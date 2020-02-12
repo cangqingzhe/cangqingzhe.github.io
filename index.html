@@ -167,7 +167,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2020-02-12 13:57:24 / Modified: 15:08:30" itemprop="dateCreated datePublished" datetime="2020-02-12T13:57:24+08:00">2020-02-12</time>
+              <time title="Created: 2020-02-12 13:57:24 / Modified: 16:17:02" itemprop="dateCreated datePublished" datetime="2020-02-12T13:57:24+08:00">2020-02-12</time>
             </span>
 
           
@@ -200,7 +200,9 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell sc delete WindowsUpdate 删除服务</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210214933364.png" alt="image-20200210214933364"></p>
-<h2 id="映像劫持"><a href="#映像劫持" class="headerlink" title="映像劫持"></a>映像劫持</h2><p>映像劫持某个操作的时候被拦截下来，干了别的事。使用IFEO可以实现后门持久化,可以实现系统在未登录状态下，通过快捷键运行自己的程序。比如：Windows + U组合键时启动的utilman.exe，或者5次shift替换粘滞键。</p>
+<h2 id="IFEO映像劫持"><a href="#IFEO映像劫持" class="headerlink" title="IFEO映像劫持"></a>IFEO映像劫持</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">映像劫持：某个操作的时候被拦截下来，干了别的事。</span><br></pre></td></tr></table></figure>
+
+<p>使用IFEO可以实现后门持久化,可以实现系统在未登录状态下，通过快捷键运行自己的程序。比如：Windows + U组合键时启动的utilman.exe，或者5次shift替换粘滞键。</p>
 <h3 id="劫持utilman"><a href="#劫持utilman" class="headerlink" title="劫持utilman"></a>劫持utilman</h3><p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200211193950726.png" alt="image-20200211193950726"></p>
 <p>执行后我们可以看到，本质上还是操作注册表</p>
 <p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200211194149713.png" alt="image-20200211194149713"></p>
