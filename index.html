@@ -167,7 +167,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2020-02-12 13:57:24 / Modified: 16:18:46" itemprop="dateCreated datePublished" datetime="2020-02-12T13:57:24+08:00">2020-02-12</time>
+              <time title="Created: 2020-02-12 13:57:24 / Modified: 23:24:40" itemprop="dateCreated datePublished" datetime="2020-02-12T13:57:24+08:00">2020-02-12</time>
             </span>
 
           
@@ -184,17 +184,22 @@
           <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    在我们获取一个beacon后，为了防止掉线，或者防止目标重启后权限丢失，需要进行权限维持，我这里使用Erebus插件进行权限维持。当然这个插件还有其他功能，我这里仅仅对权限维持这部分的功能进行测试。有service、IFEO和AutoRun三种。插件地址：<a href="https://github.com/DeEpinGh0st/Erebus" target="_blank" rel="noopener">Erebus</a></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">既然要进行权限维持，首先是需要在获取高权的基础上，有两方面因素:</span><br><span class="line">第一点就是获取低权权限维持的意义不大,</span><br><span class="line">第二点是低权无法进行注册表修改等等操作，也不好进行权限维持.</span><br></pre></td></tr></table></figure>
 
-<h2 id="service"><a href="#service" class="headerlink" title="service"></a>service</h2><p>首先使用cs获取权限，</p>
+<h2 id="service"><a href="#service" class="headerlink" title="service"></a>service</h2><p>使用service进行权限维持，当开启服务后，即可使目标上线。以下是测试过程：</p>
+<p>首先使用cs获取权限</p>
 <p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210204445767.png" alt="image-20200210204445767"></p>
-<p>然后将我们想要重启后执行的exe上传到目标机器上，我这里是使用cs生成了一个exe，执行后可以反弹shell。</p>
+<p>然后将我们想要执行的exe上传到目标机器上，我这里是使用cs生成了一个exe，执行后可以反弹shell。</p>
 <p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210204951391.png" alt="image-20200210204951391"></p>
 <p>通过Erebus插件添加服务，选择Persistence-&gt;service。</p>
 <p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210211402844.png" alt="image-20200210211402844"></p>
 <p>添加一个服务，上面的那个参数是服务名，下面的参数是这个服务运行时执行的文件。</p>
 <p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210211725936.png" alt="image-20200210211725936"></p>
-<p>执行成功后，会返回system的shell。</p>
+<p>使用这种方式进行权限维持，本质上是执行了如下的命令，不过是写成插件以后比较方便。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sc create &quot;WindowsUpdate&quot; binpath&#x3D; &quot;cmd &#x2F;c start &quot;C:\Users\admin\Desktop\artifact.exe&quot;&quot;&amp;&amp;sc config &quot;WindowsUpdate&quot; start&#x3D; auto&amp;&amp;net start  WindowsUpdate</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200212232104780.png" alt="image-20200212232104780"></p>
+<p>执行成功后，会返回system的shell，无需重启</p>
 <p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210212033229.png" alt="image-20200210212033229"></p>
-<p>然后我们重启受害机进行测试。</p>
+<p>然后我们重启受害机进行测试，shell仍然存在</p>
 <p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210212244400.png" alt="image-20200210212244400"></p>
 <p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210212421777.png" alt="image-20200210212421777"></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell sc delete WindowsUpdate 删除服务</span><br></pre></td></tr></table></figure>
