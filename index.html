@@ -142,124 +142,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/" class="post-title-link" itemprop="url">文件上传绕安全狗</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2020-07-21 20:01:40 / Modified: 20:08:14" itemprop="dateCreated datePublished" datetime="2020-07-21T20:01:40+08:00">2020-07-21</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><strong>文件上传突破WAF的核心思想在于破坏数据包的格式影响WAF的正常解析</strong></p>
-<p>本文使用常见的绕WAF的方法对安全狗这款软件关于上传的防护进行测试，文章的最后会给出测试结果。</p>
-<ul>
-<li>通过传输长文件名测试绕过</li>
-</ul>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721153008627.png" alt="image-20200721153008627"></p>
-<p>使用这种方式不仅有可能影响正常程序的解析，而且还无法绕过安全狗</p>
-<ul>
-<li>在name和filename间填充任意字符</li>
-</ul>
-<p>因为WAF有一个规则库进行匹配，而它又不能影响正常的程序解析，因此如果在某些规则中间填充大量字符，就有可能绕过WAF,比如通过这种方式绕过安全狗。</p>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721153557609.png" alt="image-20200721153557609"></p>
-<ul>
-<li>修改content-type的类型为multipart/form-DATA</li>
-</ul>
-<p>因为WAF的解析是从前到后的，那么解析请求后缀的这个规则肯定是在判断请求之前，因此，不用测也可以知道这个绕不过WAF</p>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721154017713.png" alt="image-20200721154017713"></p>
-<ul>
-<li>将name和filename之间的一个分号变为多个</li>
-</ul>
-<p>这个其实绕过的逻辑和在name和filename填充关键字的原理相同，直接使用都是绕不过的，不过如果填充的够多，就可以。</p>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721154257612.png" alt="image-20200721154257612"></p>
-<p>这个方法是可以进行一些稍微的变通的，比如在form-data和name之间进行垃圾字符填充。</p>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721154802185.png" alt="image-20200721154802185"></p>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721154933235.png" alt="image-20200721154933235"></p>
-<ul>
-<li>使用多个filename进行测试</li>
-</ul>
-<p>在apache中，只会取最后一个filename，这样也是会被拦的。</p>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721155147115.png" alt="image-20200721155147115"></p>
-<p>不过只要我们祭出大数据方法，破坏它的拦截规则，就可以绕过了。</p>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721160351804.png" alt="image-20200721160351804"></p>
-<ul>
-<li>提交多个boundary</li>
-</ul>
-<p>直接使用这个方法显然也是过不去的，不过我们只要灵活改变一下，大数据。。。</p>
-<p>使用这个方法比较麻烦一些，可能如果格式没有调好，会导致传上去的后缀不是我们想要的，而且如果填充过大可能服务端处理会有一些问题，很长时间都不会相应的。</p>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721162518700.png" alt="image-20200721162518700"></p>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721162547536.png" alt="image-20200721162547536"></p>
-<ul>
-<li>倒装filename和name的位置</li>
-</ul>
-<p><strong>绕过失败</strong></p>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721164356462.png" alt="image-20200721164356462"></p>
-<ul>
-<li>修改Content-Disposition的内容</li>
-</ul>
-<p>只要够长还是可以绕过的</p>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721164655713.png" alt="image-20200721164655713"></p>
-<ul>
-<li>在=，:,；这些符号之后添加空格</li>
-</ul>
-<p>只要够长总是可以的</p>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721165037762.png" alt="image-20200721165037762"></p>
-<ul>
-<li>变换单双银行</li>
-</ul>
-<p>经过测试，不用双引号可以直接绕过</p>
-<p><img src="/2020/07/21/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97/C:%5CUsers%5Cadmin%5CDesktop%5C%E6%88%91%E7%9A%84%E7%AC%94%E8%AE%B0%5C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%5Cwaf%E7%BB%95%E8%BF%87%5C%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E7%BB%95%E5%AE%89%E5%85%A8%E7%8B%97%5Cimage-20200721170226372.png" alt="image-20200721170226372"></p>
-<p>关于安全狗上传的绕过就到这里了，其实这次绕过测试并没有用到什么新的技术点，主要是利用了WAF出于性能考虑所设计的逻辑导致了绕过,非常简单。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/07/21/%E9%92%93%E9%B1%BC%E9%82%AE%E4%BB%B6%E5%88%B6%E4%BD%9C/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -584,7 +466,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-count">3</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
