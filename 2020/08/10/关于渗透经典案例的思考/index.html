@@ -20,20 +20,20 @@
     var CONFIG = {"hostname":"cangqingzhe.github.io","root":"/","scheme":"Muse","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="1不加检点的人生不值一过。  前言​    最近可能是因为技术处于一个瓶颈期，又或者说对未来技术发展方向有些迷茫，所以写下这篇文章梳理一下当前自身的技能树以及未来的发展方向。 我的渗透观​    根据我自己对于渗透的理解，把渗透分为如下几个步骤： 信息搜集 ​    这里的信息搜集不仅仅局限于对于目标开放的web资产的情况进行搜集，也可以是人员信息，一些历史漏洞，或者信息泄露的收集，总之一些有利于">
+  <meta name="description" content="12最近刚好要做一次分享，要用到自己以往的项目经历，但是我经过了仔细呢思索，翻了翻之前的项目笔记，发现竟然没有非常经典的渗透案例，也是非常的失望，工作这么久竟然连一点拿的出手的项目经历都没有。  ​       既然要谈谈经典的渗透案例，那先得说说什么样的渗透是经典的。第一点，不常规的思路。如果是通过非常常规的思路，比如注入，后台，上传，这个过程中如果非常的顺利，那这个项目就不是一个经典的案例，因">
 <meta property="og:type" content="article">
-<meta property="og:title" content="我的渗透之路">
-<meta property="og:url" content="https://cangqingzhe.github.io/2020/07/20/%E6%88%91%E7%9A%84%E6%B8%97%E9%80%8F%E4%B9%8B%E8%B7%AF/index.html">
+<meta property="og:title" content="关于渗透经典案例的思考">
+<meta property="og:url" content="https://cangqingzhe.github.io/2020/08/10/%E5%85%B3%E4%BA%8E%E6%B8%97%E9%80%8F%E7%BB%8F%E5%85%B8%E6%A1%88%E4%BE%8B%E7%9A%84%E6%80%9D%E8%80%83/index.html">
 <meta property="og:site_name" content="藏青&#39;s BLOG">
-<meta property="og:description" content="1不加检点的人生不值一过。  前言​    最近可能是因为技术处于一个瓶颈期，又或者说对未来技术发展方向有些迷茫，所以写下这篇文章梳理一下当前自身的技能树以及未来的发展方向。 我的渗透观​    根据我自己对于渗透的理解，把渗透分为如下几个步骤： 信息搜集 ​    这里的信息搜集不仅仅局限于对于目标开放的web资产的情况进行搜集，也可以是人员信息，一些历史漏洞，或者信息泄露的收集，总之一些有利于">
+<meta property="og:description" content="12最近刚好要做一次分享，要用到自己以往的项目经历，但是我经过了仔细呢思索，翻了翻之前的项目笔记，发现竟然没有非常经典的渗透案例，也是非常的失望，工作这么久竟然连一点拿的出手的项目经历都没有。  ​       既然要谈谈经典的渗透案例，那先得说说什么样的渗透是经典的。第一点，不常规的思路。如果是通过非常常规的思路，比如注入，后台，上传，这个过程中如果非常的顺利，那这个项目就不是一个经典的案例，因">
 <meta property="og:locale" content="cn">
-<meta property="article:published_time" content="2020-07-20T12:09:15.172Z">
-<meta property="article:modified_time" content="2020-07-20T13:19:43.797Z">
+<meta property="article:published_time" content="2020-08-10T11:07:41.354Z">
+<meta property="article:modified_time" content="2020-08-10T11:09:25.804Z">
 <meta property="article:author" content="藏青">
 <meta property="article:tag" content="渗透 内网 代码审计">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://cangqingzhe.github.io/2020/07/20/%E6%88%91%E7%9A%84%E6%B8%97%E9%80%8F%E4%B9%8B%E8%B7%AF/">
+<link rel="canonical" href="https://cangqingzhe.github.io/2020/08/10/%E5%85%B3%E4%BA%8E%E6%B8%97%E9%80%8F%E7%BB%8F%E5%85%B8%E6%A1%88%E4%BE%8B%E7%9A%84%E6%80%9D%E8%80%83/">
 
 
 <script id="page-configurations">
@@ -45,7 +45,7 @@
   };
 </script>
 
-  <title>我的渗透之路 | 藏青's BLOG</title>
+  <title>关于渗透经典案例的思考 | 藏青's BLOG</title>
   
 
 
@@ -144,7 +144,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/07/20/%E6%88%91%E7%9A%84%E6%B8%97%E9%80%8F%E4%B9%8B%E8%B7%AF/">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/10/%E5%85%B3%E4%BA%8E%E6%B8%97%E9%80%8F%E7%BB%8F%E5%85%B8%E6%A1%88%E4%BE%8B%E7%9A%84%E6%80%9D%E8%80%83/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -157,7 +157,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          我的渗透之路
+          关于渗透经典案例的思考
         </h1>
 
         <div class="post-meta">
@@ -168,7 +168,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2020-07-20 20:09:15 / Modified: 21:19:43" itemprop="dateCreated datePublished" datetime="2020-07-20T20:09:15+08:00">2020-07-20</time>
+              <time title="Created: 2020-08-10 19:07:41 / Modified: 19:09:25" itemprop="dateCreated datePublished" datetime="2020-08-10T19:07:41+08:00">2020-08-10</time>
             </span>
 
           
@@ -182,29 +182,9 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">不加检点的人生不值一过。</span><br></pre></td></tr></table></figure>
+        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">最近刚好要做一次分享，要用到自己以往的项目经历，但是我经过了仔细呢思索，翻了翻之前的项目笔记，</span><br><span class="line">发现竟然没有非常经典的渗透案例，也是非常的失望，工作这么久竟然连一点拿的出手的项目经历都没有。</span><br></pre></td></tr></table></figure>
 
-<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近可能是因为技术处于一个瓶颈期，又或者说对未来技术发展方向有些迷茫，所以写下这篇文章梳理一下当前自身的技能树以及未来的发展方向。</p>
-<h2 id="我的渗透观"><a href="#我的渗透观" class="headerlink" title="我的渗透观"></a>我的渗透观</h2><p>​    根据我自己对于渗透的理解，把渗透分为如下几个步骤：</p>
-<p><strong>信息搜集</strong></p>
-<p>​    这里的信息搜集不仅仅局限于对于目标开放的web资产的情况进行搜集，也可以是人员信息，一些历史漏洞，或者信息泄露的收集，总之一些有利于我们对目标系统进行攻击的信息都可以是我们收集的范围之内。在信息搜集的过程中，我们需要根据自己搜集的结果分析目标可能比较脆弱的点，比如一些VPN,OA,邮件系统或者说是企业内部自用的一些系统。对于这些系统的攻击，我们除了可以猜弱口令或爆破外，也可以去通过钓鱼，信息泄露或者其他途径获取的密码去获得这些系统的访问权限。又或者说有一些比较知名并且非常方便去利用的RCE，比如Weblogic，Shior，Thinkphp,Struts2等等，目标哪些系统使用了这些框架也是我们在信息搜集过程中要做的。</p>
-<p>​    总之，我认为渗透的信息搜集不仅仅是包含了资产收集的步骤，还应该包含目标分析的步骤，这个阶段的结果对我们来说尤其重要，直接决定了我们后续活动的重心，因此，我认为在这个阶段我们可以花费较多的时间去搜集、整理、分析、筛选目标。</p>
-<p><strong>漏洞挖掘</strong></p>
-<p>​    同样，这里的漏洞挖掘并非狭义的指一些web漏洞的挖掘，而是目标整个防御体系的缺陷，任何有可能帮助我们突破目标防御的点都值得我们去深入挖掘。这个步骤我们需要注意的就是明确目标，我们所挖掘的任何信息或者漏洞目的只有一个，为了帮助我们获取目标的一个根据点，不要花费精力去挖一些对于本次活动没什么帮助的漏洞。</p>
-<p>​    就我个人来讲，我不是很喜欢这个过程，可能因为我很少挖到那种比较开脑洞的漏洞，让我觉得挖洞是一个体力活，相比漏洞挖掘，我更喜欢下一个过程。</p>
-<p><strong>漏洞利用</strong></p>
-<p>​    这个过程的目的就是通过我们前面这些步骤操作所挖掘到系统存在的问题，然后通过一些组合利用，让我们获取一个进入目标内网的一个口子，也可以说是突破目标边界。</p>
-<p>​    为什么我喜欢这个过程，因为我喜欢了解漏洞的原理，而且在漏洞利用这个过程我认为比较有趣，尤其是遇到各种拦截，需要我们通过自己的知识去bypass，还有就是因为可能目标环境的问题影响，可能导致虽然是同一种漏洞，但是利用的方法都不太一样。</p>
-<p>​    通过漏洞的组合利用，我们最终构建了一个进入目标内网的通道，这个通道可以是一个反弹shell,一个马，一个http隧道，socks隧道。</p>
-<p><strong>内网信息搜集</strong></p>
-<p>​    当我们进入内网后，我们可能对目标内网是一无所知的，也不知道我们最终的目标在哪里，所以需要进行各种信息搜集，搜集这些信息的目的，主要还是为了定位目标的地址，构建一个从我们至目标的一个可达的途径。主要搜集的一个是目标内网的一个拓扑，通过这个拓扑我们就可以知道目标在哪个位置，还有一个就是目标内网的各种主机和服务的密码，很多时候，我们渗透内网的方式非常的简单粗暴，就是不停的搜集资产，抓密码，撞密码的过程。</p>
-<p>​    因为在某些活动中，我们获取一个内网权限来之不易，为了防止我们在操作的过程中被发现导致权限丢掉了，我认为在内网信息搜集前，应该先想办法去巩固我们的权限，比如多种几个隐秘的shell，还有就是对当前主机的一个权限维持。</p>
-<p><strong>内网横向渗透</strong></p>
-<p>​    关于内网横向渗透，我认为这个过程和漏洞挖掘的过程类似，就是一定要明确我们的目标，假如我们的目的只是内网中的某一个系统，那么去打一圈，控很多系统对我们实际是没有用的，我认为在内网渗透，应该尽量减少我们不必要的操作，因为我们每个操作都有可能给对方留下日志，增加了被发现的风险。</p>
-<p>​    单纯从控更多主机来看的话，首选是通过主机密码去撞，现在还是有很多内网使用通用密码的，其次是通过各种服务的弱口令去搞，比如MSSQL，redis等，这些服务也比较容易帮助我们获取主机权限。再次，就是通过各种高危的web服务，weblogic,struts2等等去搞，最后再去搞目标的其他内网的系统。</p>
-<p>​    也有一种思路就是去针对指定用户比如科技部，信息安全部的内网的邮件，oa系统进行攻击，这些人员可能有内网的各种系统的账号密码，如果能控这个人员的个人机也是非常不错的。</p>
-<p><strong>最后</strong></p>
-<p>​    为什么直接到最后了，经过内网的横向渗透，我们可能已经拿到了我们想要的目标，这时剩下的操作就是两个，一个是权限维持，另一个是痕迹清理，根据自己的需要执行对应的操作就可以了。</p>
+<p>​       既然要谈谈经典的渗透案例，那先得说说什么样的渗透是经典的。第一点，不常规的思路。如果是通过非常常规的思路，比如注入，后台，上传，这个过程中如果非常的顺利，那这个项目就不是一个经典的案例，因为这个全是新手都知道的东西。第二点，稍微有些复杂的攻击链。<br>即使我们的思路非常不常规，如果在突破了某个点以后就结束了，这样好像也不是非常经典，所以如果是一个非常经典的经历，应该是有点历经波折这种感觉或者说绝处逢生也行。<br>        知道了什么是经典案例，再分析一下为什么我做了那么多项目却没有经典的。项目过于简单？应该是不存在的，因为后来我参与的很多项目都不算是简单的。那是项目太难了吗？是的吧，因为感觉很多项目都让人觉得没有希望，可是项目如果简单的话那也不会有经典的案例，所以项目是需要稍微难一点的，那为什么我做了那么多的难项目，却没有经典呢？我分析了一下，应该是项目的难度发生了变化，我的思路仍然没有变化，还是用之前的思路去渗透，这样的话我就不能攻克这样的系统，连打点都打不下，自然没有经典的案例产生了，这里又会有一个比较矛盾的问题，如果我用常规的思路攻克了，那么这个项目就不会是一个经典的项目，没攻克就更不会是了。所以这里的本质问题就出来了，因为总是使用常规的思路，这里的常规思路当然就是我之前渗透的经验。<br>​        那又有一个问题，我不用我以往的经验用什么，对啊，如果我不用自己以往的经验，我就要去学新东西，这个在项目中学习的成本也是非常高的，这个显然也是不现实的。所以这里又从一方面涉及到了日常技术积累的重要性。<br>​     我们肯定不是在任何项目的一开始就想去使用非常规的思路去做。什么项目适合用非常规的方法去做呢，肯定是我们用了常规思路做了以后没有结果，这个时候如果还固执的使用以往的经验继续做，可能最终比较难攻克，所以到这个时候就是想办法去找其他可能的思路的时候了，比如各种方式的钓鱼，社工，甚至物理渗透或者某种迂回的打法。这当然值得是一个小的点，还有很多其他需要我们去思考创新的一些手法，这个是一点，可以总结为新的思路的创新。<br>​    还有一点的话，我师傅会有一些比较经典的项目，结合他这个人的特点，他这个人渗透比较喜欢死磕，这个我也和他聊过，他认为有希望攻克的点就会死磕，所以第二个点的话就是找到自己认为有希望的点，然后想尽办法去死磕。<br>​    要使用这种方式，当然也是有前提的，第一点就是能找到一个认为有希望的点，他可能是一个挖掘出来但是非常难以利用的漏洞，或者说是需要某些组合利用才可以的才可以达到我们目的的点。有希望的说法可能不太好去理解，也可以说是有攻击成功的可能性，也就是这个攻击路径虽然复杂，不过我们只要找到了某种方式，最终会找到一个可达的攻击路径。我认为确认一个点是否可以磕，就是先抛开难度这种因素，分析这种攻击路径是否可达，可以实现我们的目的，如果可以，那么这个点就满足了可以磕的一个条件，当然，实际项目中还需要考虑时间成本的问题，从很多可以磕的点挑一个成本最低的一个点磕。<br>​      所以分析了这么多，<strong>希望自己能尽快有一些经典案例吧！</strong></p>
 
     </div>
 
@@ -220,13 +200,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/" rel="prev" title="使用cobaltstrike权限维持">
-      <i class="fa fa-chevron-left"></i> 使用cobaltstrike权限维持
+    <a href="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/" rel="prev" title="关于windows执行shellcode的方式学习">
+      <i class="fa fa-chevron-left"></i> 关于windows执行shellcode的方式学习
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/" rel="next" title="记MSSQL绕过阿里云">
-      记MSSQL绕过阿里云 <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -286,7 +263,6 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#我的渗透观"><span class="nav-number">2.</span> <span class="nav-text">我的渗透观</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
