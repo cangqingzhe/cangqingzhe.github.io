@@ -254,7 +254,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-08-25 16:27:30" itemprop="dateModified" datetime="2020-08-25T16:27:30+08:00">2020-08-25</time>
+                <time title="Modified: 2020-08-25 16:39:52" itemprop="dateModified" datetime="2020-08-25T16:39:52+08:00">2020-08-25</time>
               </span>
 
           
@@ -553,10 +553,12 @@
 
 <p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825162057120.png" alt="image-20200825162057120"></p>
 <p>2、远程修改防火墙配置</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netsh -r 192.168.3.73 -u administrator -p xxx advfirewall firewall add rule name&#x3D;&quot;any&quot; protocol&#x3D;TCP dir&#x3D;in localport&#x3D;any action&#x3D;allow</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netsh -r 192.168.3.73 -u  rootkit\administrator -p xxx advfirewall firewall add rule name&#x3D;&quot;any&quot; protocol&#x3D;TCP dir&#x3D;in localport&#x3D;any action&#x3D;allow</span><br></pre></td></tr></table></figure>
 
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825163734585.png" alt="image-20200825163734585"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netsh -r 192.168.3.73  -u rootkit\administrator -p xxx advfirewall firewall Delete rule name&#x3D;&quot;any&quot;  删除规则</span><br></pre></td></tr></table></figure>
 
-
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825163854134.png" alt="image-20200825163854134"></p>
 <p><strong>参考文章</strong></p>
 <p><a href="https://www.freebuf.com/articles/network/246440.html" target="_blank" rel="noopener">内网横向移动：利用WMI来渗透</a></p>
 <p><a href="https://lengjibo.github.io/LateralMovement/" target="_blank" rel="noopener">LateralMovement(横向移动)</a></p>
@@ -565,6 +567,7 @@
 <p><a href="https://pentestlab.blog/2018/05/15/lateral-movement-winrm/" target="_blank" rel="noopener">横向运动– WinRM</a></p>
 <p><a href="http://t3ngyu.leanote.com/post/345687ddad59" target="_blank" rel="noopener">SCShell：横向移动工具</a></p>
 <p><a href="http://t3ngyu.leanote.com/post/LM-SMB" target="_blank" rel="noopener">横向渗透之 [SMB]</a></p>
+<p><a href="[https://3gstudent.github.io/3gstudent.github.io/%E5%9F%9F%E6%B8%97%E9%80%8F-%E5%88%A9%E7%94%A8DCOM%E5%9C%A8%E8%BF%9C%E7%A8%8B%E7%B3%BB%E7%BB%9F%E6%89%A7%E8%A1%8C%E7%A8%8B%E5%BA%8F/](https://3gstudent.github.io/3gstudent.github.io/域渗透-利用DCOM在远程系统执行程序/)">域渗透——利用DCOM在远程系统执行程序</a></p>
 
       
     </div>
