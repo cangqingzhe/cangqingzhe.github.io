@@ -61,7 +61,7 @@
 <meta property="og:image" content="https://cangqingzhe.github.io/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810172937554.png">
 <meta property="og:image" content="https://cangqingzhe.github.io/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810182402572.png">
 <meta property="article:published_time" content="2020-08-06T12:07:45.470Z">
-<meta property="article:modified_time" content="2020-08-12T06:09:58.178Z">
+<meta property="article:modified_time" content="2020-08-28T08:09:14.982Z">
 <meta property="article:author" content="藏青">
 <meta property="article:tag" content="渗透 内网 代码审计">
 <meta name="twitter:card" content="summary">
@@ -208,7 +208,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-08-12 14:09:58" itemprop="dateModified" datetime="2020-08-12T14:09:58+08:00">2020-08-12</time>
+                <time title="Modified: 2020-08-28 16:09:14" itemprop="dateModified" datetime="2020-08-28T16:09:14+08:00">2020-08-28</time>
               </span>
 
           
@@ -309,7 +309,7 @@
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807172754499.png" alt="image-20200807172754499"></p>
 <h3 id="msbuild"><a href="#msbuild" class="headerlink" title="msbuild"></a>msbuild</h3><p> 使用msbuild可以编译xml c#的项目文件，msbuild.exe并不在windows的环境变量中，因此需要绝对路径进行加载。</p>
 <p><strong>如何使用msbuild执行？</strong></p>
-<p> 首先我们准备一个xml的[模板]([[<a href="https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes%20shellcode.xml\]]" target="_blank" rel="noopener">https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes%20shellcode.xml\]]</a>(<a href="https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes" target="_blank" rel="noopener">https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes</a> shellcode.xml])(<a href="https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes" target="_blank" rel="noopener">https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes</a> shellcode.xml)),下载好后使用cs生成一个c#的shellcode，对xml中执行shellcode部分的内容进行替换，使用如下命令加载xml文件</p>
+<p> 首先我们准备一个xml的<a href="https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes%20shellcode.xml" target="_blank" rel="noopener">模板</a>,下载好后使用cs生成一个c#的shellcode，对xml中执行shellcode部分的内容进行替换，使用如下命令加载xml文件</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe 1.xml</span><br></pre></td></tr></table></figure>
 
 <p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807175852058.png" alt="image-20200807175852058"></p>
@@ -543,7 +543,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">14</span>
+          <span class="site-state-item-count">15</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
