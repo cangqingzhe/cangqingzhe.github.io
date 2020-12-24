@@ -20,15 +20,15 @@
     var CONFIG = {"hostname":"cangqingzhe.github.io","root":"/","scheme":"Muse","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="知行合一">
+  <meta name="description" content="​    讲到JAVA的反序列化，我们肯定离不开readObject函数，我们在分析JAVA反序列化漏洞中，常常跟踪到readObject就跟踪结束，我们有没有想过readObject是如何实现反序列化的？为什么我们找到了readObject后并不能直接造成命令执行，还需要去寻找其他的调用链来配合才可以命令执行？今天我将和大家一起学习readObject这个函数。 readObject简介​">
 <meta property="og:type" content="article">
 <meta property="og:title" content="readObject深入分析">
 <meta property="og:url" content="https://cangqingzhe.github.io/2020/12/07/readObject%E6%B7%B1%E5%85%A5%E5%88%86%E6%9E%90/index.html">
 <meta property="og:site_name" content="藏青&#39;s BLOG">
-<meta property="og:description" content="知行合一">
+<meta property="og:description" content="​    讲到JAVA的反序列化，我们肯定离不开readObject函数，我们在分析JAVA反序列化漏洞中，常常跟踪到readObject就跟踪结束，我们有没有想过readObject是如何实现反序列化的？为什么我们找到了readObject后并不能直接造成命令执行，还需要去寻找其他的调用链来配合才可以命令执行？今天我将和大家一起学习readObject这个函数。 readObject简介​">
 <meta property="og:locale" content="cn">
 <meta property="article:published_time" content="2020-12-07T05:56:03.000Z">
-<meta property="article:modified_time" content="2020-12-07T05:56:57.349Z">
+<meta property="article:modified_time" content="2020-12-07T06:05:11.513Z">
 <meta property="article:author" content="藏青">
 <meta property="article:tag" content="代码审计">
 <meta property="article:tag" content="JAVA">
@@ -179,7 +179,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2020-12-07 13:56:03 / Modified: 13:56:57" itemprop="dateCreated datePublished" datetime="2020-12-07T13:56:03+08:00">2020-12-07</time>
+              <time title="Created: 2020-12-07 13:56:03 / Modified: 14:05:11" itemprop="dateCreated datePublished" datetime="2020-12-07T13:56:03+08:00">2020-12-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -204,7 +204,9 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        
+        <p>​    讲到JAVA的反序列化，我们肯定离不开readObject函数，我们在分析JAVA反序列化漏洞中，常常跟踪到readObject就跟踪结束，我们有没有想过readObject是如何实现反序列化的？为什么我们找到了readObject后并不能直接造成命令执行，还需要去寻找其他的调用链来配合才可以命令执行？今天我将和大家一起学习readObject这个函数。</p>
+<h3 id="readObject简介"><a href="#readObject简介" class="headerlink" title="readObject简介"></a>readObject简介</h3><p>​        </p>
+
     </div>
 
     
@@ -226,7 +228,10 @@
     <a href="/2020/12/02/JAVA%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6%E5%AD%A6%E4%B9%A0/" rel="prev" title="JAVA反射机制学习">
       <i class="fa fa-chevron-left"></i> JAVA反射机制学习
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2020/12/17/JAVA%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E5%9B%9E%E6%98%BE%E5%AD%A6%E4%B9%A0/" rel="next" title="JAVA反序列化回显学习">
+      JAVA反序列化回显学习 <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -286,6 +291,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#readObject简介"><span class="nav-number">1.</span> <span class="nav-text">readObject简介</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -299,7 +305,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">32</span>
+          <span class="site-state-item-count">33</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
