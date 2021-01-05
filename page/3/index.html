@@ -152,6 +152,167 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">关于内网断网主机上线的学习总结</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-28 17:12:06" itemprop="dateCreated datePublished" datetime="2020-08-28T17:12:06+08:00">2020-08-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-09-02 20:04:20" itemprop="dateModified" datetime="2020-09-02T20:04:20+08:00">2020-09-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/" itemprop="url" rel="index">
+                    <span itemprop="name">内网渗透</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​        在进行内网横向移动的过程中我们可能经常会遇到这样的情况，目标内网中的其他主机不出外网，那么我们使用cs直接生成的reverse shell就没有办法使目标内网中的”断网”主机上线，今天我就和大家一起学习如何上线内网的”断网”主机。</p>
+<h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">OWA2013:192.168.3.144 192.168.5.55   模拟边界机192.168.5.*这个网段使用nat模式，192.168.3.*使用仅主机模式</span><br><span class="line">ser-web:192.168.3.73 模拟内网断网机</span><br></pre></td></tr></table></figure>
+
+<h3 id="Pivot-listener"><a href="#Pivot-listener" class="headerlink" title="Pivot listener"></a>Pivot listener</h3><p><strong>建立Pivot listener</strong></p>
+<p>​        首先让边界主机OWA2013上线,上线后对着边界机右键，选择pivoting-&gt;Listener</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828180723949.png" alt="image-20200828180723949"></p>
+<p>​        配置过程中需要注意，这里的<strong>Listen host要选择和内网主机所在一个段所对应的ip</strong>，我这里是192.168.3.144</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828180840537.png" alt="image-20200828180840537"></p>
+<p>​        <img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828181006859.png" alt="image-20200828181006859"></p>
+<p>​            Pivot listener生成好以后，选择Packages-&gt;windows executalbe(s)</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828181100073.png" alt="image-20200828181100073"></p>
+<p>​        配置过程中Listener选择我们刚生成的Pivot listener</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828181152418.png" alt="image-20200828181152418"></p>
+<p>​        假设我们这里已经拿到了内网断网主机的密码，使用ipc进行连接。</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828181857058.png" alt="image-20200828181857058"></p>
+<p>​        在文件管理这里将生成的文件上传到断网主机</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828182328347.png" alt="image-20200828182328347"></p>
+<p>​        使用remote exec wmi模块去执行上传的exe</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828182839924.png" alt="image-20200828182839924"></p>
+<p>​        目标主机上线，这里有一个小点需要注意，就是上线的这台断网机只要我们不进行交互默认的last时间就是一直增长的，这里不需要管这个超时时间的问题，需要的时候执行命令就可以了</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828182918650.png" alt="image-20200828182918650"></p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200828183126947.png" alt="image-20200828183126947"></p>
+<h3 id="smb-beacon"><a href="#smb-beacon" class="headerlink" title="smb beacon"></a>smb beacon</h3><p><strong>什么是smb beacon？</strong></p>
+<p>​        SMB Beacon使用命名管道通过父级Beacon进行通讯，当两个Beacons链接后，子Beacon从父Beacon获取到任务并发送。 因为链接的Beacons使用Windows命名管道进行通信，此流量封装在SMB协议中，所以SMB Beacon相对隐蔽，绕防火墙时可能发挥奇效(系统防火墙默认是允许445的端口与外界通信的，其他端口可能会弹窗提醒，会导致远程命令行反弹shell失败)。</p>
+<p><strong>什么是命名管道？</strong></p>
+<p>​        “命名管道” 又名 “命名管线”，但是通常都叫命名管道，是一种简单基于 SMB 协议的进程间通信（Internet Process Connection - IPC）机制。 在计算机编程里，命名管道可在同一台计算机的不同进程之间或在<strong>跨越一个网络的不同计算机的不同进程之间</strong>，支持可靠的、单向或双向的数据通信传输。和一般的管道不同，命名管道可以被不同进程以不同的方式方法调用（可以跨语言、跨平台）。只要程序知道命名管道的名字，任何进程都可以通过该名字打开管道的另一端，根据给定的权限和服务器进程通信。</p>
+<p><strong>命名规范</strong><br>命名管道的命名是采用的 UNC 格式：\Server\Pipe[Path]Name 的。</p>
+<p>第一部分\Server指定了服务器的名字，命名管道服务即在此服务器创建，其字符串部分可表示为一个小数点(表示本机)、星号(当前网络字段)、域名或是一个真正的服务；第二部分 pipe 是一个不可变化的硬编码字串，以指出该文件是从属于 NTFS；第三部分[Path]Name则使应用程序可以唯一定义及标识一个命名管道的名字，而且可以设置多级目录。</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831103821108.png" alt="image-20200831103821108"></p>
+<p><strong>利用条件</strong></p>
+<ul>
+<li>目标开放445端口</li>
+<li>得知目标主机账号密码并建立ipc连接</li>
+</ul>
+<p><strong>如何使用smb beacon</strong></p>
+<p>​        首先我们创建一个smb的listener</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831101527143.png" alt="image-20200831101527143"></p>
+<p>​        我们再通过ipc和内网的断网主机192.168.3.73建立连接</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831101635873.png" alt="image-20200831101635873"></p>
+<p>​        建立连接后通过jump命令来让192.168.3.73这台断网主机上线</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jump psexec 192.168.3.73 smb</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831101807854.png" alt="image-20200831101807854"></p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831101834919.png" alt="image-20200831101834919"></p>
+<p>​        上线后根据自己的需要执行对应的操作即可</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831101901136.png" alt="image-20200831101901136"></p>
+<p>​        当使用结束后，可以使用unlink命令取消和该内网主机的连接</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">unlink 192.168.3.73</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831102021398.png" alt="image-20200831102021398"></p>
+<p>​        当想再次让该断网主机上线，使用link命令连接即可</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">link 192.168.3.73</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831102234598.png" alt="image-20200831102234598"></p>
+<p><strong>Pivot listener和smb beacon在使用上的区别</strong></p>
+<ul>
+<li><p>使用pivot listener可以使用生成executables来上线，也可以使用jumpexec的方式上线</p>
+<p>​    首先创建一个pivot listener test666</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831114634920.png" alt="image-20200831114634920"></p>
+<p>​        配置这里还是要注意应该选择和断网机所在一个C段的ip，我这里是192.168.3.144</p>
+</li>
+</ul>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831114730991.png" alt="image-20200831114730991"></p>
+<p>​            使用ipc和目标主机建立连接，使用jump psexec来让目标主机上线，test666为刚刚创建的pivote listener的名字</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831115052331.png" alt="image-20200831115052331"></p>
+<p>​        成功上线</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831115201232.png" alt="image-20200831115201232"></p>
+<ul>
+<li>使用smb beacon可以使用jumpexec的方式上线，但不能使用生成executables来上线</li>
+</ul>
+<p>Attacks-&gt;packages-&gt;windows executable(s),listener选择smb</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831112921031.png" alt="image-20200831112921031"></p>
+<p>​        将生成的文件上传到目标主机</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831113055853.png" alt="image-20200831113055853"></p>
+<p>​        使用remote-exec来执行beacon.exe</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831114043504.png" alt="image-20200831114043504"></p>
+<p>​        目标主机成功执行beacon.exe，但是并不能上线</p>
+<p><img src="/2020/08/28/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%96%AD%E7%BD%91%E4%B8%BB%E6%9C%BA%E4%B8%8A%E7%BA%BF%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831114118504.png" alt="image-20200831114118504"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        最后我总结一下这两种上线方式的使用区别</p>
+<ul>
+<li>pivot listener主要使用端口转发的方式来上线断网主机，这种方式会在我们的边界主机上开放一个端口，如果目标内网存在防火墙，则有可能无法使用这种方式来进行横向移动，但是使用这种方式既可以使用生成exe并执行的方式来上线，也可以使用psexec的方式来上线断网机。</li>
+<li>使用smb beacon仅仅需要可以和目标的445端口进行通信即可，不需要额外开启其他端口，并且使用smb上线可以规避防火墙。但是这种方式不能使用生成exe并执行的方式上线，只能通过使用psexec的方式上线。</li>
+</ul>
+<p><strong>参考文章</strong></p>
+<p><a href="https://pythonpig.github.io/2018/01/17/Cobaltstrike-SMB-beacon/" target="_blank" rel="noopener">Cobaltstrike SMB beacon(命名管道相关知识)</a></p>
+<p><a href="http://blog.leanote.com/post/snowming/8b7ce0f84c03" target="_blank" rel="noopener">CS 4.0 SMB Beacon</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/26/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A5%97%E4%BB%B6%E7%9A%84%E5%88%A9%E7%94%A8%E6%80%BB%E7%BB%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2361,100 +2522,6 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/07/26/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/07/26/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/" class="post-title-link" itemprop="url">MSSQL注入绕过360主机卫士</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-07-26 15:35:22" itemprop="dateCreated datePublished" datetime="2020-07-26T15:35:22+08:00">2020-07-26</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-07-28 18:39:21" itemprop="dateModified" datetime="2020-07-28T18:39:21+08:00">2020-07-28</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">仅仅是记录绕过的思路和过程，也算是自己的一个总结</span><br></pre></td></tr></table></figure>
-
-<h1 id="绕过过程"><a href="#绕过过程" class="headerlink" title="绕过过程"></a>绕过过程</h1><h2 id="参数污染"><a href="#参数污染" class="headerlink" title="参数污染"></a>参数污染</h2><p>这个之前bypass写过，我这次测试的目标同样是可以使用参数污染来进行绕过的，会出现这个问题，是因为360主机卫士在处理post请求时，没有处理post请求中的get参数，所以可以使用这种方式来进行全局绕过。</p>
-<p><img src="/2020/07/26/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726165735149.png" alt="image-20200726165735149"></p>
-<h2 id="静态资源白名单"><a href="#静态资源白名单" class="headerlink" title="静态资源白名单"></a>静态资源白名单</h2><p>之前我自己也经过测试，在php+apache或aspx+iis的站上，加静态后缀是不会影响程序的正常解析。同时，这个也能绕过安全卫士</p>
-<p><img src="/2020/07/26/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726170717888.png" alt="image-20200726170717888"></p>
-<h2 id="改变请求为multipart-form-data"><a href="#改变请求为multipart-form-data" class="headerlink" title="改变请求为multipart/form-data"></a>改变请求为multipart/form-data</h2><p>这个方法直接使用是绕不过的，不过可以配合数据填充的方法进行绕过</p>
-<p><img src="/2020/07/26/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726171115095.png" alt="image-20200726171115095"></p>
-<h2 id="语义上的绕过"><a href="#语义上的绕过" class="headerlink" title="语义上的绕过"></a>语义上的绕过</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">上面的绕过是全局绕过的方法，下面我们回归到正常语句的绕过</span><br></pre></td></tr></table></figure>
-
-<p>现在我们要测试多语句，需要使用waitfor delay来进行判断，我们知道，很多waf在遇到%00是会忽略后面的语句的，但是在ASPX+IIS的环境中，并不会影响正常解析，我们尝试使用这个特性绕过。</p>
-<p><img src="/2020/07/26/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726180930445.png" alt="image-20200726180930445"></p>
-<p><strong>DNS外带</strong></p>
-<p>我们再测试能否绕过WAF发起DNS请求，首先我还是使用%00代替空格，但是这里是绕不过的</p>
-<p><img src="/2020/07/26/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726194613652.png" alt="image-20200726194613652"></p>
-<p>这里的拦截一般就是exec和xp_dirtree的拦截，首先我测试在exec和xp_dirtree之间，能否又什么字符可以绕过，这里可以使用换行加注释进行绕过。</p>
-<p><img src="/2020/07/26/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726200253396.png" alt="image-20200726200253396"></p>
-<p>exec和xp_dirtree之间的空格也可以使用空白字符，我测了%11绕不过去，也可以fuzz一下，不过这个站速度挺慢的，这里就简单提供一个思路。针对aspx的站，虽然也可以使用unicode编码，不过使用的比较受限，这里测试了字符e的unicode编码%004e，是绕不过去的。</p>
-<p><strong>命令执行</strong></p>
-<p>也可以使用–xxx%0a这样的语法进行绕过。</p>
-<p><img src="/2020/07/26/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726212927798.png" alt="image-20200726212927798"></p>
-<p>其实也有其他的绕过方式，比如通过exec函数来执行命令</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Exec(&#39;x&#39;+&#39;p_c&#39;+&#39;mds&#39;+&#39;hell &#39;&#39;whoami&#39;&#39;&#39;)</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/07/26/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726213916436.png" alt="image-20200726213916436"></p>
-<p>或者通过变量定义的方式</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">declare @test nvarchar(50) set @test&#x3D;&#39;e&#39;+&#39;x&#39;+&#39;e&#39;+&#39;c x&#39;+&#39;p_&#39;+&#39;c&#39;+&#39;mdshell &#39;&#39;whoami&#39;&#39;&#39; exec--%0asp_executesql @test--</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/07/26/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726214833741.png" alt="image-20200726214833741"></p>
-<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p> 在进行WAF绕过时，其实我认为最好还是先去测那种通用绕过方案，比如参数污染，静态资源白名单，改变请求类型，因为这样可以全局绕过WAF，又能最少的触发拦截规则，如果要手动去根据规则绕的话，难免某些语句会触发拦截规则，如果在某些红蓝对抗的项目中，不就被发现了。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
@@ -2525,7 +2592,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">33</span>
+          <span class="site-state-item-count">34</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
