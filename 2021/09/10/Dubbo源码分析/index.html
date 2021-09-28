@@ -1,350 +1,90 @@
-<!DOCTYPE html>
-<html lang="cn">
+<!DOCTYPE HTML>
+<html>
 <head>
-  <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 4.2.0">
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
-  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta charset="utf-8">
+  
+  <title>Dubbo源码分析 | 藏青&#39;s BLOG</title>
 
-<link rel="stylesheet" href="/css/main.css">
-
-
-<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
-
-<script id="hexo-configurations">
-    var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"cangqingzhe.github.io","root":"/","scheme":"Muse","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
-  </script>
-
-  <meta name="description" content="​        最近准备对Dubbo的历史漏洞进行分析，但觉得不懂Dubbo的设计和实现直接去分析漏洞比较困难，所以在分析漏洞前先分析Dubbo的源码及实现，值得一提的是Dubbo的官网也有非常详细的源码分析的过程。 SPI机制及实现​        Dubbo的SPI是对JDK自身SPI的扩展实现，增加了IOC和AOP的功能，是Dubbo实现的核心，Dubbo SPI需要的配置文件放在&#x2F;met">
-<meta property="og:type" content="article">
-<meta property="og:title" content="Dubbo源码分析">
-<meta property="og:url" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/index.html">
-<meta property="og:site_name" content="藏青&#39;s BLOG">
-<meta property="og:description" content="​        最近准备对Dubbo的历史漏洞进行分析，但觉得不懂Dubbo的设计和实现直接去分析漏洞比较困难，所以在分析漏洞前先分析Dubbo的源码及实现，值得一提的是Dubbo的官网也有非常详细的源码分析的过程。 SPI机制及实现​        Dubbo的SPI是对JDK自身SPI的扩展实现，增加了IOC和AOP的功能，是Dubbo实现的核心，Dubbo SPI需要的配置文件放在&#x2F;met">
-<meta property="og:locale" content="cn">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910141629401.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910143121791.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910142641943.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910144520134.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910144916264.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910145047509.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910145421185.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910145535084.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910150018733.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910150328371.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910151027677.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910151554367.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910153042790.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910155850737.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910160909268.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910162020436.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910162254562.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910162528606.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910163122043.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910163959267.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910164637510.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910165458497.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910173512877.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910173558737.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910174331550.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910174450700.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910191335022.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910191637278.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910192020803.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910192607693.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910193304740.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910204329809.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913094202333.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913094252060.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910170319633.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910170540525.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910170647244.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910171257814.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913101339434.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913113221590.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913113753051.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913113907181.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913114042839.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913114129549.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913114350703.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913114650696.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913114438826.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913114755892.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913115400466.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913115527858.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913120106343.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913120403548.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913120556258.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913134215238.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913135243969.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913140236459.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913141411753.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913141940752.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913142046319.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913142433464.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913142928529.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913143155375.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913144237104.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913144809592.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913150629589.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913151358964.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913155617492.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913155910479.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913161909275.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913162133815.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913163041659.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913170935219.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913171719001.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913173653552.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913173903099.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913174901860.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913175327784.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913180242019.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914203023130.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913180820871.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913180958894.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913183049914.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913183319343.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913202357260.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913202655478.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913202725502.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913205047434.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913205302680.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913205600010.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913205929446.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913210629008.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913211116652.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914092258934.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914093935761.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914101227398.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914102852897.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914111156433.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914140905803.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914142047540.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914114556775.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914143424395.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914143723921.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914192347578.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914143851670.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914145531602.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914160600831.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914161157472.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914164347557.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914164911276.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914172239461.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914173300914.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914192727989.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914192838250.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914193337932.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914193634269.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914200306489.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914200350526.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914201638562.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914201705806.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914201741834.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914201903323.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914203608528.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914203828393.png">
-<meta property="article:published_time" content="2021-09-10T05:50:49.000Z">
-<meta property="article:modified_time" content="2021-09-15T06:03:49.439Z">
-<meta property="article:author" content="藏青">
-<meta property="article:tag" content="JAVA">
-<meta property="article:tag" content="源码分析">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910141629401.png">
-
-<link rel="canonical" href="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
-
-
-<script id="page-configurations">
-  // https://hexo.io/docs/variables.html
-  CONFIG.page = {
-    sidebar: "",
-    isHome: false,
-    isPost: true
-  };
-</script>
-
-  <title>Dubbo源码分析 | 藏青's BLOG</title>
+  
+  <meta name="author" content="藏青">
   
 
-
-
-
-
-
-  <noscript>
-  <style>
-  .use-motion .brand,
-  .use-motion .menu-item,
-  .sidebar-inner,
-  .use-motion .post-block,
-  .use-motion .pagination,
-  .use-motion .comments,
-  .use-motion .post-header,
-  .use-motion .post-body,
-  .use-motion .collection-header { opacity: initial; }
-
-  .use-motion .site-title,
-  .use-motion .site-subtitle {
-    opacity: initial;
-    top: initial;
-  }
-
-  .use-motion .logo-line-before i { left: initial; }
-  .use-motion .logo-line-after i { right: initial; }
-  </style>
-</noscript>
-
-</head>
-
-<body itemscope itemtype="http://schema.org/WebPage">
-  <div class="container use-motion">
-    <div class="headband"></div>
-
-    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-container">
-  <div class="site-meta">
-
-    <div>
-      <a href="/" class="brand" rel="start">
-        <span class="logo-line-before"><i></i></span>
-        <span class="site-title">藏青's BLOG</span>
-        <span class="logo-line-after"><i></i></span>
-      </a>
-    </div>
-  </div>
-
-  <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Toggle navigation bar">
-      <span class="toggle-line toggle-line-first"></span>
-      <span class="toggle-line toggle-line-middle"></span>
-      <span class="toggle-line toggle-line-last"></span>
-    </div>
-  </div>
-</div>
-
-
-<nav class="site-nav">
   
-  <ul id="menu" class="menu">
-        <li class="menu-item menu-item-home">
+  <meta name="description" content="知行合一">
+  
 
-    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
 
-  </li>
-        <li class="menu-item menu-item-tags">
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+  <meta property="og:title" content="Dubbo源码分析"/>
 
-  </li>
-        <li class="menu-item menu-item-categories">
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
 
-    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
 
-  </li>
-        <li class="menu-item menu-item-archives">
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 4.2.0"></head>
 
-    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
 
-  </li>
-  </ul>
+<body>
+<div class="blog">
+  <div class="content">
 
-</nav>
-</div>
-    </header>
-
-    
-  <div class="back-to-top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
   </div>
-
-
-    <main class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-          
-
-          <div class="content">
-            
-
-  <div class="posts-expand">
+  <nav class="site-navigation">
+    <ul>
       
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
   
+    
+    <h3 class="article-title"><span>Dubbo源码分析</span></h3>
+    
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/10/Dubbo源码分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-10T05:50:49.000Z">
+          2021-09-10
+        </time>
+      </a>
     </span>
+  </div>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          Dubbo源码分析
-        </h1>
 
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
+  
 
-              <time title="Created: 2021-09-10 13:50:49" itemprop="dateCreated datePublished" datetime="2021-09-10T13:50:49+08:00">2021-09-10</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-09-15 14:03:49" itemprop="dateModified" datetime="2021-09-15T14:03:49+08:00">2021-09-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/JAVA/" itemprop="url" rel="index">
-                    <span itemprop="name">JAVA</span>
-                  </a>
-                </span>
-                  , 
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/JAVA/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" itemprop="url" rel="index">
-                    <span itemprop="name">源码分析</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
+  <div class="article-content">
+    <div class="entry">
       
         <p>​        最近准备对Dubbo的历史漏洞进行分析，但觉得不懂Dubbo的设计和实现直接去分析漏洞比较困难，所以在分析漏洞前先分析Dubbo的源码及实现，值得一提的是Dubbo的官网也有非常详细的源码分析的过程。</p>
 <h3 id="SPI机制及实现"><a href="#SPI机制及实现" class="headerlink" title="SPI机制及实现"></a>SPI机制及实现</h3><p>​        Dubbo的SPI是对JDK自身SPI的扩展实现，增加了IOC和AOP的功能，是Dubbo实现的核心，Dubbo SPI需要的配置文件放在<code>/meta-inf/dubbo</code>目录下，通过键值对的方式配置，如下所示：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">adaptive&#x3D;org.apache.dubbo.common.extension.factory.AdaptiveExtensionFactory</span><br><span class="line">spi&#x3D;org.apache.dubbo.common.extension.factory.SpiExtensionFactory</span><br></pre></td></tr></table></figure>
 
 <p>​        Dubbo的SPI和JDK自身的SPI对比如下，这也是Dubbo没有选择使用JDK自带SPI的原因。</p>
+<a id="more"></a>
+
 <p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910141629401.png" alt="image-20210910141629401"></p>
 <p>​        可以通过<code>@SPI</code>注解将接口声明由Dubbo的SPI机制加载实现类。</p>
 <p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910143121791.png" alt="image-20210910143121791"></p>
@@ -589,209 +329,60 @@
 <li><a href="https://blog.csdn.net/qq_35190492/article/details/108461885" target="_blank" rel="noopener">https://blog.csdn.net/qq_35190492/article/details/108461885</a></li>
 </ul>
 
+      
     </div>
-
-    
-    
-    
-
-      <footer class="post-footer">
-          <div class="post-tags">
-              <a href="/tags/JAVA/" rel="tag"># JAVA</a>
-              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="tag"># 源码分析</a>
-          </div>
-
-        
-
-
-        
-    <div class="post-nav">
-      <div class="post-nav-item">
-    <a href="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" rel="prev" title="Dubbo漏洞分析">
-      <i class="fa fa-chevron-left"></i> Dubbo漏洞分析
-    </a></div>
-      <div class="post-nav-item">
-    <a href="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/" rel="next" title="负载均衡踩坑记">
-      负载均衡踩坑记 <i class="fa fa-chevron-right"></i>
-    </a></div>
-    </div>
-      </footer>
-    
-  </article>
-  
-  
-  
 
   </div>
 
+  <div class="article-footer">
+    <div class="article-meta pull-left">
 
-          </div>
-          
+    
+      
 
-<script>
-  window.addEventListener('tabs:register', () => {
-    let activeClass = CONFIG.comments.activeClass;
-    if (CONFIG.comments.storage) {
-      activeClass = localStorage.getItem('comments_active') || activeClass;
-    }
-    if (activeClass) {
-      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
-      if (activeTab) {
-        activeTab.click();
-      }
-    }
-  });
-  if (CONFIG.comments.storage) {
-    window.addEventListener('tabs:click', event => {
-      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
-      let commentClass = event.target.classList[1];
-      localStorage.setItem('comments_active', commentClass);
-    });
-  }
-</script>
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/JAVA/">JAVA</a>, <a href="/categories/JAVA/源码分析/">源码分析</a>
+    </span>
+    
 
-        </div>
-          
-  
-  <div class="toggle sidebar-toggle">
-    <span class="toggle-line toggle-line-first"></span>
-    <span class="toggle-line toggle-line-middle"></span>
-    <span class="toggle-line toggle-line-last"></span>
-  </div>
+    
+    
 
-  <aside class="sidebar">
-    <div class="sidebar-inner">
-
-      <ul class="sidebar-nav motion-element">
-        <li class="sidebar-nav-toc">
-          Table of Contents
-        </li>
-        <li class="sidebar-nav-overview">
-          Overview
-        </li>
-      </ul>
-
-      <!--noindex-->
-      <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#SPI机制及实现"><span class="nav-number">1.</span> <span class="nav-text">SPI机制及实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Dubbo如何实现SPI"><span class="nav-number">1.1.</span> <span class="nav-text">Dubbo如何实现SPI?</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#如何实现IOC"><span class="nav-number">1.2.</span> <span class="nav-text">如何实现IOC?</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#为什么可以得到AdaptiveExtentionFactory"><span class="nav-number">1.3.</span> <span class="nav-text">为什么可以得到AdaptiveExtentionFactory?</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#标签解析过程"><span class="nav-number">2.</span> <span class="nav-text">标签解析过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#服务导出过程"><span class="nav-number">3.</span> <span class="nav-text">服务导出过程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#本地导出"><span class="nav-number">3.1.</span> <span class="nav-text">本地导出</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#远程导出"><span class="nav-number">3.2.</span> <span class="nav-text">远程导出</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#服务导出"><span class="nav-number">3.2.1.</span> <span class="nav-text">服务导出</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#服务注册"><span class="nav-number">3.2.2.</span> <span class="nav-text">服务注册</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#服务引用过程"><span class="nav-number">4.</span> <span class="nav-text">服务引用过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#服务调用过程"><span class="nav-number">5.</span> <span class="nav-text">服务调用过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考资料"><span class="nav-number">7.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
-      </div>
-      <!--/noindex-->
-
-      <div class="site-overview-wrap sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">藏青</p>
-  <div class="site-description" itemprop="description">知行合一</div>
-</div>
-<div class="site-state-wrap motion-element">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-          <a href="/archives/">
-        
-          <span class="site-state-item-count">49</span>
-          <span class="site-state-item-name">posts</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-categories">
-            <a href="/categories/">
-          
-        <span class="site-state-item-count">15</span>
-        <span class="site-state-item-name">categories</span></a>
-      </div>
-      <div class="site-state-item site-state-tags">
-            <a href="/tags/">
-          
-        <span class="site-state-item-count">20</span>
-        <span class="site-state-item-name">tags</span></a>
-      </div>
-  </nav>
-</div>
-
-
-
-      </div>
+    <span class="post-tags">
+      <i class="icon-tags"></i>
+        <a href="/tags/JAVA/">JAVA</a><a href="/tags/源码分析/">源码分析</a>
+    </span>
+    
 
     </div>
-  </aside>
-  <div id="sidebar-dimmer"></div>
+
+    
+  </div>
+</article>
+
+  
 
 
-      </div>
+
+
+
+
     </main>
 
-    <footer class="footer">
-      <div class="footer-inner">
-        
-
-<div class="copyright">
-  
-  &copy; 
-  <span itemprop="copyrightYear">2021</span>
-  <span class="with-love">
-    <i class="fa fa-user"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">藏青</span>
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
-  </div>
-  <span class="post-meta-divider">|</span>
-  <div class="theme-info">Theme – <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.7.1
-  </div>
-
-    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-
-        
-<div class="busuanzi-count">
-  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-</div>
-
-
-
-
-
-
-
-
-      </div>
-    </footer>
-  </div>
-
-  
-  <script src="/lib/anime.min.js"></script>
-  <script src="/lib/velocity/velocity.min.js"></script>
-  <script src="/lib/velocity/velocity.ui.min.js"></script>
-
-<script src="/js/utils.js"></script>
-
-<script src="/js/motion.js"></script>
-
-
-<script src="/js/schemes/muse.js"></script>
-
-
-<script src="/js/next-boot.js"></script>
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-  
-
 </body>
 </html>
