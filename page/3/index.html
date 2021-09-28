@@ -1,448 +1,711 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="cn">
 <head>
-  <meta charset="utf-8">
-  
-  <title>Page 3 | 藏青&#39;s BLOG</title>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
 
-  
-  <meta name="author" content="藏青">
-  
+<link rel="stylesheet" href="/css/main.css">
 
-  
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"cangqingzhe.github.io","root":"/","scheme":"Muse","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
   <meta name="description" content="知行合一">
+<meta property="og:type" content="website">
+<meta property="og:title" content="藏青&#39;s BLOG">
+<meta property="og:url" content="https://cangqingzhe.github.io/page/3/index.html">
+<meta property="og:site_name" content="藏青&#39;s BLOG">
+<meta property="og:description" content="知行合一">
+<meta property="og:locale" content="cn">
+<meta property="article:author" content="藏青">
+<meta property="article:tag" content="渗透 内网 代码审计">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://cangqingzhe.github.io/page/3/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: true,
+    isPost: false
+  };
+</script>
+
+  <title>藏青's BLOG</title>
   
 
-  
-  <meta name="keywords" content="渗透 内网 代码审计">
-  
-
-  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-
-  
-
-  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
-
-  
-  <meta property="og:image" content="/favicon.ico"/>
-  
-
-  <link href="/favicon.ico" rel="icon">
-  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
-  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
-<meta name="generator" content="Hexo 4.2.0"></head>
 
 
-<body>
-<div class="blog">
-  <div class="content">
 
-    <header>
-  <div class="site-branding">
-    <h1 class="site-title">
-      <a href="/">藏青&#39;s BLOG</a>
-    </h1>
-    <p class="site-description"></p>
-  </div>
-  <nav class="site-navigation">
-    <ul>
-      
-    </ul>
-  </nav>
-</header>
 
-    <main class="site-main posts-loop">
-    
-  <article>
 
-  
-    
-    <h3 class="article-title"><a href="/2020/12/02/JAVA反射机制学习/"><span>JAVA反射机制学习</span></a></h3>
-    
-  
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
 
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/12/02/JAVA反射机制学习/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-12-02T06:04:35.000Z">
-          2020-12-02
-        </time>
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">藏青's BLOG</span>
+        <span class="logo-line-after"><i></i></span>
       </a>
-    </span>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
   </div>
 
 
-  
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
 
-  <div class="article-content">
-    <div class="entry">
+          <div class="content">
+            
+
+  <div class="posts-expand">
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/12/02/JAVA%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6%E5%AD%A6%E4%B9%A0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/12/02/JAVA%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6%E5%AD%A6%E4%B9%A0/" class="post-title-link" itemprop="url">JAVA反射机制学习</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-12-02 14:04:35" itemprop="dateCreated datePublished" datetime="2020-12-02T14:04:35+08:00">2020-12-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-09-28 19:42:34" itemprop="dateModified" datetime="2021-09-28T19:42:34+08:00">2021-09-28</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/" itemprop="url" rel="index">
+                    <span itemprop="name">代码审计</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
       
-        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">在我们了解或者分析JAVA的反序列化漏洞时，一定绕过不过一个知识点，那就是JAVA的反射调用，所以这次我们专门写一篇文章和大家学习和了解一下JAVA的反射调用。</span><br></pre></td></tr></table></figure>
+          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">在我们了解或者分析JAVA的反序列化漏洞时，一定绕过不过一个知识点，那就是JAVA的反射调用，所以这次我们专门写一篇文章和大家学习和了解一下JAVA的反射调用。</span><br></pre></td></tr></table></figure>
 
 <h2 id="基本介绍"><a href="#基本介绍" class="headerlink" title="基本介绍"></a>基本介绍</h2><h3 id="为什么要引入反射机制？"><a href="#为什么要引入反射机制？" class="headerlink" title="为什么要引入反射机制？"></a>为什么要引入反射机制？</h3><p>​        我们在编写程序时会有两种情况，第一种是我们明确知道编译时要使用的类和需要调用的方法的具体信息，这种情况下我们可以使用<code>new xxx()</code>来创建对象并使用。第二种是我们在编译的过程种不知道类或者对象的具体情况，只能通过程序运行时通过动态加载来判断。 比如类的名称和需要调用的属性放在配置文件中，这种配置方式降低了耦合性，我们在写JAVA WEB的过程中经常会遇到。</p>
 <p>​        对于第二种方式，我们就无法在编译时得知我们要使用的类的类型和调用的方法，所以引入了反射机制。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/12/02/JAVA%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6%E5%AD%A6%E4%B9%A0/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
         
       
     </div>
 
-  </div>
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
 
-  <div class="article-footer">
-    <div class="article-meta pull-left">
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">shiro rce漏洞分析</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-11-28 22:07:45" itemprop="dateCreated datePublished" datetime="2020-11-28T22:07:45+08:00">2020-11-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-09-28 19:38:13" itemprop="dateModified" datetime="2021-09-28T19:38:13+08:00">2021-09-28</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" itemprop="url" rel="index">
+                    <span itemprop="name">漏洞分析</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
 
     
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
       
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/代码审计/">代码审计</a>
-    </span>
-    
-
-    
-    
-
-    <span class="post-tags">
-      <i class="icon-tags"></i>
-        <a href="/tags/JAVA/">JAVA</a><a href="/tags/代码审计/">代码审计</a>
-    </span>
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/11/28/shiro-rce漏洞分析/"><span>shiro rce漏洞分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/11/28/shiro-rce漏洞分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-11-28T14:07:45.000Z">
-          2020-11-28
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">在最近这几年，我们在渗透的过程中经常会用到shiro的rce漏洞来打点，直到目前为止还经常会在一些项目或者HW中也会经常遇到shrio的rce，因此了解shiro的RememberMe反序列化导致的命令执行漏洞的原理是至关重要的，在本次分享中，我将和大家一起学习shiro RememberMe反序列化漏洞。</span><br></pre></td></tr></table></figure>
+          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">在最近这几年，我们在渗透的过程中经常会用到shiro的rce漏洞来打点，直到目前为止还经常会在一些项目或者HW中也会经常遇到shrio的rce，因此了解shiro的RememberMe反序列化导致的命令执行漏洞的原理是至关重要的，在本次分享中，我将和大家一起学习shiro RememberMe反序列化漏洞。</span><br></pre></td></tr></table></figure>
 
 <h3 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h3>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/11/28/shiro-rce%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
         
       
     </div>
 
-  </div>
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
 
-  <div class="article-footer">
-    <div class="article-meta pull-left">
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/" class="post-title-link" itemprop="url">关于sqlserver注入另类技巧的学习</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-11-13 16:50:19" itemprop="dateCreated datePublished" datetime="2020-11-13T16:50:19+08:00">2020-11-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-09-28 19:40:31" itemprop="dateModified" datetime="2021-09-28T19:40:31+08:00">2021-09-28</time>
+              </span>
+
+          
+
+        </div>
+      </header>
 
     
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
       
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-    
-
-    <span class="post-tags">
-      <i class="icon-tags"></i>
-        <a href="/tags/JAVA/">JAVA</a><a href="/tags/漏洞分析/">漏洞分析</a><a href="/tags/代码审计/">代码审计</a>
-    </span>
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/11/13/关于sqlserver注入另类技巧的学习/"><span>关于sqlserver注入另类技巧的学习</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/11/13/关于sqlserver注入另类技巧的学习/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
-          2020-11-13
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​    最近看到国外一篇关于<a href="https://swarm.ptsecurity.com/advanced-mssql-injection-tricks/" target="_blank" rel="noopener">mssql注入利用</a>的文章，里面用了很多技巧我之前一直不知道，所以自己对这些技巧进行了复现,本次测试的环境为SQLSERVER2008</p>
+          <p>​    最近看到国外一篇关于<a href="https://swarm.ptsecurity.com/advanced-mssql-injection-tricks/" target="_blank" rel="noopener">mssql注入利用</a>的文章，里面用了很多技巧我之前一直不知道，所以自己对这些技巧进行了复现,本次测试的环境为SQLSERVER2008</p>
 <h2 id="报错注入"><a href="#报错注入" class="headerlink" title="报错注入"></a>报错注入</h2><p>​    之前对于SQLSERVER报错注入理解仅限于类型转换导致的报错的利用方法，这次看到有很多新的函数可以进行报错注入利用，我把每个函数的测试单独取出来进行测试。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/11/13/%E5%85%B3%E4%BA%8Esqlserver%E6%B3%A8%E5%85%A5%E5%8F%A6%E7%B1%BB%E6%8A%80%E5%B7%A7%E7%9A%84%E5%AD%A6%E4%B9%A0/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
         
       
     </div>
 
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-
     
     
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
 
-    <span class="post-tags">
-      <i class="icon-tags"></i>
-        <a href="/tags/漏洞利用/">漏洞利用</a><a href="/tags/sqlserver/">sqlserver</a>
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
     </span>
-    
 
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/11/09/关于免杀的技术总结（-）/"><span>关于免杀的技术总结（-）</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/11/09/关于免杀的技术总结（-）/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-11-09T12:26:00.000Z">
-          2020-11-09
-        </time>
-      </a>
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
     </span>
-  </div>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/" class="post-title-link" itemprop="url">关于免杀的技术总结（-）</a>
+        </h1>
 
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
 
-  
+              <time title="Created: 2020-11-09 20:26:00" itemprop="dateCreated datePublished" datetime="2020-11-09T20:26:00+08:00">2020-11-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-09-28 19:39:22" itemprop="dateModified" datetime="2021-09-28T19:39:22+08:00">2021-09-28</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%85%8D%E6%9D%80/" itemprop="url" rel="index">
+                    <span itemprop="name">免杀</span>
+                  </a>
+                </span>
+            </span>
 
-  <div class="article-content">
-    <div class="entry">
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
       
-        <p>​    在钓鱼或者渗透的过程中，如果我们不会免杀，使用Cobaltstrike生成的exe可能直接就被干掉了，还会触发目标的告警，导致之前的工作前功尽弃，因此在往更高阶的攻防对抗中，免杀能力是必不可少的能力，不是说每个人都必须掌握这种能力，但是如果一个团队中，一个会免杀的人都没有，那就很僵了。</p>
+          <p>​    在钓鱼或者渗透的过程中，如果我们不会免杀，使用Cobaltstrike生成的exe可能直接就被干掉了，还会触发目标的告警，导致之前的工作前功尽弃，因此在往更高阶的攻防对抗中，免杀能力是必不可少的能力，不是说每个人都必须掌握这种能力，但是如果一个团队中，一个会免杀的人都没有，那就很僵了。</p>
 <p>​    回到正题，本片文章并不会讲到免杀方法可能很多已经都不可用了，之所以写这篇总结文章，是希望大家能对免杀的方法能有一个系统的认知。</p>
 <h2 id="远程线程调用"><a href="#远程线程调用" class="headerlink" title="远程线程调用"></a>远程线程调用</h2><p>​    要讲远程线程调用，我们首先看一下本地的调用，代码如下：</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
         
       
     </div>
 
-  </div>
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
 
-  <div class="article-footer">
-    <div class="article-meta pull-left">
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8BCVE-2017-10271%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8BCVE-2017-10271%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">weblogic漏洞分析系列之CVE-2017-10271漏洞分析</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-10-30 23:15:58" itemprop="dateCreated datePublished" datetime="2020-10-30T23:15:58+08:00">2020-10-30</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-09-28 19:38:47" itemprop="dateModified" datetime="2021-09-28T19:38:47+08:00">2021-09-28</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" itemprop="url" rel="index">
+                    <span itemprop="name">漏洞分析</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
 
     
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
       
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/免杀/">免杀</a>
-    </span>
-    
-
-    
-    
-
-    <span class="post-tags">
-      <i class="icon-tags"></i>
-        <a href="/tags/免杀/">免杀</a><a href="/tags/C-C/">C/C++</a>
-    </span>
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/10/30/weblogic漏洞分析系列之CVE-2017-10271漏洞分析/"><span>weblogic漏洞分析系列之CVE-2017-10271漏洞分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/10/30/weblogic漏洞分析系列之CVE-2017-10271漏洞分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-10-30T15:15:58.000Z">
-          2020-10-30
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​    CVE-2017-10271漏洞是由于通过readobject解析webservice接口中的xml代码导致命令执行的，今天我们一起学习一下这个漏洞是如何导致的并分析一下漏洞的检测方法。</p>
+          <p>​    CVE-2017-10271漏洞是由于通过readobject解析webservice接口中的xml代码导致命令执行的，今天我们一起学习一下这个漏洞是如何导致的并分析一下漏洞的检测方法。</p>
 <h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><p>​        这里直接给出文件写入的poc，数据包如下：</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8BCVE-2017-10271%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
         
       
     </div>
 
-  </div>
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
 
-  <div class="article-footer">
-    <div class="article-meta pull-left">
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" class="post-title-link" itemprop="url">weblogic漏洞分析系列之调试环境搭建</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-10-30 20:32:17" itemprop="dateCreated datePublished" datetime="2020-10-30T20:32:17+08:00">2020-10-30</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-09-28 19:38:43" itemprop="dateModified" datetime="2021-09-28T19:38:43+08:00">2021-09-28</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/" itemprop="url" rel="index">
+                    <span itemprop="name">代码审计</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
 
     
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
       
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-    
-
-    <span class="post-tags">
-      <i class="icon-tags"></i>
-        <a href="/tags/JAVA/">JAVA</a><a href="/tags/漏洞分析/">漏洞分析</a><a href="/tags/代码审计/">代码审计</a>
-    </span>
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/10/30/weblogic漏洞分析系列之调试环境搭建/"><span>weblogic漏洞分析系列之调试环境搭建</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/10/30/weblogic漏洞分析系列之调试环境搭建/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-10-30T12:32:17.000Z">
-          2020-10-30
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        最近一直在做一些项目，因为对一些原理性的知识不懂感觉渗透很难再继续往上走，因此接下来打算将精力放在漏洞的理解和分析，工具的编写和优化上面，而不再执着于更多的技巧。</p>
+          <p>​        最近一直在做一些项目，因为对一些原理性的知识不懂感觉渗透很难再继续往上走，因此接下来打算将精力放在漏洞的理解和分析，工具的编写和优化上面，而不再执着于更多的技巧。</p>
 <p>​        weblogic是一款比较经常使用的java容器，当然它爆出的漏洞也是层出不穷，为了能让自己更加了解weblogic漏洞的形成原因，我决定和大家一起调试weblogic各个版本的一些漏洞，并最终编写一个简单的weblogic漏洞检测工具，在这片文章中，我们首先一起来学习一下如何搭建weblogic的调试环境。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/10/30/weblogic%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E4%B9%8B%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
         
       
     </div>
 
-  </div>
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
 
-  <div class="article-footer">
-    <div class="article-meta pull-left">
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/" class="post-title-link" itemprop="url">记基于cobaltstrike基础设施架构设计尝试</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-09-08 11:11:22" itemprop="dateCreated datePublished" datetime="2020-09-08T11:11:22+08:00">2020-09-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-09-28 19:40:58" itemprop="dateModified" datetime="2021-09-28T19:40:58+08:00">2021-09-28</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/cobaltstrike/" itemprop="url" rel="index">
+                    <span itemprop="name">cobaltstrike</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
 
     
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
       
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/代码审计/">代码审计</a>
-    </span>
-    
-
-    
-    
-
-    <span class="post-tags">
-      <i class="icon-tags"></i>
-        <a href="/tags/JAVA/">JAVA</a><a href="/tags/漏洞分析/">漏洞分析</a><a href="/tags/代码审计/">代码审计</a>
-    </span>
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/09/08/记基于cobaltstrike基础设施架构设计尝试/"><span>记基于cobaltstrike基础设施架构设计尝试</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/09/08/记基于cobaltstrike基础设施架构设计尝试/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-09-08T03:11:22.000Z">
-          2020-09-08
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        通过之前的介绍我们了解了cobaltstrike的一些混淆或者隐藏的策略，这次我们主要对学到的这些策略进行实践，设计一个比较好用的不容易被反查的方案。</p>
+          <p>​        通过之前的介绍我们了解了cobaltstrike的一些混淆或者隐藏的策略，这次我们主要对学到的这些策略进行实践，设计一个比较好用的不容易被反查的方案。</p>
 <p>​        设计思路如下：</p>
 <ul>
 <li><p>自定义mallable c2 profile文件，自定义通讯流量</p>
@@ -453,234 +716,444 @@
 </li>
 <li><p>teamserver主机配置防火墙仅允许前置机和teamserver主机的特定端口通信</p>
 <p>因为CDN配置需要等待一段时间才能生效，所以我们先来配置CDN。</p></li></ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/09/08/%E8%AE%B0%E5%9F%BA%E4%BA%8Ecobaltstrike%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%B0%9D%E8%AF%95/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
         
       
     </div>
 
-  </div>
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
 
-  <div class="article-footer">
-    <div class="article-meta pull-left">
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">关于Mod_Rewrite重定向cobaltstrike流量的学习总结</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-09-04 17:20:35" itemprop="dateCreated datePublished" datetime="2020-09-04T17:20:35+08:00">2020-09-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-09-28 19:40:28" itemprop="dateModified" datetime="2021-09-28T19:40:28+08:00">2021-09-28</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/cobaltstrike/" itemprop="url" rel="index">
+                    <span itemprop="name">cobaltstrike</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
 
     
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
       
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/cobaltstrike/">cobaltstrike</a>
-    </span>
-    
-
-    
-    
-
-    <span class="post-tags">
-      <i class="icon-tags"></i>
-        <a href="/tags/cobaltstrike/">cobaltstrike</a>
-    </span>
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/09/04/关于Mod-Rewrite重定向cobaltstrike流量的学习总结/"><span>关于Mod_Rewrite重定向cobaltstrike流量的学习总结</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/09/04/关于Mod-Rewrite重定向cobaltstrike流量的学习总结/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-09-04T09:20:35.000Z">
-          2020-09-04
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        通过使用socat进行重定向虽然可以将我们的teamserver隐藏起来，但是我们如果想做的更好一些，对请求我们重定向主机的流量做一个区分，如果请求来自客户端则重定向到teamserver，如果请求来自其他请求则重定向到其他网站。或者在请求中设置白名单，仅仅允许来自某个特定的ip来访问。这就需要通过apache 的Mod_rewrite来实现。</p>
+          <p>​        通过使用socat进行重定向虽然可以将我们的teamserver隐藏起来，但是我们如果想做的更好一些，对请求我们重定向主机的流量做一个区分，如果请求来自客户端则重定向到teamserver，如果请求来自其他请求则重定向到其他网站。或者在请求中设置白名单，仅仅允许来自某个特定的ip来访问。这就需要通过apache 的Mod_rewrite来实现。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
         
       
     </div>
 
-  </div>
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
 
-  <div class="article-footer">
-    <div class="article-meta pull-left">
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">关于CobaltStrike各种协议beacon的使用总结</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-09-02 20:15:47" itemprop="dateCreated datePublished" datetime="2020-09-02T20:15:47+08:00">2020-09-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-09-28 19:40:01" itemprop="dateModified" datetime="2021-09-28T19:40:01+08:00">2021-09-28</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/cobaltstrike/" itemprop="url" rel="index">
+                    <span itemprop="name">cobaltstrike</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
 
     
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
       
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/cobaltstrike/">cobaltstrike</a>
-    </span>
-    
-
-    
-    
-
-    <span class="post-tags">
-      <i class="icon-tags"></i>
-        <a href="/tags/cobaltstrike/">cobaltstrike</a>
-    </span>
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/09/02/关于CobaltStrike各种协议beacon的使用总结/"><span>关于CobaltStrike各种协议beacon的使用总结</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/09/02/关于CobaltStrike各种协议beacon的使用总结/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-09-02T12:15:47.000Z">
-          2020-09-02
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        在之前的学习中我们了解了关于CobaltStrike beacon运行的流程，以及流量的修改，今天我们一起来学习一下CobaltStrike自带的各种beacon的使用。</p>
+          <p>​        在之前的学习中我们了解了关于CobaltStrike beacon运行的流程，以及流量的修改，今天我们一起来学习一下CobaltStrike自带的各种beacon的使用。</p>
 <h3 id="http-beacon"><a href="#http-beacon" class="headerlink" title="http beacon"></a>http beacon</h3><p>​        http beacon 使用get方式去获取服务端下发的任务，同时使用post方式向服务端获取数据。关于使用ip上线我相信大家都已经非常熟悉了，所以我主要讲一下关于域名上线需要注意的问题。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
         
       
     </div>
 
-  </div>
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
 
-  <div class="article-footer">
-    <div class="article-meta pull-left">
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="cn">
+    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="藏青">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="藏青's BLOG">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/" class="post-title-link" itemprop="url">关于蚁剑免杀的学习</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-09-02 19:58:25" itemprop="dateCreated datePublished" datetime="2020-09-02T19:58:25+08:00">2020-09-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-09-28 19:39:54" itemprop="dateModified" datetime="2021-09-28T19:39:54+08:00">2021-09-28</time>
+              </span>
+
+          
+
+        </div>
+      </header>
 
     
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
       
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/cobaltstrike/">cobaltstrike</a>
-    </span>
-    
-
-    
-    
-
-    <span class="post-tags">
-      <i class="icon-tags"></i>
-        <a href="/tags/cobaltstrike/">cobaltstrike</a>
-    </span>
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/09/02/关于蚁剑免杀的学习/"><span>关于蚁剑免杀的学习</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/09/02/关于蚁剑免杀的学习/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-09-02T11:58:25.664Z">
-          2020-09-02
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">当我们直接使用蚁剑这种比较出名的shell管理工具，在一些防护比较严的情况下，可能过一会会就被发现甚至关站，因此去除蚁剑的特征或者对shell免杀都是特别重要的，我之前并未接触过这方面的知识，写这篇文章的目的就是记录自己学习的一个过程，所以开始吧。</span><br></pre></td></tr></table></figure>
+          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">当我们直接使用蚁剑这种比较出名的shell管理工具，在一些防护比较严的情况下，可能过一会会就被发现甚至关站，因此去除蚁剑的特征或者对shell免杀都是特别重要的，我之前并未接触过这方面的知识，写这篇文章的目的就是记录自己学习的一个过程，所以开始吧。</span><br></pre></td></tr></table></figure>
 
 <p>我认为特征处理有几个部分吧，一个是静态代码特征，比如我们直接使用蚁剑的马，这种马如果我们没有进行过任何处理直接上传就非常有可能在上传的时候被干掉，也就是说如果在上传的时候就被干掉了，或者上传之后被干掉了，问题都出在传的马被杀了。还有一种情况就是我们的马传上去了，而且也能访问到，然后使用蚁剑连接的时候发现连接被阻断同时马被杀了，这个就是流量方面的特征的问题了。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
         
       
     </div>
 
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
   </div>
 
-  <div class="article-footer">
-    <div class="article-meta pull-left">
+  
+  <nav class="pagination">
+    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+  </nav>
 
-    
 
-    
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">藏青</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
 
     </div>
-
-    
-  </div>
-</article>
+  </aside>
+  <div id="sidebar-dimmer"></div>
 
 
-
-
-<nav class="pagination">
-  
-  <a href="/page/2/" class="pagination-prev">Prev</a>
-  
-  
-  <a href="/page/4/" class="pagination-next">Next</a>
-  
-</nav>
+      </div>
     </main>
 
-    <footer class="site-footer">
-  <p class="site-info">
-    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
-    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
-    </br>
-    
-    &copy; 2021 藏青
-    
-  </p>
-</footer>
-    
-    
-  </div>
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">藏青</span>
 </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.7.1
+  </div>
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
 </body>
 </html>
