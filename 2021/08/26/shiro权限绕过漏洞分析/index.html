@@ -1,278 +1,86 @@
-<!DOCTYPE html>
-<html lang="cn">
+<!DOCTYPE HTML>
+<html>
 <head>
-  <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 4.2.0">
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
-  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta charset="utf-8">
+  
+  <title>shiro权限绕过漏洞分析 | 藏青&#39;s BLOG</title>
 
-<link rel="stylesheet" href="/css/main.css">
-
-
-<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
-
-<script id="hexo-configurations">
-    var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"cangqingzhe.github.io","root":"/","scheme":"Muse","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
-  </script>
-
-  <meta name="description" content="​        之前协助渗透做审计的时候遇到了shiro版本不高，当时想到了shiro的权限绕过漏洞，但是在网上试了好几个payload都没成功 ，现在空下来了分析下shiro权限绕过的原理及触发条件。 为什么会导致权限绕过？​        首先观察一下shiro权限绕过的payload为&#x2F;xx&#x2F;..;&#x2F;，并且在官方也强调了是和spring配合使用时出现的问题，不难判断出出现这个问题的原因在于">
-<meta property="og:type" content="article">
-<meta property="og:title" content="shiro权限绕过漏洞分析">
-<meta property="og:url" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/index.html">
-<meta property="og:site_name" content="藏青&#39;s BLOG">
-<meta property="og:description" content="​        之前协助渗透做审计的时候遇到了shiro版本不高，当时想到了shiro的权限绕过漏洞，但是在网上试了好几个payload都没成功 ，现在空下来了分析下shiro权限绕过的原理及触发条件。 为什么会导致权限绕过？​        首先观察一下shiro权限绕过的payload为&#x2F;xx&#x2F;..;&#x2F;，并且在官方也强调了是和spring配合使用时出现的问题，不难判断出出现这个问题的原因在于">
-<meta property="og:locale" content="cn">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827152142957.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827152630930.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827153707698.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827154125758.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827154642267.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827154739666.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827154759289.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827154806657.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827155309890.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827155448065.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827155650530.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827160122031.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827160257002.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827160523409.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827160603856.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827161116974.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827162231558.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827162418720.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827162357888.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827162557664.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827163326846.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827163529708.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827164609076.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827171047564.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827173349412.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827173514501.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827173709263.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827173732079.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830112915448.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830114802113.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830115145893.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830115729159.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830115817072.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830120454769.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830120952394.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830122047766.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830122328775.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830122417293.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830150721752.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830151104307.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830151357783.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830151618993.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830153207009.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210830154607102.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831133945380.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831134020818.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831141511815.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831142024408.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831142355307.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831143300867.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831143516034.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831143643479.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831151524382.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831153213504.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831152150751.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831153632212.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831153954322.png">
-<meta property="article:published_time" content="2021-08-26T09:39:40.000Z">
-<meta property="article:modified_time" content="2021-09-28T11:38:17.642Z">
-<meta property="article:author" content="藏青">
-<meta property="article:tag" content="JAVA">
-<meta property="article:tag" content="漏洞分析">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210827152142957.png">
-
-<link rel="canonical" href="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">
-
-
-<script id="page-configurations">
-  // https://hexo.io/docs/variables.html
-  CONFIG.page = {
-    sidebar: "",
-    isHome: false,
-    isPost: true
-  };
-</script>
-
-  <title>shiro权限绕过漏洞分析 | 藏青's BLOG</title>
+  
+  <meta name="author" content="藏青">
   
 
-
-
-
-
-
-  <noscript>
-  <style>
-  .use-motion .brand,
-  .use-motion .menu-item,
-  .sidebar-inner,
-  .use-motion .post-block,
-  .use-motion .pagination,
-  .use-motion .comments,
-  .use-motion .post-header,
-  .use-motion .post-body,
-  .use-motion .collection-header { opacity: initial; }
-
-  .use-motion .site-title,
-  .use-motion .site-subtitle {
-    opacity: initial;
-    top: initial;
-  }
-
-  .use-motion .logo-line-before i { left: initial; }
-  .use-motion .logo-line-after i { right: initial; }
-  </style>
-</noscript>
-
-</head>
-
-<body itemscope itemtype="http://schema.org/WebPage">
-  <div class="container use-motion">
-    <div class="headband"></div>
-
-    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-container">
-  <div class="site-meta">
-
-    <div>
-      <a href="/" class="brand" rel="start">
-        <span class="logo-line-before"><i></i></span>
-        <span class="site-title">藏青's BLOG</span>
-        <span class="logo-line-after"><i></i></span>
-      </a>
-    </div>
-  </div>
-
-  <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Toggle navigation bar">
-      <span class="toggle-line toggle-line-first"></span>
-      <span class="toggle-line toggle-line-middle"></span>
-      <span class="toggle-line toggle-line-last"></span>
-    </div>
-  </div>
-</div>
-
-
-<nav class="site-nav">
   
-  <ul id="menu" class="menu">
-        <li class="menu-item menu-item-home">
+  <meta name="description" content="知行合一">
+  
 
-    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
 
-  </li>
-        <li class="menu-item menu-item-tags">
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+  <meta property="og:title" content="shiro权限绕过漏洞分析"/>
 
-  </li>
-        <li class="menu-item menu-item-categories">
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
 
-    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
 
-  </li>
-        <li class="menu-item menu-item-archives">
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 4.2.0"></head>
 
-    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
 
-  </li>
-  </ul>
+<body>
+<div class="blog">
+  <div class="content">
 
-</nav>
-</div>
-    </header>
-
-    
-  <div class="back-to-top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
   </div>
-
-
-    <main class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-          
-
-          <div class="content">
-            
-
-  <div class="posts-expand">
+  <nav class="site-navigation">
+    <ul>
       
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
   
+    
+    <h3 class="article-title"><span>shiro权限绕过漏洞分析</span></h3>
+    
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/08/26/shiro权限绕过漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-08-26T09:39:40.000Z">
+          2021-08-26
+        </time>
+      </a>
     </span>
+  </div>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          shiro权限绕过漏洞分析
-        </h1>
 
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
+  
 
-              <time title="Created: 2021-08-26 17:39:40" itemprop="dateCreated datePublished" datetime="2021-08-26T17:39:40+08:00">2021-08-26</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-09-28 19:38:17" itemprop="dateModified" datetime="2021-09-28T19:38:17+08:00">2021-09-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/JAVA/" itemprop="url" rel="index">
-                    <span itemprop="name">JAVA</span>
-                  </a>
-                </span>
-                  , 
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/JAVA/%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/" itemprop="url" rel="index">
-                    <span itemprop="name">漏洞利用</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
+  <div class="article-content">
+    <div class="entry">
       
         <p>​        之前协助渗透做审计的时候遇到了shiro版本不高，当时想到了shiro的权限绕过漏洞，但是在网上试了好几个payload都没成功 ，现在空下来了分析下shiro权限绕过的原理及触发条件。</p>
 <h3 id="为什么会导致权限绕过？"><a href="#为什么会导致权限绕过？" class="headerlink" title="为什么会导致权限绕过？"></a>为什么会导致权限绕过？</h3><p>​        首先观察一下shiro权限绕过的payload为<code>/xx/..;/</code>，并且在官方也强调了是和spring配合使用时出现的问题，不难判断出出现这个问题的原因在于shiro和spring处理url的不一致导致的，而spring在请求处理过程中会去除/./和/;xxxasxdasd/中的内容，通过这种方式变形的url可能和shiro配置的filter不一致，导致了权限绕过。</p>
@@ -401,209 +209,60 @@
 <p><img src="/2021/08/26/shiro%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210831153954322.png" alt="image-20210831153954322"></p>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        Shiro的权限认证漏洞归根结底还是和Spring会处理<code>/;xxx</code>的内容有关，通过shiro过滤器和Spring获取请求URL的不一致性产生了绕过。从漏洞利用的角度来讲，只有<code>CVE-2020-1957</code>影响最广，利用条件是不能配置<code>map.put(&quot;/**&quot;, &quot;authc&quot;);</code>,也就是说即使版本存在漏洞，也可以通过配置<code>map.put(&quot;/**&quot;, &quot;authc&quot;);</code>来防御权限绕过漏洞。至于其余两个绕过则显得比较鸡肋，即使绕过了Shiro的权限认证，也无法有效的控制输入。</p>
 
+      
     </div>
-
-    
-    
-    
-
-      <footer class="post-footer">
-          <div class="post-tags">
-              <a href="/tags/JAVA/" rel="tag"># JAVA</a>
-              <a href="/tags/%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" rel="tag"># 漏洞分析</a>
-          </div>
-
-        
-
-
-        
-    <div class="post-nav">
-      <div class="post-nav-item">
-    <a href="/2021/08/26/%E8%87%B4%E8%BF%9CAjax-do%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E5%88%86%E6%9E%90/" rel="prev" title="致远Ajax.do权限绕过分析">
-      <i class="fa fa-chevron-left"></i> 致远Ajax.do权限绕过分析
-    </a></div>
-      <div class="post-nav-item">
-    <a href="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" rel="next" title="Dubbo漏洞分析">
-      Dubbo漏洞分析 <i class="fa fa-chevron-right"></i>
-    </a></div>
-    </div>
-      </footer>
-    
-  </article>
-  
-  
-  
 
   </div>
 
+  <div class="article-footer">
+    <div class="article-meta pull-left">
 
-          </div>
-          
+    
+      
 
-<script>
-  window.addEventListener('tabs:register', () => {
-    let activeClass = CONFIG.comments.activeClass;
-    if (CONFIG.comments.storage) {
-      activeClass = localStorage.getItem('comments_active') || activeClass;
-    }
-    if (activeClass) {
-      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
-      if (activeTab) {
-        activeTab.click();
-      }
-    }
-  });
-  if (CONFIG.comments.storage) {
-    window.addEventListener('tabs:click', event => {
-      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
-      let commentClass = event.target.classList[1];
-      localStorage.setItem('comments_active', commentClass);
-    });
-  }
-</script>
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/JAVA/">JAVA</a>, <a href="/categories/JAVA/漏洞利用/">漏洞利用</a>
+    </span>
+    
 
-        </div>
-          
-  
-  <div class="toggle sidebar-toggle">
-    <span class="toggle-line toggle-line-first"></span>
-    <span class="toggle-line toggle-line-middle"></span>
-    <span class="toggle-line toggle-line-last"></span>
-  </div>
+    
+    
 
-  <aside class="sidebar">
-    <div class="sidebar-inner">
-
-      <ul class="sidebar-nav motion-element">
-        <li class="sidebar-nav-toc">
-          Table of Contents
-        </li>
-        <li class="sidebar-nav-overview">
-          Overview
-        </li>
-      </ul>
-
-      <!--noindex-->
-      <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#为什么会导致权限绕过？"><span class="nav-number">1.</span> <span class="nav-text">为什么会导致权限绕过？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shiro的认证流程是怎样的？"><span class="nav-number">2.</span> <span class="nav-text">shiro的认证流程是怎样的？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CVE-2020-1957"><span class="nav-number">3.</span> <span class="nav-text">CVE-2020-1957</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#shiro是如何导致权限绕过的？"><span class="nav-number">3.1.</span> <span class="nav-text">shiro是如何导致权限绕过的？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#还有没有其他绕过方法？"><span class="nav-number">3.2.</span> <span class="nav-text">还有没有其他绕过方法？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#绕过的条件？"><span class="nav-number">3.3.</span> <span class="nav-text">绕过的条件？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#如何修复这个漏洞？"><span class="nav-number">3.4.</span> <span class="nav-text">如何修复这个漏洞？</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CVE-2020-11989"><span class="nav-number">4.</span> <span class="nav-text">CVE-2020-11989</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#为什么可以通过这种方式绕过？"><span class="nav-number">4.1.</span> <span class="nav-text">为什么可以通过这种方式绕过？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#为什么只能使用-PathVariable的方式绕过？"><span class="nav-number">4.2.</span> <span class="nav-text">为什么只能使用@PathVariable的方式绕过？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#如何修复这个漏洞？-1"><span class="nav-number">4.3.</span> <span class="nav-text">如何修复这个漏洞？</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CVE-2020-13933"><span class="nav-number">5.</span> <span class="nav-text">CVE-2020-13933</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#为什么可以绕过？"><span class="nav-number">5.1.</span> <span class="nav-text">为什么可以绕过？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#漏洞利用条件是什么？"><span class="nav-number">5.2.</span> <span class="nav-text">漏洞利用条件是什么？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#为什么需要对-进行url编码？"><span class="nav-number">5.3.</span> <span class="nav-text">为什么需要对;进行url编码？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#如何修复这个漏洞？-2"><span class="nav-number">5.4.</span> <span class="nav-text">如何修复这个漏洞？</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
-      </div>
-      <!--/noindex-->
-
-      <div class="site-overview-wrap sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">藏青</p>
-  <div class="site-description" itemprop="description">知行合一</div>
-</div>
-<div class="site-state-wrap motion-element">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-          <a href="/archives/">
-        
-          <span class="site-state-item-count">49</span>
-          <span class="site-state-item-name">posts</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-categories">
-            <a href="/categories/">
-          
-        <span class="site-state-item-count">15</span>
-        <span class="site-state-item-name">categories</span></a>
-      </div>
-      <div class="site-state-item site-state-tags">
-            <a href="/tags/">
-          
-        <span class="site-state-item-count">20</span>
-        <span class="site-state-item-name">tags</span></a>
-      </div>
-  </nav>
-</div>
-
-
-
-      </div>
+    <span class="post-tags">
+      <i class="icon-tags"></i>
+        <a href="/tags/漏洞分析/">漏洞分析</a><a href="/tags/JAVA/">JAVA</a>
+    </span>
+    
 
     </div>
-  </aside>
-  <div id="sidebar-dimmer"></div>
+
+    
+  </div>
+</article>
+
+  
 
 
-      </div>
+
+
+
+
     </main>
 
-    <footer class="footer">
-      <div class="footer-inner">
-        
-
-<div class="copyright">
-  
-  &copy; 
-  <span itemprop="copyrightYear">2021</span>
-  <span class="with-love">
-    <i class="fa fa-user"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">藏青</span>
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
-  </div>
-  <span class="post-meta-divider">|</span>
-  <div class="theme-info">Theme – <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.7.1
-  </div>
-
-    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-
-        
-<div class="busuanzi-count">
-  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-</div>
-
-
-
-
-
-
-
-
-      </div>
-    </footer>
-  </div>
-
-  
-  <script src="/lib/anime.min.js"></script>
-  <script src="/lib/velocity/velocity.min.js"></script>
-  <script src="/lib/velocity/velocity.ui.min.js"></script>
-
-<script src="/js/utils.js"></script>
-
-<script src="/js/motion.js"></script>
-
-
-<script src="/js/schemes/muse.js"></script>
-
-
-<script src="/js/next-boot.js"></script>
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-  
-
 </body>
 </html>

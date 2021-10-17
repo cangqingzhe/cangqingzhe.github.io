@@ -1,271 +1,86 @@
-<!DOCTYPE html>
-<html lang="cn">
+<!DOCTYPE HTML>
+<html>
 <head>
-  <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 4.2.0">
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
-  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta charset="utf-8">
+  
+  <title>fastjson反序列化漏洞分析 | 藏青&#39;s BLOG</title>
 
-<link rel="stylesheet" href="/css/main.css">
-
-
-<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
-
-<script id="hexo-configurations">
-    var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"cangqingzhe.github.io","root":"/","scheme":"Muse","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
-  </script>
-
-  <meta name="description" content="​        最近做项目遇到存在漏洞的fastjson,虽然最终还是打下来了，但是要深入利用如果不了解原理就比较难受，因此专门花时间了解下fastjson反序列化漏洞形成的原理。我不想长篇大论的去写很多关于fastjson的问题，主要是解决我这个没接触过fastjson漏洞的一些疑惑。 有没有特殊编码可以绕WAF？​        之前做渗透，当json数据包中出现&quot;@type&amp;qu">
-<meta property="og:type" content="article">
-<meta property="og:title" content="fastjson反序列化漏洞分析">
-<meta property="og:url" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/index.html">
-<meta property="og:site_name" content="藏青&#39;s BLOG">
-<meta property="og:description" content="​        最近做项目遇到存在漏洞的fastjson,虽然最终还是打下来了，但是要深入利用如果不了解原理就比较难受，因此专门花时间了解下fastjson反序列化漏洞形成的原理。我不想长篇大论的去写很多关于fastjson的问题，主要是解决我这个没接触过fastjson漏洞的一些疑惑。 有没有特殊编码可以绕WAF？​        之前做渗透，当json数据包中出现&quot;@type&amp;qu">
-<meta property="og:locale" content="cn">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809200029784.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809200956010.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809201034510.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809201156390.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809201927817.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809202116641.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809203925768.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809204100959.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809204814799.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810115316825.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810115008162.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810115703210.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810120808140.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810121307901.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810140411609.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813095915259.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810174755608.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810181457685.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811100951035.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811101036551.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811101049087-16286478493461.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811150655676.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811164406216.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811164803524.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811165020874.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811153553795.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811154100302.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811154316625.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811154544475.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811182520612.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210812092914276.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210812094129036.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210812094740688.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210812194941931.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210812201408245.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813092820948.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813093152616.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813093744619.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813093928169.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813094300234.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813095254988.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813095537523.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813103623363.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813110100329.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813111157386.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813111508572.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813111758681.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813112008054.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813122104986.png">
-<meta property="og:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813121742456.png">
-<meta property="article:published_time" content="2021-08-06T05:47:24.000Z">
-<meta property="article:modified_time" content="2021-09-28T11:42:26.312Z">
-<meta property="article:author" content="藏青">
-<meta property="article:tag" content="JAVA">
-<meta property="article:tag" content="反序列化">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809200029784.png">
-
-<link rel="canonical" href="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">
-
-
-<script id="page-configurations">
-  // https://hexo.io/docs/variables.html
-  CONFIG.page = {
-    sidebar: "",
-    isHome: false,
-    isPost: true
-  };
-</script>
-
-  <title>fastjson反序列化漏洞分析 | 藏青's BLOG</title>
+  
+  <meta name="author" content="藏青">
   
 
-
-
-
-
-
-  <noscript>
-  <style>
-  .use-motion .brand,
-  .use-motion .menu-item,
-  .sidebar-inner,
-  .use-motion .post-block,
-  .use-motion .pagination,
-  .use-motion .comments,
-  .use-motion .post-header,
-  .use-motion .post-body,
-  .use-motion .collection-header { opacity: initial; }
-
-  .use-motion .site-title,
-  .use-motion .site-subtitle {
-    opacity: initial;
-    top: initial;
-  }
-
-  .use-motion .logo-line-before i { left: initial; }
-  .use-motion .logo-line-after i { right: initial; }
-  </style>
-</noscript>
-
-</head>
-
-<body itemscope itemtype="http://schema.org/WebPage">
-  <div class="container use-motion">
-    <div class="headband"></div>
-
-    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-container">
-  <div class="site-meta">
-
-    <div>
-      <a href="/" class="brand" rel="start">
-        <span class="logo-line-before"><i></i></span>
-        <span class="site-title">藏青's BLOG</span>
-        <span class="logo-line-after"><i></i></span>
-      </a>
-    </div>
-  </div>
-
-  <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Toggle navigation bar">
-      <span class="toggle-line toggle-line-first"></span>
-      <span class="toggle-line toggle-line-middle"></span>
-      <span class="toggle-line toggle-line-last"></span>
-    </div>
-  </div>
-</div>
-
-
-<nav class="site-nav">
   
-  <ul id="menu" class="menu">
-        <li class="menu-item menu-item-home">
+  <meta name="description" content="知行合一">
+  
 
-    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
 
-  </li>
-        <li class="menu-item menu-item-tags">
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+  <meta property="og:title" content="fastjson反序列化漏洞分析"/>
 
-  </li>
-        <li class="menu-item menu-item-categories">
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
 
-    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
 
-  </li>
-        <li class="menu-item menu-item-archives">
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 4.2.0"></head>
 
-    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
 
-  </li>
-  </ul>
+<body>
+<div class="blog">
+  <div class="content">
 
-</nav>
-</div>
-    </header>
-
-    
-  <div class="back-to-top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
   </div>
-
-
-    <main class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-          
-
-          <div class="content">
-            
-
-  <div class="posts-expand">
+  <nav class="site-navigation">
+    <ul>
       
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
   
+    
+    <h3 class="article-title"><span>fastjson反序列化漏洞分析</span></h3>
+    
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="cn">
-    <link itemprop="mainEntityOfPage" href="https://cangqingzhe.github.io/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="藏青">
-      <meta itemprop="description" content="知行合一">
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/08/06/fastjson反序列化漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-08-06T05:47:24.000Z">
+          2021-08-06
+        </time>
+      </a>
     </span>
+  </div>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="藏青's BLOG">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          fastjson反序列化漏洞分析
-        </h1>
 
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
+  
 
-              <time title="Created: 2021-08-06 13:47:24" itemprop="dateCreated datePublished" datetime="2021-08-06T13:47:24+08:00">2021-08-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-09-28 19:42:26" itemprop="dateModified" datetime="2021-09-28T19:42:26+08:00">2021-09-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/JAVA/" itemprop="url" rel="index">
-                    <span itemprop="name">JAVA</span>
-                  </a>
-                </span>
-                  , 
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/JAVA/%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/" itemprop="url" rel="index">
-                    <span itemprop="name">反序列化</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
+  <div class="article-content">
+    <div class="entry">
       
         <p>​        最近做项目遇到存在漏洞的fastjson,虽然最终还是打下来了，但是要深入利用如果不了解原理就比较难受，因此专门花时间了解下fastjson反序列化漏洞形成的原理。我不想长篇大论的去写很多关于fastjson的问题，主要是解决我这个没接触过fastjson漏洞的一些疑惑。</p>
 <h3 id="有没有特殊编码可以绕WAF？"><a href="#有没有特殊编码可以绕WAF？" class="headerlink" title="有没有特殊编码可以绕WAF？"></a><strong>有没有特殊编码可以绕WAF？</strong></h3><p>​        之前做渗透，当json数据包中出现<code>&quot;@type&quot;:&quot;com.sun.rowset.JdbcRowSetImpl&quot;</code>数据包就会被拦截，因此分析下有没有替代方案可以绕过WAF。</p>
@@ -393,209 +208,60 @@
 <p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813121742456.png" alt="image-20210813121742456"></p>
 <p>​        最后我们对TemplateImpl这种利用方式做一个总结，首先由于 _bytecodes和 _name属性的setter方法不是public的，所以默认情况下无法调用，因此需要在parseObject加上SupportNonPublicField，但是加上这个设置后就无法通过toJSON调用getter方法，但是getOutputProperties返回类型是Map的子类，所以在javaBeanInfo.build的过程中，可以得到getOutputProperties方法并设置到filedInfo中，由于getOutputProperties没有一个参数的方法，所以不会通过asm动态构建反序列化器而是使用JavaBeanDeserializer构造，当解析到OutputProperties属性时，通过反射调用了getOutputProperties方法完成利用。据作者所说，这个利用链是参考jackson反序列化利用链找到的，我没了解过jackson是如何解析json数据的，可能他们的解析存在一种共性，所以导致利用链也可以迁移。</p>
 <h3 id="AutoType如何影响反序列化过程？"><a href="#AutoType如何影响反序列化过程？" class="headerlink" title="AutoType如何影响反序列化过程？"></a>AutoType如何影响反序列化过程？</h3>
+      
     </div>
-
-    
-    
-    
-
-      <footer class="post-footer">
-          <div class="post-tags">
-              <a href="/tags/JAVA/" rel="tag"># JAVA</a>
-              <a href="/tags/%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/" rel="tag"># 反序列化</a>
-          </div>
-
-        
-
-
-        
-    <div class="post-nav">
-      <div class="post-nav-item">
-    <a href="/2021/07/31/hibernate1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/" rel="prev" title="hibernate1利用链分析">
-      <i class="fa fa-chevron-left"></i> hibernate1利用链分析
-    </a></div>
-      <div class="post-nav-item">
-    <a href="/2021/08/26/%E8%87%B4%E8%BF%9CAjax-do%E6%9D%83%E9%99%90%E7%BB%95%E8%BF%87%E5%88%86%E6%9E%90/" rel="next" title="致远Ajax.do权限绕过分析">
-      致远Ajax.do权限绕过分析 <i class="fa fa-chevron-right"></i>
-    </a></div>
-    </div>
-      </footer>
-    
-  </article>
-  
-  
-  
 
   </div>
 
+  <div class="article-footer">
+    <div class="article-meta pull-left">
 
-          </div>
-          
+    
+      
 
-<script>
-  window.addEventListener('tabs:register', () => {
-    let activeClass = CONFIG.comments.activeClass;
-    if (CONFIG.comments.storage) {
-      activeClass = localStorage.getItem('comments_active') || activeClass;
-    }
-    if (activeClass) {
-      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
-      if (activeTab) {
-        activeTab.click();
-      }
-    }
-  });
-  if (CONFIG.comments.storage) {
-    window.addEventListener('tabs:click', event => {
-      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
-      let commentClass = event.target.classList[1];
-      localStorage.setItem('comments_active', commentClass);
-    });
-  }
-</script>
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/JAVA/">JAVA</a>, <a href="/categories/JAVA/反序列化/">反序列化</a>
+    </span>
+    
 
-        </div>
-          
-  
-  <div class="toggle sidebar-toggle">
-    <span class="toggle-line toggle-line-first"></span>
-    <span class="toggle-line toggle-line-middle"></span>
-    <span class="toggle-line toggle-line-last"></span>
-  </div>
+    
+    
 
-  <aside class="sidebar">
-    <div class="sidebar-inner">
-
-      <ul class="sidebar-nav motion-element">
-        <li class="sidebar-nav-toc">
-          Table of Contents
-        </li>
-        <li class="sidebar-nav-overview">
-          Overview
-        </li>
-      </ul>
-
-      <!--noindex-->
-      <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#有没有特殊编码可以绕WAF？"><span class="nav-number">1.</span> <span class="nav-text">有没有特殊编码可以绕WAF？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#反序列化过程中会调用什么方法？有何限制？"><span class="nav-number">2.</span> <span class="nav-text">反序列化过程中会调用什么方法？有何限制？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#反序列化利用链原理是什么？"><span class="nav-number">3.</span> <span class="nav-text">反序列化利用链原理是什么？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#TemplateImpl"><span class="nav-number">3.1.</span> <span class="nav-text">TemplateImpl</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AutoType如何影响反序列化过程？"><span class="nav-number">4.</span> <span class="nav-text">AutoType如何影响反序列化过程？</span></a></li></ol></div>
-      </div>
-      <!--/noindex-->
-
-      <div class="site-overview-wrap sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">藏青</p>
-  <div class="site-description" itemprop="description">知行合一</div>
-</div>
-<div class="site-state-wrap motion-element">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-          <a href="/archives/">
-        
-          <span class="site-state-item-count">49</span>
-          <span class="site-state-item-name">posts</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-categories">
-            <a href="/categories/">
-          
-        <span class="site-state-item-count">15</span>
-        <span class="site-state-item-name">categories</span></a>
-      </div>
-      <div class="site-state-item site-state-tags">
-            <a href="/tags/">
-          
-        <span class="site-state-item-count">20</span>
-        <span class="site-state-item-name">tags</span></a>
-      </div>
-  </nav>
-</div>
-
-
-
-      </div>
+    <span class="post-tags">
+      <i class="icon-tags"></i>
+        <a href="/tags/JAVA/">JAVA</a><a href="/tags/反序列化/">反序列化</a>
+    </span>
+    
 
     </div>
-  </aside>
-  <div id="sidebar-dimmer"></div>
+
+    
+  </div>
+</article>
+
+  
 
 
-      </div>
+
+
+
+
     </main>
 
-    <footer class="footer">
-      <div class="footer-inner">
-        
-
-<div class="copyright">
-  
-  &copy; 
-  <span itemprop="copyrightYear">2021</span>
-  <span class="with-love">
-    <i class="fa fa-user"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">藏青</span>
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
-  </div>
-  <span class="post-meta-divider">|</span>
-  <div class="theme-info">Theme – <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.7.1
-  </div>
-
-    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-
-        
-<div class="busuanzi-count">
-  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-</div>
-
-
-
-
-
-
-
-
-      </div>
-    </footer>
-  </div>
-
-  
-  <script src="/lib/anime.min.js"></script>
-  <script src="/lib/velocity/velocity.min.js"></script>
-  <script src="/lib/velocity/velocity.ui.min.js"></script>
-
-<script src="/js/utils.js"></script>
-
-<script src="/js/motion.js"></script>
-
-
-<script src="/js/schemes/muse.js"></script>
-
-
-<script src="/js/next-boot.js"></script>
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-  
-
 </body>
 </html>
