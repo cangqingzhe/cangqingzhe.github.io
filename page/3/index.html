@@ -63,6 +63,60 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/06/03/commons-collection1利用链分析/"><span>commons-collection1利用链分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/06/03/commons-collection1利用链分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-06-03T01:55:52.305Z">
+          2021-06-03
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h4 id="1-序列化-与-反序列化"><a href="#1-序列化-与-反序列化" class="headerlink" title="1. 序列化 与 反序列化"></a>1. <strong>序列化 与 反序列化</strong></h4><ul>
+<li><p><strong>定义</strong>：<strong><u>序列化</u></strong>指 将 <strong><u>对象/数据结构</u></strong>的<u><strong>状态</strong></u>信息 转换为可以<u><strong>存储</strong></u>或<u><strong>传输</strong></u>的形式的过程，其<u><strong>反</strong></u>过程称为<u><strong>反序列化</strong></u>。</p>
+</li>
+<li><p><strong>作用</strong>：</p>
+<ul>
+<li>将对象<u><strong>持久化</strong></u>到<u><strong>存储介质</strong></u>以便再次使用</li>
+<li>使对象能在<u><strong>网络</strong></u>中传输</li>
+<li>如序列化格式<u><strong>独立于语言</strong></u>，可以实现<u><strong>不同语言</strong></u>之间<u><strong>对象的传递</strong></u></li>
+</ul></li></ul>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/05/27/某微文件上传漏洞分析/"><span>某微文件上传漏洞分析</span></a></h3>
     
   
@@ -577,69 +631,6 @@
         <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">近年来出现的很多JAVA的漏洞都是无回显的漏洞，因此了解如何能让本身不回显的漏洞回显成为很多大佬研究的内容，本文将带着大家一起学习JAVA反序列化漏洞的回显方案。</span><br></pre></td></tr></table></figure>
 
 <h3 id="defineClass"><a href="#defineClass" class="headerlink" title="defineClass"></a>defineClass</h3><p>​        defineClass可以将byte[]转换为Class类，如下所示defineClass会接收我们传入的name,byte[],长度等参数，最终会返回给我们一个Class类的对象。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/代码审计/">代码审计</a>
-    </span>
-    
-
-    
-    
-
-    <span class="post-tags">
-      <i class="icon-tags"></i>
-        <a href="/tags/JAVA/">JAVA</a><a href="/tags/代码审计/">代码审计</a>
-    </span>
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/12/02/JAVA反射机制学习/"><span>JAVA反射机制学习</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/12/02/JAVA反射机制学习/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-12-02T06:04:35.000Z">
-          2020-12-02
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">在我们了解或者分析JAVA的反序列化漏洞时，一定绕过不过一个知识点，那就是JAVA的反射调用，所以这次我们专门写一篇文章和大家学习和了解一下JAVA的反射调用。</span><br></pre></td></tr></table></figure>
-
-<h2 id="基本介绍"><a href="#基本介绍" class="headerlink" title="基本介绍"></a>基本介绍</h2><h3 id="为什么要引入反射机制？"><a href="#为什么要引入反射机制？" class="headerlink" title="为什么要引入反射机制？"></a>为什么要引入反射机制？</h3><p>​        我们在编写程序时会有两种情况，第一种是我们明确知道编译时要使用的类和需要调用的方法的具体信息，这种情况下我们可以使用<code>new xxx()</code>来创建对象并使用。第二种是我们在编译的过程种不知道类或者对象的具体情况，只能通过程序运行时通过动态加载来判断。 比如类的名称和需要调用的属性放在配置文件中，这种配置方式降低了耦合性，我们在写JAVA WEB的过程中经常会遇到。</p>
-<p>​        对于第二种方式，我们就无法在编译时得知我们要使用的类的类型和调用的方法，所以引入了反射机制。</p>
         
       
     </div>
