@@ -83,6 +83,8 @@
     <div class="entry">
       
         <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    去年分析过JSP加载shellcode上线的技术，但是由于需要先上传DLL到目标主机，所以在真实环境下并不方便使用，最近看到<code>rebeyond</code>发表的关于<code>Java原生远程进程注入</code>的文章，可以实现无需依赖上传的<code>dll</code>实现<code>JSP</code>加载shellcode的功能，因此决定写下这篇文章分析和复现其中的技术。</p>
+<a id="more"></a>
+
 <h2 id="原理分析"><a href="#原理分析" class="headerlink" title="原理分析"></a>原理分析</h2><p>​    平时执行shellcode时经常会使用远程线程注入，也就是<code>CreateRemoteThread</code>。之前我们的实现中是自己通过JNI实现了一个<code>CreateRemoteThread</code>来加载我们的shellcode，这种情况当然是需要将生成的dll传到目标下的，但是如果JDK的Native 层的函数中中本身实现了<code>CreateRemoteThread</code>并且可以接收我们的参数执行，那不就不需要上传DLL了。</p>
 <p>​    在<code>Java Agent</code>中，我们要想实现在另一个进程中注入我们的<code>Agent</code>,一定要实现不同JVM之间通信，并且是需要在另一个JVM进程中注入我们的Agent并执行，所以一定会使用<code>CreateRemoteThread</code>。具体的实现在<code>enqueue</code>中，而具体的实现则在<code>Java_sun_tools_attach_WindowsVirtualMachine_enqueue</code>中。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">enqueue</span><span class="params">(<span class="keyword">long</span> var0, <span class="keyword">byte</span>[] var2, String var3, String var4, Object... var5)</span> <span class="keyword">throws</span> IOException</span>;</span><br></pre></td></tr></table></figure>
