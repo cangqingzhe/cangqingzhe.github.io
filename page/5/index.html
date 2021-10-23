@@ -55,6 +55,8 @@
       
         <li><a href="/categories">Categories</a></li>
       
+        <li><a href="/links">Links</a></li>
+      
     </ul>
   </nav>
 </header>
@@ -65,14 +67,400 @@
 
   
     
-    <h3 class="article-title"><a href="/2020/09/02/关于蚁剑免杀的学习/"><span>关于蚁剑免杀的学习</span></a></h3>
+    <h3 class="article-title"><a href="/2020/11/09/关于免杀的技术总结（-）/"><span>关于免杀的技术总结（-）</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/09/关于免杀的技术总结（-）/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-09T12:26:00.000Z">
+          2020-11-09
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​    在钓鱼或者渗透的过程中，如果我们不会免杀，使用Cobaltstrike生成的exe可能直接就被干掉了，还会触发目标的告警，导致之前的工作前功尽弃，因此在往更高阶的攻防对抗中，免杀能力是必不可少的能力，不是说每个人都必须掌握这种能力，但是如果一个团队中，一个会免杀的人都没有，那就很僵了。</p>
+<p>​    回到正题，本片文章并不会讲到免杀方法可能很多已经都不可用了，之所以写这篇总结文章，是希望大家能对免杀的方法能有一个系统的认知。</p>
+<h2 id="远程线程调用"><a href="#远程线程调用" class="headerlink" title="远程线程调用"></a>远程线程调用</h2><p>​    要讲远程线程调用，我们首先看一下本地的调用，代码如下：</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/免杀/">免杀</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/10/30/weblogic漏洞分析系列之CVE-2017-10271漏洞分析/"><span>weblogic漏洞分析系列之CVE-2017-10271漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/10/30/weblogic漏洞分析系列之CVE-2017-10271漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-10-30T15:15:58.000Z">
+          2020-10-30
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​    CVE-2017-10271漏洞是由于通过readobject解析webservice接口中的xml代码导致命令执行的，今天我们一起学习一下这个漏洞是如何导致的并分析一下漏洞的检测方法。</p>
+<h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><p>​        这里直接给出文件写入的poc，数据包如下：</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/10/30/weblogic漏洞分析系列之调试环境搭建/"><span>weblogic漏洞分析系列之调试环境搭建</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/10/30/weblogic漏洞分析系列之调试环境搭建/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-10-30T12:32:17.000Z">
+          2020-10-30
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        最近一直在做一些项目，因为对一些原理性的知识不懂感觉渗透很难再继续往上走，因此接下来打算将精力放在漏洞的理解和分析，工具的编写和优化上面，而不再执着于更多的技巧。</p>
+<p>​        weblogic是一款比较经常使用的java容器，当然它爆出的漏洞也是层出不穷，为了能让自己更加了解weblogic漏洞的形成原因，我决定和大家一起调试weblogic各个版本的一些漏洞，并最终编写一个简单的weblogic漏洞检测工具，在这片文章中，我们首先一起来学习一下如何搭建weblogic的调试环境。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/08/记基于cobaltstrike基础设施架构设计尝试/"><span>记基于cobaltstrike基础设施架构设计尝试</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/08/记基于cobaltstrike基础设施架构设计尝试/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-08T03:11:22.000Z">
+          2020-09-08
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        通过之前的介绍我们了解了cobaltstrike的一些混淆或者隐藏的策略，这次我们主要对学到的这些策略进行实践，设计一个比较好用的不容易被反查的方案。</p>
+<p>​        设计思路如下：</p>
+<ul>
+<li><p>自定义mallable c2 profile文件，自定义通讯流量</p>
+</li>
+<li><p>前置机通过mod_rewrite对不同流量进行不同的转发</p>
+</li>
+<li><p>给前置机配置CDN保护前置机的真实IP</p>
+</li>
+<li><p>teamserver主机配置防火墙仅允许前置机和teamserver主机的特定端口通信</p>
+<p>因为CDN配置需要等待一段时间才能生效，所以我们先来配置CDN。</p></li></ul>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/04/关于Mod-Rewrite重定向cobaltstrike流量的学习总结/"><span>关于Mod_Rewrite重定向cobaltstrike流量的学习总结</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/04/关于Mod-Rewrite重定向cobaltstrike流量的学习总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-04T09:20:35.000Z">
+          2020-09-04
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        通过使用socat进行重定向虽然可以将我们的teamserver隐藏起来，但是我们如果想做的更好一些，对请求我们重定向主机的流量做一个区分，如果请求来自客户端则重定向到teamserver，如果请求来自其他请求则重定向到其他网站。或者在请求中设置白名单，仅仅允许来自某个特定的ip来访问。这就需要通过apache 的Mod_rewrite来实现。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/02/关于CobaltStrike各种协议beacon的使用总结/"><span>关于CobaltStrike各种协议beacon的使用总结</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/02/关于CobaltStrike各种协议beacon的使用总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-02T12:15:47.000Z">
+          2020-09-02
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        在之前的学习中我们了解了关于CobaltStrike beacon运行的流程，以及流量的修改，今天我们一起来学习一下CobaltStrike自带的各种beacon的使用。</p>
+<h3 id="http-beacon"><a href="#http-beacon" class="headerlink" title="http beacon"></a>http beacon</h3><p>​        http beacon 使用get方式去获取服务端下发的任务，同时使用post方式向服务端获取数据。关于使用ip上线我相信大家都已经非常熟悉了，所以我主要讲一下关于域名上线需要注意的问题。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/02/关于自解压文件创建/"><span>关于自解压文件创建</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/02/关于自解压文件创建/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-02T12:15:47.000Z">
+          2020-09-02
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h3 id="创建过程"><a href="#创建过程" class="headerlink" title="创建过程"></a>创建过程</h3><p>首先准备好我们想要创建自解压的文件，我这里的内容如下</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/钓鱼/">钓鱼</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/02/关于蚁剑免杀的学习/"><span>关于蚁剑免杀学习</span></a></h3>
     
   
 
   <div class="article-top-meta">
     <span class="posted-on">
       <a href="/2020/09/02/关于蚁剑免杀的学习/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-09-02T11:58:25.664Z">
+        <time class="entry-date published" datetime="2020-09-02T12:15:47.000Z">
           2020-09-02
         </time>
       </a>
@@ -97,6 +485,71 @@
   <div class="article-footer">
     <div class="article-meta pull-left">
 
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/02/关于文档钓鱼的学习/"><span>关于文档钓鱼的学习</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/02/关于文档钓鱼的学习/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-02T12:15:47.000Z">
+          2020-09-02
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">虽然word,office这些办公软件的漏洞都比较早了，不过由于很多人用的都不是正版的程序，因此很多人电脑的办公软</span><br><span class="line">件依然存在漏洞，所以也是值得去研究和学习的，本文记录了我学习的过程。</span><br></pre></td></tr></table></figure>
+
+<p><strong>学习环境</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">office套件2016</span><br><span class="line">windows10 10.0.17763.1282</span><br></pre></td></tr></table></figure>
+
+<h3 id="DDE钓鱼"><a href="#DDE钓鱼" class="headerlink" title="DDE钓鱼"></a>DDE钓鱼</h3><p>​    动态数据交换(DDE)是一种动态数据交换机制，使用DDE通讯需要两个Windows应用程序，其中一个作为服务器处理信息，另外一个作为客户机从服务器获得信息。我们可以利用这个属性在office中执行我们的恶意代码。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/钓鱼/">钓鱼</a>
+    </span>
     
 
     
@@ -151,443 +604,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/随笔/">随笔</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/09/02/关于Malleable-C2的学习总结/"><span>关于Malleable C2的学习总结</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/09/02/关于Malleable-C2的学习总结/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-09-02T02:27:15.000Z">
-          2020-09-02
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        通过之前我们对于CobaltStrike的Beacon通信流程分析，我们可以看到CobaltStrike在使用心跳包发送active和match，执行命令的返回结果通过请求submit.php来进行传输，而且我们通过这两个包发送和接收的也是一些加密的内容，因此可能有些杀软可能会对这样的请求进行拦截，如果这样，那么无论我们之前对shellcode怎么免杀，只要和服务端产生一些通信，那么都有可能被拦截，因此我们需要修改掉这些流量特征，好在CobaltStrike已经给我们提供了这样的功能，那就是malleable C2。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/cobaltstrike/">cobaltstrike</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/09/01/关于cobaltstrike通信流程的分析/"><span>关于cobaltstrike通信流程的分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/09/01/关于cobaltstrike通信流程的分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-09-01T08:15:43.000Z">
-          2020-09-01
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        之前我们了解了关于cobaltstrike shell生成的过程，接下来我们一起了解一下cobaltstrike的stager具体是如何工作的，它在目标主机执行后是如何和我们的服务端进行通信的。</p>
-<h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h3><p>​        在我们分析cobaltstrike的通信过程之前，首先需要了解cobaltstrike的一些基本概念</p>
-<p><strong>Staged Payloads</strong></p>
-<p>​        执行payload的方式分为两种，一种是分阶段加载（Staged）和不分阶段加载（STAGELESS ）。当使用分阶段加载的方式时，一般把程序分为两个部分，stager和stage，stager通常是一个代码量非常小的精简过的汇编代码，它的作用非常简单，就是用来下载stage并载入到内存,也就是主要完成下载远程的stage文件和分配内存将stage加载到内存并执行的功能。在cobaltstrike的官方博客中，给出了一个简单的stager的代码,主要通过C语言实现，通过wsconnect来和远程的地址建立socket通信，下载远程的文件分配内存并载入到内存，最后通过函数指针的形式来进行调用。之所以这么做主要是为了解决payload大小限制的问题。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/cobaltstrike/">cobaltstrike</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/08/31/关于CobaltStrike生成shell的过程和执行流程的分析学习/"><span>关于CobaltStrike生成shell的过程和执行流程的分析学习</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/08/31/关于CobaltStrike生成shell的过程和执行流程的分析学习/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-08-31T09:21:58.000Z">
-          2020-08-31
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        可能我们在后渗透阶段使用CobaltStrike使用的是比较多的，关于一款工具，我们不仅仅只能停留在如何使用它，我们也应该了解一下它实现的原理，本文将带着大家和我一起学习关于CoblatStrike这款工具shell生成的过程还有执行流程。我这里是以CobaltStrike4.0为例来进行分析的。</p>
-<p>​        首先我们将CobaltStrike导入到IDEA中，对着CobaltStrike.jar右键选择-add as libirary,那样我们就可以在IDEA中查看这个包反编译的代码，IDEA反编译代码的还原度还是非常高的。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/cobaltstrike/">cobaltstrike</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/08/31/关于内网批量横向渗透的学习总结/"><span>关于内网批量横向渗透的学习总结</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/08/31/关于内网批量横向渗透的学习总结/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-08-31T04:07:47.000Z">
-          2020-08-31
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        之前的学习中我们了解了关于横向移动的方式，当我们知道了这些方式，下一步当然是想要去提高速度，在这篇文章中我将带着大家学习如何来批量上线内网主机。</p>
-<h3 id="环境说明"><a href="#环境说明" class="headerlink" title="环境说明"></a>环境说明</h3><p>192.168.3.* 为仅主机模式的网段</p>
-<p>192.168.5.*为nat模式的网段</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">OWA2013 192.168.3.144 192.168.5.58   边界机</span><br><span class="line">SRV-WEB-KIT 192.168.3.73   内网断网机</span><br><span class="line">PC-JERRY-KIT 192.168.3.75 192.168.5.59   内网出网机</span><br></pre></td></tr></table></figure>
-
-<h3 id="WMI"><a href="#WMI" class="headerlink" title="WMI"></a>WMI</h3><p>​        我们首先学习一下如何使用WMI来批量上线内网主机</p>
-<p>​        当我们获取了某个主机的密码，我们想测试是否有内网主机和这个主机的密码相同，首先需要扫描内网那些主机开放了445端口。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/内网渗透/">内网渗透</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/08/28/关于内网断网主机上线的学习总结/"><span>关于内网断网主机上线的学习总结</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/08/28/关于内网断网主机上线的学习总结/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-08-28T09:12:06.000Z">
-          2020-08-28
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        在进行内网横向移动的过程中我们可能经常会遇到这样的情况，目标内网中的其他主机不出外网，那么我们使用cs直接生成的reverse shell就没有办法使目标内网中的”断网”主机上线，今天我就和大家一起学习如何上线内网的”断网”主机。</p>
-<h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">OWA2013:192.168.3.144 192.168.5.55   模拟边界机192.168.5.*这个网段使用nat模式，192.168.3.*使用仅主机模式</span><br><span class="line">ser-web:192.168.3.73 模拟内网断网机</span><br></pre></td></tr></table></figure>
-
-<h3 id="Pivot-listener"><a href="#Pivot-listener" class="headerlink" title="Pivot listener"></a>Pivot listener</h3><p><strong>建立Pivot listener</strong></p>
-<p>​        首先让边界主机OWA2013上线,上线后对着边界机右键，选择pivoting-&gt;Listener</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/内网渗透/">内网渗透</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/08/26/关于内网横向移动套件的利用总结/"><span>关于内网横向移动套件的利用总结</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/08/26/关于内网横向移动套件的利用总结/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-08-26T09:15:32.000Z">
-          2020-08-26
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        通过上篇文章我们了解了关于内网横向移动的常用方法，但是实战中去使用这些方法往往效率比较低，并且已经有很多大佬发现了这一点并且针对于每种横向移动的方法写出了横向移动的套件。熟悉这些横向移动套件的使用有助于提高我们渗透的速度。因此学习大佬们横向移动套件的使用是非常有必要的，下面我将和大家一起学习关于内网横向移动套件的使用。</p>
-<h3 id="Crackmapexec"><a href="#Crackmapexec" class="headerlink" title="Crackmapexec"></a>Crackmapexec</h3><p>​        Crackmapexec是一款由python开发的横向移动利用工具，网上也有人打包好了它的<a href="https://github.com/maaaaz/CrackMapExecWin" target="_blank" rel="noopener">windows版本</a>，这个是2.x版本的打包,虽然版本比较旧，但是基本的功能都有了</p>
-<p>​        在横向移动之前，可以去扫描开放445端口的主机</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/内网渗透/">内网渗透</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/08/23/关于孤独的理解/"><span>关于孤独的理解</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/08/23/关于孤独的理解/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-08-23T14:42:46.000Z">
-          2020-08-23
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <pre><code>孤独是一个人的狂欢</code></pre><p>​        当我们越来越长大，走出了学校，走到了社会，开始参加了工作，或许我们也有些许的朋友在这个城市，或许我们也有同事可以交流，可是每到晚上回到自己的小房间，每到周末呆在房间里，没有来会有一种空虚的感觉，可能这只是我个人的感觉，不过可能在大城市工作的很多人，也有类似的感觉，我们感到空虚，孤独，可能并不一定是因为我们一个人，没有人陪伴，可能只是由于我们有了很多独自与自己相处的时间，但我们不习惯和自己相处，所以才会产生某种难以排解的苦闷。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/08/21/关于内网横向移动的学习总结/"><span>关于内网横向移动的学习总结</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/08/21/关于内网横向移动的学习总结/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-08-21T09:53:05.000Z">
-          2020-08-21
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        当我们进入内网后，并且对当前主机的各种信息已经搜集完毕，接下来就到了最有意思的环节，横向移动。在这个环节，我们可以通过我们的操作获取多台主机的权限，本文将总结内网横向渗透中常用的姿势。</p>
-<h3 id="WMI"><a href="#WMI" class="headerlink" title="WMI"></a>WMI</h3><p><strong>什么是WMI?</strong></p>
-<p>​        WMI 的全称是 Windows Management Instrumentation，它出现在所有的 Windows 操作系统中，由一组强大的工具集合组成，用于管理本地或<strong>远程</strong>的 Windows 系统。</p>
-<p><strong>为什么要使用WMI？</strong></p>
-<p>​        使用WMI进行横向移动，默认不会留下系统日志，并且脚本无需写入磁盘，具有隐蔽性。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/内网渗透/">内网渗透</a>
     </span>
     
 

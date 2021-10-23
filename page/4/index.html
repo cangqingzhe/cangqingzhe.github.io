@@ -55,12 +55,128 @@
       
         <li><a href="/categories">Categories</a></li>
       
+        <li><a href="/links">Links</a></li>
+      
     </ul>
   </nav>
 </header>
 
     <main class="site-main posts-loop">
     
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/12/31/Tomcat内存马实现原理解析-servlet内存马/"><span>Tomcat内存马实现原理解析-servlet内存马</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/12/31/Tomcat内存马实现原理解析-servlet内存马/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-12-31T02:25:16.000Z">
+          2020-12-31
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        除了通过Filter实现的内存马，也可以使用servlet，listener等实现内存马，不同的实现方式需要不同的查杀方式，有可能使用不同类型的内存马就可以绕过查杀，本片文章将带着大家了解servlet的入门、tomcat下servlet的实现、servlet内存马的实现。</p>
+<h2 id="servlet基础入门"><a href="#servlet基础入门" class="headerlink" title="servlet基础入门"></a>servlet基础入门</h2><h3 id="什么是servlet"><a href="#什么是servlet" class="headerlink" title="什么是servlet?"></a>什么是servlet?</h3><h4 id="servlet基本介绍"><a href="#servlet基本介绍" class="headerlink" title="servlet基本介绍"></a>servlet基本介绍</h4><p>​        servlet是一个Java应用程序，运行在服务器端，用来处理客户端请求并作出响应的程序。servlet没有main方法不能独立运行，需要使用servlet容器比如tomcat来创建。当我们通过URL来访问servlet，首先会在servlet容器中判断该URL是由哪个servlet处理的，当前容器中是否有这个servlet实例，如果没有则创建servlet实例，并交由对应servlet的service方法来处理请求，处理结束后再返回web服务器。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内存马/">内存马</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/12/24/Tomcat内存马实现原理解析/"><span>Tomcat内存马实现原理解析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/12/24/Tomcat内存马实现原理解析/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-12-24T05:40:03.000Z">
+          2020-12-24
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​            目前webshell的免杀开始向内存中迁移，这样实现的好处显而易见，将webshell注入到内存中，一方面增加了查杀的难度，另一方面即使我们传入的文件被查杀，只要服务器不重启，我们仍然可以利用注入到内存中的shell控制主机，所以了解内存shell的实现是比较重要的。</p>
+<h2 id="动态注册Filter实现内存马"><a href="#动态注册Filter实现内存马" class="headerlink" title="动态注册Filter实现内存马"></a>动态注册Filter实现内存马</h2><p>​            要了解如何动态实现filter过滤器加载内存马，首先得了解几个问题</p>
+<ul>
+<li>什么是过滤器?</li>
+<li>为什么要使用过滤器？</li>
+<li>如何手动创建过滤器？</li>
+<li>如何动态注册过滤器？</li>
+<li></li></ul>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内存马/">内存马</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
   <article>
 
   
@@ -231,6 +347,59 @@
 
   
     
+    <h3 class="article-title"><a href="/2020/11/13/MSSQL注入绕过360主机卫士/"><span>MSSQL注入绕过360主机卫士</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/13/MSSQL注入绕过360主机卫士/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="参数污染"><a href="#参数污染" class="headerlink" title="参数污染"></a>参数污染</h2><p>这个之前bypass写过，我这次测试的目标同样是可以使用参数污染来进行绕过的，会出现这个问题，是因为360主机卫士在处理post请求时，没有处理post请求中的get参数，所以可以使用这种方式来进行全局绕过。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2020/11/13/关于sqlserver注入另类技巧的学习/"><span>关于sqlserver注入另类技巧的学习</span></a></h3>
     
   
@@ -285,15 +454,15 @@
 
   
     
-    <h3 class="article-title"><a href="/2020/11/09/关于免杀的技术总结（-）/"><span>关于免杀的技术总结（-）</span></a></h3>
+    <h3 class="article-title"><a href="/2020/11/13/关于windows执行shellcode的方式学习/"><span>关于windows执行shellcode的方式学习</span></a></h3>
     
   
 
   <div class="article-top-meta">
     <span class="posted-on">
-      <a href="/2020/11/09/关于免杀的技术总结（-）/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-11-09T12:26:00.000Z">
-          2020-11-09
+      <a href="/2020/11/13/关于windows执行shellcode的方式学习/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
         </time>
       </a>
     </span>
@@ -305,9 +474,11 @@
   <div class="article-content">
     <div class="entry">
       
-        <p>​    在钓鱼或者渗透的过程中，如果我们不会免杀，使用Cobaltstrike生成的exe可能直接就被干掉了，还会触发目标的告警，导致之前的工作前功尽弃，因此在往更高阶的攻防对抗中，免杀能力是必不可少的能力，不是说每个人都必须掌握这种能力，但是如果一个团队中，一个会免杀的人都没有，那就很僵了。</p>
-<p>​    回到正题，本片文章并不会讲到免杀方法可能很多已经都不可用了，之所以写这篇总结文章，是希望大家能对免杀的方法能有一个系统的认知。</p>
-<h2 id="远程线程调用"><a href="#远程线程调用" class="headerlink" title="远程线程调用"></a>远程线程调用</h2><p>​    要讲远程线程调用，我们首先看一下本地的调用，代码如下：</p>
+        <h3 id="regsvr32"><a href="#regsvr32" class="headerlink" title="regsvr32"></a>regsvr32</h3><p><strong>Regsvr32是什么？</strong></p>
+<p> Regsvr32命令用来向系统注册控件或者卸载控件的命令。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">语法：Regsvr32 [&#x2F;s][&#x2F;u] [&#x2F;n] [&#x2F;i[:cmdline]] &lt;dllname&gt;</span><br><span class="line">· &#x2F;u：注销服务器；</span><br><span class="line">· &#x2F;i：调用DllInstall传递一个可选的[cmdline]，当它与&#x2F;u一起使用时，它会调用dll uninstall。</span><br><span class="line">· &#x2F;n：不要调用DllRegisterServer，此选项必须与&#x2F;i一起使用</span><br><span class="line">· &#x2F; s ：沉默，不显示消息框；</span><br></pre></td></tr></table></figure>
+
+<p><strong>如何使用regsvr32执行exe？</strong></p>
         
       
     </div>
@@ -322,7 +493,7 @@
 
     <span class="post-categories">
       <i class="icon-categories"></i>
-        <a href="/categories/免杀/">免杀</a>
+        <a href="/categories/内网渗透/">内网渗透</a>
     </span>
     
 
@@ -340,15 +511,15 @@
 
   
     
-    <h3 class="article-title"><a href="/2020/10/30/weblogic漏洞分析系列之CVE-2017-10271漏洞分析/"><span>weblogic漏洞分析系列之CVE-2017-10271漏洞分析</span></a></h3>
+    <h3 class="article-title"><a href="/2020/11/13/我的渗透之路/"><span>我的渗透之路</span></a></h3>
     
   
 
   <div class="article-top-meta">
     <span class="posted-on">
-      <a href="/2020/10/30/weblogic漏洞分析系列之CVE-2017-10271漏洞分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-10-30T15:15:58.000Z">
-          2020-10-30
+      <a href="/2020/11/13/我的渗透之路/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
         </time>
       </a>
     </span>
@@ -360,8 +531,8 @@
   <div class="article-content">
     <div class="entry">
       
-        <p>​    CVE-2017-10271漏洞是由于通过readobject解析webservice接口中的xml代码导致命令执行的，今天我们一起学习一下这个漏洞是如何导致的并分析一下漏洞的检测方法。</p>
-<h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><p>​        这里直接给出文件写入的poc，数据包如下：</p>
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近可能是因为技术处于一个瓶颈期，又或者说对未来技术发展方向有些迷茫，所以写下这篇文章梳理一下当前自身的技能树以及未来的发展方向。</p>
+<h2 id="我的渗透观"><a href="#我的渗透观" class="headerlink" title="我的渗透观"></a>我的渗透观</h2><p>​    根据我自己对于渗透的理解，把渗透分为如下几个步骤：</p>
         
       
     </div>
@@ -376,7 +547,7 @@
 
     <span class="post-categories">
       <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
+        <a href="/categories/随笔/">随笔</a>
     </span>
     
 
@@ -394,15 +565,15 @@
 
   
     
-    <h3 class="article-title"><a href="/2020/10/30/weblogic漏洞分析系列之调试环境搭建/"><span>weblogic漏洞分析系列之调试环境搭建</span></a></h3>
+    <h3 class="article-title"><a href="/2020/11/13/记MSSQL绕过阿里云/"><span>记MSSQl绕过阿里云</span></a></h3>
     
   
 
   <div class="article-top-meta">
     <span class="posted-on">
-      <a href="/2020/10/30/weblogic漏洞分析系列之调试环境搭建/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-10-30T12:32:17.000Z">
-          2020-10-30
+      <a href="/2020/11/13/记MSSQL绕过阿里云/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
         </time>
       </a>
     </span>
@@ -414,8 +585,11 @@
   <div class="article-content">
     <div class="entry">
       
-        <p>​        最近一直在做一些项目，因为对一些原理性的知识不懂感觉渗透很难再继续往上走，因此接下来打算将精力放在漏洞的理解和分析，工具的编写和优化上面，而不再执着于更多的技巧。</p>
-<p>​        weblogic是一款比较经常使用的java容器，当然它爆出的漏洞也是层出不穷，为了能让自己更加了解weblogic漏洞的形成原因，我决定和大家一起调试weblogic各个版本的一些漏洞，并最终编写一个简单的weblogic漏洞检测工具，在这片文章中，我们首先一起来学习一下如何搭建weblogic的调试环境。</p>
+        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">最近一直在学习关于WAF绕过的知识，本次选择阿里云这款云WAF来测试关于MSSQL注入的绕过。因为阿里云主站可能不</span><br><span class="line">是ASP+IIS的环境，所以我不清楚如果真的是ASP+IIS的环境，阿里云的拦截规则是否会有相应的变化。</span><br></pre></td></tr></table></figure>
+
+<h2 id="绕过过程"><a href="#绕过过程" class="headerlink" title="绕过过程"></a>绕过过程</h2><h3 id="逻辑判断语句绕过"><a href="#逻辑判断语句绕过" class="headerlink" title="逻辑判断语句绕过"></a>逻辑判断语句绕过</h3><p>我们知道在检测一个注入点的时候，首先会加上and 1=1之类的判断语句，如果页面返回的逻辑符合我们设想的逻辑，那么就有可能有注入。</p>
+<p><strong>利用%特性绕过</strong></p>
+<p>在iis+asp的环境中，在关键字中间加%不会影响程序的正常执行，因此可以在关键字and中添加%来绕过阿里云的检测。</p>
         
       
     </div>
@@ -430,177 +604,7 @@
 
     <span class="post-categories">
       <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/09/08/记基于cobaltstrike基础设施架构设计尝试/"><span>记基于cobaltstrike基础设施架构设计尝试</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/09/08/记基于cobaltstrike基础设施架构设计尝试/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-09-08T03:11:22.000Z">
-          2020-09-08
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        通过之前的介绍我们了解了cobaltstrike的一些混淆或者隐藏的策略，这次我们主要对学到的这些策略进行实践，设计一个比较好用的不容易被反查的方案。</p>
-<p>​        设计思路如下：</p>
-<ul>
-<li><p>自定义mallable c2 profile文件，自定义通讯流量</p>
-</li>
-<li><p>前置机通过mod_rewrite对不同流量进行不同的转发</p>
-</li>
-<li><p>给前置机配置CDN保护前置机的真实IP</p>
-</li>
-<li><p>teamserver主机配置防火墙仅允许前置机和teamserver主机的特定端口通信</p>
-<p>因为CDN配置需要等待一段时间才能生效，所以我们先来配置CDN。</p></li></ul>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/cobaltstrike/">cobaltstrike</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/09/04/关于Mod-Rewrite重定向cobaltstrike流量的学习总结/"><span>关于Mod_Rewrite重定向cobaltstrike流量的学习总结</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/09/04/关于Mod-Rewrite重定向cobaltstrike流量的学习总结/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-09-04T09:20:35.000Z">
-          2020-09-04
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        通过使用socat进行重定向虽然可以将我们的teamserver隐藏起来，但是我们如果想做的更好一些，对请求我们重定向主机的流量做一个区分，如果请求来自客户端则重定向到teamserver，如果请求来自其他请求则重定向到其他网站。或者在请求中设置白名单，仅仅允许来自某个特定的ip来访问。这就需要通过apache 的Mod_rewrite来实现。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/cobaltstrike/">cobaltstrike</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/09/02/关于CobaltStrike各种协议beacon的使用总结/"><span>关于CobaltStrike各种协议beacon的使用总结</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/09/02/关于CobaltStrike各种协议beacon的使用总结/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-09-02T12:15:47.000Z">
-          2020-09-02
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        在之前的学习中我们了解了关于CobaltStrike beacon运行的流程，以及流量的修改，今天我们一起来学习一下CobaltStrike自带的各种beacon的使用。</p>
-<h3 id="http-beacon"><a href="#http-beacon" class="headerlink" title="http beacon"></a>http beacon</h3><p>​        http beacon 使用get方式去获取服务端下发的任务，同时使用post方式向服务端获取数据。关于使用ip上线我相信大家都已经非常熟悉了，所以我主要讲一下关于域名上线需要注意的问题。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
     </span>
     
 

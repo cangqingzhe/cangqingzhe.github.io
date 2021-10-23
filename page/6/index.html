@@ -55,12 +55,505 @@
       
         <li><a href="/categories">Categories</a></li>
       
+        <li><a href="/links">Links</a></li>
+      
     </ul>
   </nav>
 </header>
 
     <main class="site-main posts-loop">
     
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/02/关于Malleable-C2的学习总结/"><span>关于Malleable C2的学习总结</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/02/关于Malleable-C2的学习总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-02T02:27:15.000Z">
+          2020-09-02
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        通过之前我们对于CobaltStrike的Beacon通信流程分析，我们可以看到CobaltStrike在使用心跳包发送active和match，执行命令的返回结果通过请求submit.php来进行传输，而且我们通过这两个包发送和接收的也是一些加密的内容，因此可能有些杀软可能会对这样的请求进行拦截，如果这样，那么无论我们之前对shellcode怎么免杀，只要和服务端产生一些通信，那么都有可能被拦截，因此我们需要修改掉这些流量特征，好在CobaltStrike已经给我们提供了这样的功能，那就是malleable C2。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/01/关于CS上线微信通知的学习/"><span>关于cobaltstrike微信上线通知的学习</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/01/关于CS上线微信通知的学习/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-01T08:15:43.000Z">
+          2020-09-01
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>​    有时候渗透中我们可能需要对一些目标进行钓鱼，常用的就是使用邮件进行钓鱼，但是邮件钓鱼有一个问题，就是实时性不高，可能我们发了邮件，目标很久才会点，如果目标上线后我们没有及时进行利用或者权限维持，等我们再去看可能目标已经丢了，再想让目标点击上线已经不容易了，这就导致我们之前所做的事情功亏一篑，因此我们需要某种方法，让我们能随时知道目标是否上线，也不用一直盯着电脑。</p>
+<p>​    经过查找网上的资料，发现已经有人实现了通过server酱和CS扩展脚本来让目标上线后进行微信提醒的功能。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/01/关于cobaltstrike通信流程的分析/"><span>关于cobaltstrike通信流程的分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/01/关于cobaltstrike通信流程的分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-01T08:15:43.000Z">
+          2020-09-01
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        之前我们了解了关于cobaltstrike shell生成的过程，接下来我们一起了解一下cobaltstrike的stager具体是如何工作的，它在目标主机执行后是如何和我们的服务端进行通信的。</p>
+<h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h3><p>​        在我们分析cobaltstrike的通信过程之前，首先需要了解cobaltstrike的一些基本概念</p>
+<p><strong>Staged Payloads</strong></p>
+<p>​        执行payload的方式分为两种，一种是分阶段加载（Staged）和不分阶段加载（STAGELESS ）。当使用分阶段加载的方式时，一般把程序分为两个部分，stager和stage，stager通常是一个代码量非常小的精简过的汇编代码，它的作用非常简单，就是用来下载stage并载入到内存,也就是主要完成下载远程的stage文件和分配内存将stage加载到内存并执行的功能。在cobaltstrike的官方博客中，给出了一个简单的stager的代码,主要通过C语言实现，通过wsconnect来和远程的地址建立socket通信，下载远程的文件分配内存并载入到内存，最后通过函数指针的形式来进行调用。之所以这么做主要是为了解决payload大小限制的问题。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/08/31/关于CobaltStrike生成shell的过程和执行流程的分析学习/"><span>关于CobaltStrike生成shell的过程和执行流程的分析学习</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/08/31/关于CobaltStrike生成shell的过程和执行流程的分析学习/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-08-31T09:21:58.000Z">
+          2020-08-31
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        可能我们在后渗透阶段使用CobaltStrike使用的是比较多的，关于一款工具，我们不仅仅只能停留在如何使用它，我们也应该了解一下它实现的原理，本文将带着大家和我一起学习关于CoblatStrike这款工具shell生成的过程还有执行流程。我这里是以CobaltStrike4.0为例来进行分析的。</p>
+<p>​        首先我们将CobaltStrike导入到IDEA中，对着CobaltStrike.jar右键选择-add as libirary,那样我们就可以在IDEA中查看这个包反编译的代码，IDEA反编译代码的还原度还是非常高的。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/08/31/关于内网批量横向渗透的学习总结/"><span>关于内网批量横向渗透的学习总结</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/08/31/关于内网批量横向渗透的学习总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-08-31T04:07:47.000Z">
+          2020-08-31
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        之前的学习中我们了解了关于横向移动的方式，当我们知道了这些方式，下一步当然是想要去提高速度，在这篇文章中我将带着大家学习如何来批量上线内网主机。</p>
+<h3 id="环境说明"><a href="#环境说明" class="headerlink" title="环境说明"></a>环境说明</h3><p>192.168.3.* 为仅主机模式的网段</p>
+<p>192.168.5.*为nat模式的网段</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">OWA2013 192.168.3.144 192.168.5.58   边界机</span><br><span class="line">SRV-WEB-KIT 192.168.3.73   内网断网机</span><br><span class="line">PC-JERRY-KIT 192.168.3.75 192.168.5.59   内网出网机</span><br></pre></td></tr></table></figure>
+
+<h3 id="WMI"><a href="#WMI" class="headerlink" title="WMI"></a>WMI</h3><p>​        我们首先学习一下如何使用WMI来批量上线内网主机</p>
+<p>​        当我们获取了某个主机的密码，我们想测试是否有内网主机和这个主机的密码相同，首先需要扫描内网那些主机开放了445端口。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内网渗透/">内网渗透</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/08/28/关于内网断网主机上线的学习总结/"><span>关于内网断网主机上线的学习总结</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/08/28/关于内网断网主机上线的学习总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-08-28T09:12:06.000Z">
+          2020-08-28
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        在进行内网横向移动的过程中我们可能经常会遇到这样的情况，目标内网中的其他主机不出外网，那么我们使用cs直接生成的reverse shell就没有办法使目标内网中的”断网”主机上线，今天我就和大家一起学习如何上线内网的”断网”主机。</p>
+<h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">OWA2013:192.168.3.144 192.168.5.55   模拟边界机192.168.5.*这个网段使用nat模式，192.168.3.*使用仅主机模式</span><br><span class="line">ser-web:192.168.3.73 模拟内网断网机</span><br></pre></td></tr></table></figure>
+
+<h3 id="Pivot-listener"><a href="#Pivot-listener" class="headerlink" title="Pivot listener"></a>Pivot listener</h3><p><strong>建立Pivot listener</strong></p>
+<p>​        首先让边界主机OWA2013上线,上线后对着边界机右键，选择pivoting-&gt;Listener</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内网渗透/">内网渗透</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/08/26/关于内网横向移动套件的利用总结/"><span>关于内网横向移动套件的利用总结</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/08/26/关于内网横向移动套件的利用总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-08-26T09:15:32.000Z">
+          2020-08-26
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        通过上篇文章我们了解了关于内网横向移动的常用方法，但是实战中去使用这些方法往往效率比较低，并且已经有很多大佬发现了这一点并且针对于每种横向移动的方法写出了横向移动的套件。熟悉这些横向移动套件的使用有助于提高我们渗透的速度。因此学习大佬们横向移动套件的使用是非常有必要的，下面我将和大家一起学习关于内网横向移动套件的使用。</p>
+<h3 id="Crackmapexec"><a href="#Crackmapexec" class="headerlink" title="Crackmapexec"></a>Crackmapexec</h3><p>​        Crackmapexec是一款由python开发的横向移动利用工具，网上也有人打包好了它的<a href="https://github.com/maaaaz/CrackMapExecWin" target="_blank" rel="noopener">windows版本</a>，这个是2.x版本的打包,虽然版本比较旧，但是基本的功能都有了</p>
+<p>​        在横向移动之前，可以去扫描开放445端口的主机</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内网渗透/">内网渗透</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/08/23/关于孤独的理解/"><span>关于孤独的理解</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/08/23/关于孤独的理解/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-08-23T14:42:46.000Z">
+          2020-08-23
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <pre><code>孤独是一个人的狂欢</code></pre><p>​        当我们越来越长大，走出了学校，走到了社会，开始参加了工作，或许我们也有些许的朋友在这个城市，或许我们也有同事可以交流，可是每到晚上回到自己的小房间，每到周末呆在房间里，没有来会有一种空虚的感觉，可能这只是我个人的感觉，不过可能在大城市工作的很多人，也有类似的感觉，我们感到空虚，孤独，可能并不一定是因为我们一个人，没有人陪伴，可能只是由于我们有了很多独自与自己相处的时间，但我们不习惯和自己相处，所以才会产生某种难以排解的苦闷。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/08/21/关于内网横向移动的学习总结/"><span>关于内网横向移动的学习总结</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/08/21/关于内网横向移动的学习总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-08-21T09:53:05.000Z">
+          2020-08-21
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        当我们进入内网后，并且对当前主机的各种信息已经搜集完毕，接下来就到了最有意思的环节，横向移动。在这个环节，我们可以通过我们的操作获取多台主机的权限，本文将总结内网横向渗透中常用的姿势。</p>
+<h3 id="WMI"><a href="#WMI" class="headerlink" title="WMI"></a>WMI</h3><p><strong>什么是WMI?</strong></p>
+<p>​        WMI 的全称是 Windows Management Instrumentation，它出现在所有的 Windows 操作系统中，由一组强大的工具集合组成，用于管理本地或<strong>远程</strong>的 Windows 系统。</p>
+<p><strong>为什么要使用WMI？</strong></p>
+<p>​        使用WMI进行横向移动，默认不会留下系统日志，并且脚本无需写入磁盘，具有隐蔽性。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内网渗透/">内网渗透</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
   <article>
 
   
@@ -114,466 +607,13 @@
 
 
 
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/08/12/windows文件下载方式总结/"><span>windows文件下载方式总结</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/08/12/windows文件下载方式总结/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-08-12T09:21:36.000Z">
-          2020-08-12
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">好好学习，天天向上</span><br></pre></td></tr></table></figure>
-
-<p>​        我认为按照我们平时对于远程加载文件的需求，可以按照能否加载任意格式的文件来进行区分，有些下载方式，可以去远程下载任意格式的文件，比如exe,txt等等，但是有些则是有限制的，只能下载指定格式的文件，比如js，xls，msi等等。还有些方式也可以下载或者加载远程的文件，但是不是windows自带的方式，所以也可以把这种方式当作一种类型进行总结。最后还有一些方式不能通过http协议进行下载，但是可以通过smb协议进行下载文件，这也可以列为一种方式。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/内网渗透/">内网渗透</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/08/06/关于windows执行shellcode的方式学习/"><span>关于windows执行shellcode的方式学习</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/08/06/关于windows执行shellcode的方式学习/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-08-06T12:07:45.470Z">
-          2020-08-06
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">有时候我们想让目标执行我们的程序上线CS,但是直接调用CMD去执行exe是会被拦截的，遇到这种情况有什么方法可以执行我们的程序。</span><br></pre></td></tr></table></figure>
-
-<h3 id="regsvr32"><a href="#regsvr32" class="headerlink" title="regsvr32"></a>regsvr32</h3><p><strong>Regsvr32是什么？</strong></p>
-<p> Regsvr32命令用来向系统注册控件或者卸载控件的命令。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">语法：Regsvr32 [&#x2F;s][&#x2F;u] [&#x2F;n] [&#x2F;i[:cmdline]] &lt;dllname&gt;</span><br><span class="line">· &#x2F;u：注销服务器；</span><br><span class="line">· &#x2F;i：调用DllInstall传递一个可选的[cmdline]，当它与&#x2F;u一起使用时，它会调用dll uninstall。</span><br><span class="line">· &#x2F;n：不要调用DllRegisterServer，此选项必须与&#x2F;i一起使用</span><br><span class="line">· &#x2F; s ：沉默，不显示消息框；</span><br></pre></td></tr></table></figure>
-
-<p><strong>如何使用regsvr32执行exe？</strong></p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/08/01/关于CS上线微信通知的学习/"><span>关于CS上线微信通知的学习</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/08/01/关于CS上线微信通知的学习/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-08-01T01:30:19.013Z">
-          2020-08-01
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">好好学习，天天向上</span><br></pre></td></tr></table></figure>
-
-<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>​    有时候渗透中我们可能需要对一些目标进行钓鱼，常用的就是使用邮件进行钓鱼，但是邮件钓鱼有一个问题，就是实时性不高，可能我们发了邮件，目标很久才会点，如果目标上线后我们没有及时进行利用或者权限维持，等我们再去看可能目标已经丢了，再想让目标点击上线已经不容易了，这就导致我们之前所做的事情功亏一篑，因此我们需要某种方法，让我们能随时知道目标是否上线，也不用一直盯着电脑。</p>
-<p>​    经过查找网上的资料，发现已经有人实现了通过server酱和CS扩展脚本来让目标上线后进行微信提醒的功能。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/07/31/关于自解压文件创建/"><span>关于自解压文件创建</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/07/31/关于自解压文件创建/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-07-31T02:42:09.076Z">
-          2020-07-31
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">记录自解压文件创建的过程及遇到的问题</span><br></pre></td></tr></table></figure>
-
-<h3 id="创建过程"><a href="#创建过程" class="headerlink" title="创建过程"></a>创建过程</h3><p>首先准备好我们想要创建自解压的文件，我这里的内容如下</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/07/29/关于文档钓鱼的学习/"><span>关于文档钓鱼的学习</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/07/29/关于文档钓鱼的学习/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-07-29T09:00:12.485Z">
-          2020-07-29
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">虽然word,office这些办公软件的漏洞都比较早了，不过由于很多人用的都不是正版的程序，因此很多人电脑的办公软</span><br><span class="line">件依然存在漏洞，所以也是值得去研究和学习的，本文记录了我学习的过程。</span><br></pre></td></tr></table></figure>
-
-<p><strong>学习环境</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">office套件2016</span><br><span class="line">windows10 10.0.17763.1282</span><br></pre></td></tr></table></figure>
-
-<h3 id="DDE钓鱼"><a href="#DDE钓鱼" class="headerlink" title="DDE钓鱼"></a>DDE钓鱼</h3><p>​    动态数据交换(DDE)是一种动态数据交换机制，使用DDE通讯需要两个Windows应用程序，其中一个作为服务器处理信息，另外一个作为客户机从服务器获得信息。我们可以利用这个属性在office中执行我们的恶意代码。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/07/26/MSSQL注入绕过360主机卫士/"><span>MSSQL注入绕过360主机卫士</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/07/26/MSSQL注入绕过360主机卫士/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-07-26T07:35:22.410Z">
-          2020-07-26
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">仅仅是记录绕过的思路和过程，也算是自己的一个总结</span><br></pre></td></tr></table></figure>
-
-<h1 id="绕过过程"><a href="#绕过过程" class="headerlink" title="绕过过程"></a>绕过过程</h1><h2 id="参数污染"><a href="#参数污染" class="headerlink" title="参数污染"></a>参数污染</h2><p>这个之前bypass写过，我这次测试的目标同样是可以使用参数污染来进行绕过的，会出现这个问题，是因为360主机卫士在处理post请求时，没有处理post请求中的get参数，所以可以使用这种方式来进行全局绕过。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/07/26/记MSSQL绕过阿里云/"><span>记MSSQL绕过阿里云</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/07/26/记MSSQL绕过阿里云/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-07-26T03:17:07.868Z">
-          2020-07-26
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">最近一直在学习关于WAF绕过的知识，本次选择阿里云这款云WAF来测试关于MSSQL注入的绕过。因为阿里云主站可能不</span><br><span class="line">是ASP+IIS的环境，所以我不清楚如果真的是ASP+IIS的环境，阿里云的拦截规则是否会有相应的变化。</span><br></pre></td></tr></table></figure>
-
-<h2 id="绕过过程"><a href="#绕过过程" class="headerlink" title="绕过过程"></a>绕过过程</h2><h3 id="逻辑判断语句绕过"><a href="#逻辑判断语句绕过" class="headerlink" title="逻辑判断语句绕过"></a>逻辑判断语句绕过</h3><p>我们知道在检测一个注入点的时候，首先会加上and 1=1之类的判断语句，如果页面返回的逻辑符合我们设想的逻辑，那么就有可能有注入。</p>
-<p><strong>利用%特性绕过</strong></p>
-<p>在iis+asp的环境中，在关键字中间加%不会影响程序的正常执行，因此可以在关键字and中添加%来绕过阿里云的检测。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/07/20/我的渗透之路/"><span>我的渗透之路</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/07/20/我的渗透之路/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-07-20T12:09:15.172Z">
-          2020-07-20
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">不加检点的人生不值一过。</span><br></pre></td></tr></table></figure>
-
-<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近可能是因为技术处于一个瓶颈期，又或者说对未来技术发展方向有些迷茫，所以写下这篇文章梳理一下当前自身的技能树以及未来的发展方向。</p>
-<h2 id="我的渗透观"><a href="#我的渗透观" class="headerlink" title="我的渗透观"></a>我的渗透观</h2><p>​    根据我自己对于渗透的理解，把渗透分为如下几个步骤：</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/02/12/权限维持/"><span>使用cobaltstrike权限维持</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/02/12/权限维持/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-02-12T05:57:24.000Z">
-          2020-02-12
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    在我们获取一个beacon后，为了防止掉线，或者防止目标重启后权限丢失，需要进行权限维持，我这里使用Erebus插件进行权限维持。当然这个插件还有其他功能，我这里仅仅对权限维持这部分的功能进行测试。有service、IFEO和AutoRun三种。插件地址：<a href="https://github.com/DeEpinGh0st/Erebus" target="_blank" rel="noopener">Erebus</a></p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/cobaltstrike/">cobaltstrike</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
 
 <nav class="pagination">
   
   <a href="/page/5/" class="pagination-prev">Prev</a>
   
+  
+  <a href="/page/7/" class="pagination-next">Next</a>
   
 </nav>
     </main>

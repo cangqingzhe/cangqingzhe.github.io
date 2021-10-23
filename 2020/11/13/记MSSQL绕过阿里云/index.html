@@ -1,0 +1,235 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>记MSSQl绕过阿里云 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="记MSSQl绕过阿里云"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>记MSSQl绕过阿里云</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/13/记MSSQL绕过阿里云/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">最近一直在学习关于WAF绕过的知识，本次选择阿里云这款云WAF来测试关于MSSQL注入的绕过。因为阿里云主站可能不</span><br><span class="line">是ASP+IIS的环境，所以我不清楚如果真的是ASP+IIS的环境，阿里云的拦截规则是否会有相应的变化。</span><br></pre></td></tr></table></figure>
+
+<h2 id="绕过过程"><a href="#绕过过程" class="headerlink" title="绕过过程"></a>绕过过程</h2><h3 id="逻辑判断语句绕过"><a href="#逻辑判断语句绕过" class="headerlink" title="逻辑判断语句绕过"></a>逻辑判断语句绕过</h3><p>我们知道在检测一个注入点的时候，首先会加上and 1=1之类的判断语句，如果页面返回的逻辑符合我们设想的逻辑，那么就有可能有注入。</p>
+<p><strong>利用%特性绕过</strong></p>
+<p>在iis+asp的环境中，在关键字中间加%不会影响程序的正常执行，因此可以在关键字and中添加%来绕过阿里云的检测。</p>
+<a id="more"></a>
+
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726131616934.png" alt="image-20200726131616934"></p>
+<p><strong>利用unicode编码绕过</strong></p>
+<p>在ASP+IIS环境中，有某些特性的字符可能会有多个unicode编码，因此可以通过对关键字进行unicode编码进行绕过，比如字符A有多个unicode编码，使用%u0061，%u0041等可能无法绕过，但是使用%u00AA则可以绕过。</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726132202139.png" alt="image-20200726132202139"></p>
+<p><strong>参数污染</strong></p>
+<p>同样，我们也可以使用参数污染来绕过阿里云的检测，可能阿里云这种云WAF在设计上没有考虑到容器特性导致的绕过，只是适配于大多数网站的一般防护。</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726132416572.png" alt="image-20200726132416572"></p>
+<h3 id="绕过order-by拦截"><a href="#绕过order-by拦截" class="headerlink" title="绕过order by拦截"></a>绕过order by拦截</h3><p>阿里云对order by的拦截比较奇怪，如果order by后面跟的是个字符，则不会拦截，跟的是数字就会拦截，因此我们可以这样构造,order by “a”,1</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726133941676.png" alt="image-20200726133941676"></p>
+<p>上面是针对阿里云拦截的通用绕过方法，我们也可以结合asp的特性来进行绕过，比如%,参数污染等等</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726134347117.png" alt="image-20200726134347117"></p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726134426821.png" alt="image-20200726134426821"></p>
+<p>换行+注释，这里阿里云是这样的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">--%0a 不拦截，这个是mssql的注释+换行</span><br><span class="line">--+%0a 拦截，mysql注释+换行</span><br></pre></td></tr></table></figure>
+
+<p>这就可以说明阿里云这款云WAF的主要拦截规则是为mysql设计的，至少在edu.aliyun.com这个站是这样的，至于其他的网站，我没有找到用阿里云的asp的站，所以没有测试。</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726134723900.png" alt="image-20200726134723900"></p>
+<h3 id="联合注入绕过"><a href="#联合注入绕过" class="headerlink" title="联合注入绕过"></a>联合注入绕过</h3><p>在ASP+IIS的环境中，%11等也可以代替空白字符，这个阿里云也没有考虑到，因此也可以达到绕过的目的。</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726135438964.png" alt="image-20200726135438964"></p>
+<p>至于union和select之后的其他字符，并不会被拦截</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726135841710.png" alt="image-20200726135841710"></p>
+<p>假如现在要通过union注入获取数据，比如version，数据库等等，我们看下怎么绕过。</p>
+<h4 id="获取版本信息"><a href="#获取版本信息" class="headerlink" title="获取版本信息"></a>获取版本信息</h4><p>比如获取version，直接使用version关键字是不拦的，只有使用@@version时才会拦截。而且单独的@@version也是会被阿里云拦截的</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726140854413.png" alt="image-20200726140854413"></p>
+<p>所以这里要绕过的话，就是要想办法破坏@@version这个关键字，方法也挺多的。</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726140950076.png" alt="image-20200726140950076"></p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726141003116.png" alt="image-20200726141003116"></p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726141022204.png" alt="image-20200726141022204"></p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726141048780.png" alt="image-20200726141048780"></p>
+<h4 id="获取数据库"><a href="#获取数据库" class="headerlink" title="获取数据库"></a>获取数据库</h4><p>使用db_name()获取数据库，这个直接没有拦截，没什么好说的</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726141206749.png" alt="image-20200726141206749"></p>
+<p>获取其他的数据库，源语句如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">union select null,null,null,name from master..sysdatabases where name not in(&#39;master&#39;)</span><br></pre></td></tr></table></figure>
+
+<p>前面union select的绕过方法不变，这里我测试过程中发现当我使用master..sysdatabases会被阿里云拦截。</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726141611877.png" alt="image-20200726141611877"></p>
+<p>但是master..sysdatabases单独出现并不会被拦截，因此绕过的思路有两种，第一种是破坏master..sysdatabases出现的上下文环境，另一种就是就是对这个关键字自身做一些操作。</p>
+<p><strong>方法一：参数污染</strong></p>
+<p>使用这种方式进行处理，就是破坏这个关键字出现的上下问环境</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726142000412.png" alt="image-20200726142000412"></p>
+<p><strong>方法二：破坏关键字本身</strong></p>
+<p>这里阿里云是将master..sysdatabases整体当作一个拦截规则进行拦截的，因此我们可以破坏这个关键字本身来达到绕过的目的。</p>
+<p>注释+换行，在.中间加上注释和换行不会影响程序的正常解析，但是却可以绕过阿里云</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726142708993.png" alt="image-20200726142708993"></p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726142729333.png" alt="image-20200726142729333"></p>
+<p>当然，我们也可以使用unicode编码</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726142856285.png" alt="image-20200726142856285"></p>
+<h4 id="获取表名"><a href="#获取表名" class="headerlink" title="获取表名"></a>获取表名</h4><p>这个阿里云不拦截，因此没什么好说的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">union--xxxx%0aselect null,null,null,name from 数据库名..sysobjects  where xtype&#x3D;&#39;U&#39;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726143029949.png" alt="image-20200726143029949"></p>
+<h4 id="获取列名"><a href="#获取列名" class="headerlink" title="获取列名"></a>获取列名</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">union--xxxx%0aselect null,null,null,name from%11sysobjects  where id&#x3D;(select id </span><br><span class="line">from sysobjects WHERE name &#x3D; &#39;表名&#39;)</span><br></pre></td></tr></table></figure>
+
+<p>这里阿里云拦截了select id from这部分，但是单独的select id from是不会拦截的，所以我们要把这个语句放在上下问环境下来测试绕过。首先我发现select xxx也是会被拦截的，我在select中假如了%达到了此处的绕过。</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726144229258.png" alt="image-20200726144229258"></p>
+<p>后面的部分也就不会拦截了,所以绕过语句如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">union--xxxx%0aselect null,null,null,name from%11sysobjects where id&#x3D;(sele%ct id from sysobjects where name&#x3D;&#39;x&#39;)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726145119306.png" alt="image-20200726145119306"></p>
+<h4 id="获取数据"><a href="#获取数据" class="headerlink" title="获取数据"></a>获取数据</h4><p>这个没啥说的，本身就可以直接绕过</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">union--xxxx%0aselect null,null,null,name from%11数据库..表名</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726145308997.png" alt="image-20200726145308997"></p>
+<h3 id="命令执行绕过"><a href="#命令执行绕过" class="headerlink" title="命令执行绕过"></a>命令执行绕过</h3><p>很多时候我们拿到MSSQL的注入，可能是直接执行命令而不是出数据，对吧？</p>
+<p>首先是不是要判断能不能执行多语句，我最常用的是waitfor delay ’00：00：05‘这样的语句来判断是否支持多语句，所以我们首先看下怎么使用这个语句绕过阿里云。</p>
+<p>这里讲一下，我在对WAF进行绕过测试的思路。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">首先，我要判断出这个WAF的拦截规则，比如waitfor delay ’00：00：05‘，这个直接会被阿里云拦的,所以我要</span><br><span class="line">判断是那部分被阿里云拦了。这里的绕过测试其实和免杀的方法类似，就是特征码定位，比如，我删除了delay后面的</span><br><span class="line">部分，还是会被拦，因此&#39;00:00:05&#39;并不是WAF拦截的部分，我再删除了delay发现不烂了，因此，可能拦截的就</span><br><span class="line">是waitfor delay这个关键字。</span><br></pre></td></tr></table></figure>
+
+<p><strong>绕过一：unicode编码</strong></p>
+<p>通过之前的测试，我们知道关键字a的unicode编码是没有被阿里云拦截的，因此我们可以通过unicode编码绕过。</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726150126019.png" alt="image-20200726150126019"></p>
+<p><strong>绕过二：空白字符</strong></p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726150214566.png" alt="image-20200726150214566"></p>
+<p><strong>绕过三：注释+换行</strong></p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726150252014.png" alt="image-20200726150252014"></p>
+<p>然后假如我们要调用xp_cmdshell执行命令，该怎么绕过。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">exec master..xp_cmdshell &#39;whoami&#39;</span><br></pre></td></tr></table></figure>
+
+<p>这里我经过测试，发现当exec和 master..xp_cmdshell一起出现时，则会被拦截，因此绕过一方面时破坏exec和master..xp_cmdshell中间的内容，还有就是master..xpcmdshell本身。可能是这个比较重要，我这里发现，当</p>
+<p>exec 和xp_cmdshell同时出现，不管中间是什么字符，都会被拦截。</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726150806727.png" alt="image-20200726150806727"></p>
+<p><strong>绕过一：参数污染</strong></p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726150914069.png" alt="image-20200726150914069"></p>
+<p><strong>绕过二：%</strong></p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726150953254.png" alt="image-20200726150953254"></p>
+<p><strong>绕过三：unicode编码</strong></p>
+<p>我这里找了个e的unicode编码进行绕过</p>
+<p><img src="/2020/11/13/%E8%AE%B0MSSQL%E7%BB%95%E8%BF%87%E9%98%BF%E9%87%8C%E4%BA%91/image-20200726151055989.png" alt="image-20200726151055989"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>​    其实这些方法在几年前都有很多大佬总结过，我也不过是按照他们提供的思路进行尝试，这里会发现云WAF的一个问题，就是他们针对于mysql拦截的比较全面，但是对于其他的数据库，可能没有那么全面。还有一些针对于容器的绕过方法，比如参数污染，%,甚至在aspx中还有%00特性也没有考虑到，当然，这个也有可能是因为我测试的这个站不是用的ASP+IIS的环境，才能让我顺利绕过。总之，WAF也是人写的，并没有那么可怕。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>
