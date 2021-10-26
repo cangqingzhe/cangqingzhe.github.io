@@ -67,6 +67,65 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/10/09/webshell免杀过阿里云asp/"><span>webshell免杀过阿里云asp</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/09/webshell免杀过阿里云asp/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-09T04:12:38.000Z">
+          2021-10-09
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="注释填充"><a href="#注释填充" class="headerlink" title="注释填充"></a>注释填充</h2><p>​    参考<code>Webshell-Detect-Bypass</code>项目<code>glorysday.asp</code>可以绕过阿里云的检测。这部分作者主要用了下面几个技巧。</p>
+<blockquote>
+<p>  利用<code>&#39;%&gt;</code>和<code>&#39;&lt;%</code>分别闭合前后标签填充大量垃圾<code>&lt;%%&gt;</code>标签，且最后文件体积大小要合适(测试发现文件大小约&gt;0.97 MB)</p>
+<p>在<strong>一定位置</strong>插入至少一个<code>&lt;??&gt;</code>字符串</p>
+</blockquote>
+<p>​    之前我在绕云WAF时，发现增加垃圾字符可以绕过云WAF的检测，所以我怀疑能绕过是因为大量垃圾字符的。于是我去除了<code>&#39;%&gt;</code>这部分，只使用大量的<code>&lt;%%&gt;</code>填充，也确实绕过了云查杀。但是如果使用其他字符填充无法绕过，所以我推测能绕过的原因是匹配<code>&lt;%%&gt;</code>的次数过多而导致的溢出。</p>
+<p>​    虽然大量填充可以绕过阿里云的查杀，但是这种方式在实战中并不可取，由于上传文件内容过大，导致在访问文件的过程中会有一些卡顿，一定程度上影响了客户端和webshell的交互。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/10/08/webshell免杀过阿里云PHP/"><span>webshell免杀过阿里云PHP</span></a></h3>
     
   
@@ -539,59 +598,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/反序列化/">反序列化</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/07/21/从JNDI注入到内存马植入/"><span>从JNDI注入到内存马植入</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/07/21/从JNDI注入到内存马植入/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-07-21T01:08:05.000Z">
-          2021-07-21
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        某次团队的小伙伴给了个系统需要后台getshell，经过分析这个系统不解析jsp，但在后台发现了个反射调用任意类的任意方法的功能点，想到通过JNDI注入利用，下面着重分析如何通过JNDI注入种植内存马。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞利用/">漏洞利用</a>
     </span>
     
 

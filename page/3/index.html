@@ -67,6 +67,59 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/07/21/从JNDI注入到内存马植入/"><span>从JNDI注入到内存马植入</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/07/21/从JNDI注入到内存马植入/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-07-21T01:08:05.000Z">
+          2021-07-21
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        某次团队的小伙伴给了个系统需要后台getshell，经过分析这个系统不解析jsp，但在后台发现了个反射调用任意类的任意方法的功能点，想到通过JNDI注入利用，下面着重分析如何通过JNDI注入种植内存马。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/06/18/冰蝎客户端改写/"><span>冰蝎客户端改写</span></a></h3>
     
   
@@ -213,60 +266,6 @@
       <i class="icon-categories"></i>
         <a href="/categories/漏洞分析/">漏洞分析</a>
     </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/06/03/commons-collection1利用链分析/"><span>commons-collection1利用链分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/06/03/commons-collection1利用链分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-06-03T01:55:52.305Z">
-          2021-06-03
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h4 id="1-序列化-与-反序列化"><a href="#1-序列化-与-反序列化" class="headerlink" title="1. 序列化 与 反序列化"></a>1. <strong>序列化 与 反序列化</strong></h4><ul>
-<li><p><strong>定义</strong>：<strong><u>序列化</u></strong>指 将 <strong><u>对象/数据结构</u></strong>的<u><strong>状态</strong></u>信息 转换为可以<u><strong>存储</strong></u>或<u><strong>传输</strong></u>的形式的过程，其<u><strong>反</strong></u>过程称为<u><strong>反序列化</strong></u>。</p>
-</li>
-<li><p><strong>作用</strong>：</p>
-<ul>
-<li>将对象<u><strong>持久化</strong></u>到<u><strong>存储介质</strong></u>以便再次使用</li>
-<li>使对象能在<u><strong>网络</strong></u>中传输</li>
-<li>如序列化格式<u><strong>独立于语言</strong></u>，可以实现<u><strong>不同语言</strong></u>之间<u><strong>对象的传递</strong></u></li>
-</ul></li></ul>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
     
 
     
