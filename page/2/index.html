@@ -67,6 +67,114 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/10/09/DedeCMS-RCE漏洞分析/"><span>DedeCMS RCE漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/09/DedeCMS-RCE漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-09T14:06:08.000Z">
+          2021-10-09
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近看到几个公众号都披露了DedeCMS的漏洞，很久也没有分析过PHP的漏洞了，趁着周末没什么事情分析下这两个漏洞。</p>
+<h2 id="V5-8-1内测版前台RCE"><a href="#V5-8-1内测版前台RCE" class="headerlink" title="V5.8.1内测版前台RCE"></a>V5.8.1内测版前台RCE</h2><p>​    这个漏洞在<a href="https://mp.weixin.qq.com/s/KZ7O0JRLvk4_O1GvL5lMVw" target="_blank" rel="noopener">这篇文章</a>有过分析，但我还是决定自己搭建好环境分析一下，以便自己能理解的更加深刻。</p>
+<h3 id="分析过程"><a href="#分析过程" class="headerlink" title="分析过程"></a>分析过程</h3><p>​    在DedeCMS中，当访问出现某些异常，Dede会弹出一个窗口给用户提示。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/09/beanUtils利用链分析/"><span>beanUtils利用链分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/09/beanUtils利用链分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-09T08:41:09.000Z">
+          2021-10-09
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    之前搞Shiro时看到P神发的一篇文章<a href="https://www.leavesongs.com/PENETRATION/commons-beanutils-without-commons-collections.html" target="_blank" rel="noopener">CommonsBeanutils与无commons-collections的Shiro反序列化利用</a>,提到了可以<code>CommonsBeanutils</code>的原生利用链对Shiro系统进行利用，当时刚好有一个项目就是找不到利用链的情况，按着P神的代码魔改了一下打成了，但还是不清楚原理,所以先补一下<code>CommonsBeanutils</code>利用链的相关知识。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/反序列化/">反序列化</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/10/09/webshell免杀过阿里云asp/"><span>webshell免杀过阿里云asp</span></a></h3>
     
   
@@ -489,115 +597,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/08/06/fastjson反序列化漏洞分析/"><span>fastjson反序列化漏洞分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/08/06/fastjson反序列化漏洞分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-08-06T05:47:24.000Z">
-          2021-08-06
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        最近做项目遇到存在漏洞的fastjson,虽然最终还是打下来了，但是要深入利用如果不了解原理就比较难受，因此专门花时间了解下fastjson反序列化漏洞形成的原理。我不想长篇大论的去写很多关于fastjson的问题，主要是解决我这个没接触过fastjson漏洞的一些疑惑。</p>
-<h3 id="有没有特殊编码可以绕WAF？"><a href="#有没有特殊编码可以绕WAF？" class="headerlink" title="有没有特殊编码可以绕WAF？"></a><strong>有没有特殊编码可以绕WAF？</strong></h3><p>​        之前做渗透，当json数据包中出现<code>&quot;@type&quot;:&quot;com.sun.rowset.JdbcRowSetImpl&quot;</code>数据包就会被拦截，因此分析下有没有替代方案可以绕过WAF。</p>
-<p>​        在<code>com.alibaba.fastjson.parser.DefaultJSONParser#parseObject(java.util.Map, java.lang.Object)</code>中会对JSON进行词法解析。当解析到第一个内容是,时，会忽略后面的,和其他空白字符。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/07/31/hibernate1利用链分析/"><span>hibernate1利用链分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/07/31/hibernate1利用链分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-07-31T05:05:31.000Z">
-          2021-07-31
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        最近做项目刚好遇到了反序列化漏洞，在项目中依赖了hibernate组件，借此机会分析下hibernate利用链。</p>
-<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>​        首先看下最终反序列化漏洞的触发点，这个漏洞的触发点在<code>org.hibernate.property.BasicPropertyAccessor.BasicGetter#get</code>中，在这这个方法中使用了method.invoke反射调用。这里的method是从属性中获取的，因此是可控的，所以下来需要找到可以控制target参数的点。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/反序列化/">反序列化</a>
     </span>
     
 

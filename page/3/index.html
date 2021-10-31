@@ -67,6 +67,115 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/08/06/fastjson反序列化漏洞分析/"><span>fastjson反序列化漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/08/06/fastjson反序列化漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-08-06T05:47:24.000Z">
+          2021-08-06
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        最近做项目遇到存在漏洞的fastjson,虽然最终还是打下来了，但是要深入利用如果不了解原理就比较难受，因此专门花时间了解下fastjson反序列化漏洞形成的原理。我不想长篇大论的去写很多关于fastjson的问题，主要是解决我这个没接触过fastjson漏洞的一些疑惑。</p>
+<h3 id="有没有特殊编码可以绕WAF？"><a href="#有没有特殊编码可以绕WAF？" class="headerlink" title="有没有特殊编码可以绕WAF？"></a><strong>有没有特殊编码可以绕WAF？</strong></h3><p>​        之前做渗透，当json数据包中出现<code>&quot;@type&quot;:&quot;com.sun.rowset.JdbcRowSetImpl&quot;</code>数据包就会被拦截，因此分析下有没有替代方案可以绕过WAF。</p>
+<p>​        在<code>com.alibaba.fastjson.parser.DefaultJSONParser#parseObject(java.util.Map, java.lang.Object)</code>中会对JSON进行词法解析。当解析到第一个内容是,时，会忽略后面的,和其他空白字符。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/07/31/hibernate1利用链分析/"><span>hibernate1利用链分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/07/31/hibernate1利用链分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-07-31T05:05:31.000Z">
+          2021-07-31
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        最近做项目刚好遇到了反序列化漏洞，在项目中依赖了hibernate组件，借此机会分析下hibernate利用链。</p>
+<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>​        首先看下最终反序列化漏洞的触发点，这个漏洞的触发点在<code>org.hibernate.property.BasicPropertyAccessor.BasicGetter#get</code>中，在这这个方法中使用了method.invoke反射调用。这里的method是从属性中获取的，因此是可控的，所以下来需要找到可以控制target参数的点。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/反序列化/">反序列化</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/07/21/从JNDI注入到内存马植入/"><span>从JNDI注入到内存马植入</span></a></h3>
     
   
@@ -250,59 +359,6 @@
       
         <p>​        前阵子vcenter爆出了<code>CVE-2021-21985</code>漏洞，师傅们对这个漏洞提出了多种不同的利用方案，都非常的精彩，因此我搭建好了vcenter的环境，并对师傅们公开的利用方法进行了分析。</p>
 <h3 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h3><p>​        本来打算通过OVA来安装，试了7.0和6.5的版本，由于各种坑试了两天都没搭建成功，最后无奈在windows下进行安装，需要注意的是在SSO设置域名时，如果是在内网搭建的没有域名，改一下本地的hosts文件随便给个域名就可以了，最终选择6.7的版本进行安装。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/05/27/某微文件上传漏洞分析/"><span>某微文件上传漏洞分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/05/27/某微文件上传漏洞分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-05-27T06:16:17.000Z">
-          2021-05-27
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        漏洞分析的好处一方面可以加深漏洞的理解，说不定还能顺手再挖个。</p>
         
       
     </div>
@@ -532,60 +588,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/webshell/">webshell</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/01/04/注入冰蝎内存马实现/"><span>注入冰蝎内存马实现</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/01/04/注入冰蝎内存马实现/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-01-04T08:39:53.000Z">
-          2021-01-04
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        通过之前的文章，我们了解了servlet和filter类型的内存马的实现，但是实现的是cmd马，在实战的过程中会有两个问题。1.不方便操作使用.2.比较难过WAF的查杀。本片文章我先解决一下第一个问题，将冰蝎马注入到内存。</p>
-<h2 id="冰蝎马实现"><a href="#冰蝎马实现" class="headerlink" title="冰蝎马实现"></a>冰蝎马实现</h2><h3 id="客户端实现"><a href="#客户端实现" class="headerlink" title="客户端实现"></a>客户端实现</h3><p>​         由于静态分析比较麻烦，所以我选择直接debug调试，这里感谢<code>https://github.com/Freakboy/Behinder</code>给出了可以直接运行的冰蝎3.0源码，有了源码可以方便调试并且根据需求对冰蝎进行二次开发。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/内存马/">内存马</a>
     </span>
     
 
