@@ -67,6 +67,65 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/11/11/Thymeleaf-SSTI漏洞分析/"><span>Thymeleaf SSTI漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/11/11/Thymeleaf-SSTI漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-11-11T02:25:16.000Z">
+          2021-11-11
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近看到某平台上有一篇关于SSTI的文章，之前也没了解过SSTI的漏洞，因此决定写篇文章记录学习过程。</p>
+<h2 id="模板引擎"><a href="#模板引擎" class="headerlink" title="模板引擎"></a>模板引擎</h2><p>​    要了解SSTI漏洞，首先要对模板引擎有所了解。下面是模板引擎的几个相关概念。</p>
+<blockquote>
+<p>模板引擎（这里特指用于Web开发的模板引擎）是为了使用户界面与业务数据（内容）分离而产生的，它可以生成特定格式的文档，用于网站的模板引擎就会生成一个标准的文档。</p>
+<p>模板引擎的本质是将模板文件和数据通过模板引擎生成最终的HTML代码。</p>
+<p>模板引擎不属于特定技术领域，它是跨领域跨平台的概念。</p>
+</blockquote>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/10/28/resin解析漏洞分析/"><span>resin解析漏洞分析</span></a></h3>
     
   
@@ -516,59 +575,6 @@
       
         <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近在研究webshell免杀的问题，到了内存马免杀部分发现传统的Filter或者Servlet查杀手段比较多，不太容易实现免杀，比如有些工具会将所有注册的<code>Servlet</code>和<code>Filter</code>拿出来，排查人员仔细一点还是会被查出来的，所以<strong>我们要找一些其他方式实现的内存马。比如我今天提到的JSP的内存马</strong>。</p>
 <h2 id="JSP加载流程分析"><a href="#JSP加载流程分析" class="headerlink" title="JSP加载流程分析"></a>JSP加载流程分析</h2><p>​    在Tomcat中<code>jsp</code>和<code>jspx</code>都会交给<code>JspServlet</code>处理，所以要想实现<code>JSP</code>驻留内存，首先得分析<code>JspServlet</code>的处理逻辑。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/内存马/">内存马</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/10/13/JavaAgent内存马研究/"><span>JavaAgent内存马研究</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/13/JavaAgent内存马研究/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-13T08:59:19.000Z">
-          2021-10-13
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近在研究<code>webshell</code>免杀，发现针对很多类型的内存马已经有了比较成型的检测方法，当然大多数内存马的查杀方式也是基于<code>javaAgent</code>，但是<code>rebeyond</code>前辈在文章<a href="https://xz.aliyun.com/t/10075" target="_blank" rel="noopener">Java内存攻击技术漫谈</a>中给出了绕过检测工具的方法，理论上这种绕过会导致现有的基于<code>Agent</code>检测的工具无法使用，所以值得我们深入学习。</p>
         
       
     </div>
