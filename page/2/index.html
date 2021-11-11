@@ -67,6 +67,60 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/10/14/JSP内存马研究/"><span>JSP内存马研究</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/14/JSP内存马研究/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-14T02:03:17.000Z">
+          2021-10-14
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近在研究webshell免杀的问题，到了内存马免杀部分发现传统的Filter或者Servlet查杀手段比较多，不太容易实现免杀，比如有些工具会将所有注册的<code>Servlet</code>和<code>Filter</code>拿出来，排查人员仔细一点还是会被查出来的，所以<strong>我们要找一些其他方式实现的内存马。比如我今天提到的JSP的内存马</strong>。</p>
+<h2 id="JSP加载流程分析"><a href="#JSP加载流程分析" class="headerlink" title="JSP加载流程分析"></a>JSP加载流程分析</h2><p>​    在Tomcat中<code>jsp</code>和<code>jspx</code>都会交给<code>JspServlet</code>处理，所以要想实现<code>JSP</code>驻留内存，首先得分析<code>JspServlet</code>的处理逻辑。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内存马/">内存马</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/10/13/JavaAgent内存马研究/"><span>JavaAgent内存马研究</span></a></h3>
     
   
@@ -528,60 +582,6 @@
         <p>​        之前审计的过程中，遇到过Dubbo这个组件，虽然知道这个组件存在反序列化漏洞，但是关于漏洞的详情和利用一概不知，所以下面对Dubbo的漏洞进行分析。</p>
 <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>​        Dubbo是一款开源的RPC和微服务治理的框架，最早是阿里开发的后来归到了Apache下面，支持多种协议，比如gRPC、Thrift、JsonRPC、Hessian2、REST、RMI、HTTP。</p>
 <p>​        下面是官网对于Dubbo架构的介绍。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/08/26/shiro权限绕过漏洞分析/"><span>shiro权限绕过漏洞分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/08/26/shiro权限绕过漏洞分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-08-26T09:39:40.000Z">
-          2021-08-26
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        之前协助渗透做审计的时候遇到了shiro版本不高，当时想到了shiro的权限绕过漏洞，但是在网上试了好几个payload都没成功 ，现在空下来了分析下shiro权限绕过的原理及触发条件。</p>
-<h3 id="为什么会导致权限绕过？"><a href="#为什么会导致权限绕过？" class="headerlink" title="为什么会导致权限绕过？"></a>为什么会导致权限绕过？</h3><p>​        首先观察一下shiro权限绕过的payload为<code>/xx/..;/</code>，并且在官方也强调了是和spring配合使用时出现的问题，不难判断出出现这个问题的原因在于shiro和spring处理url的不一致导致的，而spring在请求处理过程中会去除/./和/;xxxasxdasd/中的内容，通过这种方式变形的url可能和shiro配置的filter不一致，导致了权限绕过。</p>
         
       
     </div>
