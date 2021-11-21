@@ -67,6 +67,118 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/09/10/Dubbo源码分析/"><span>Dubbo源码分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/10/Dubbo源码分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-10T05:50:49.000Z">
+          2021-09-10
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        最近准备对Dubbo的历史漏洞进行分析，但觉得不懂Dubbo的设计和实现直接去分析漏洞比较困难，所以在分析漏洞前先分析Dubbo的源码及实现，值得一提的是Dubbo的官网也有非常详细的源码分析的过程。</p>
+<h3 id="SPI机制及实现"><a href="#SPI机制及实现" class="headerlink" title="SPI机制及实现"></a>SPI机制及实现</h3><p>​        Dubbo的SPI是对JDK自身SPI的扩展实现，增加了IOC和AOP的功能，是Dubbo实现的核心，Dubbo SPI需要的配置文件放在<code>/meta-inf/dubbo</code>目录下，通过键值对的方式配置，如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">adaptive&#x3D;org.apache.dubbo.common.extension.factory.AdaptiveExtensionFactory</span><br><span class="line">spi&#x3D;org.apache.dubbo.common.extension.factory.SpiExtensionFactory</span><br></pre></td></tr></table></figure>
+
+<p>​        Dubbo的SPI和JDK自身的SPI对比如下，这也是Dubbo没有选择使用JDK自带SPI的原因。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/源码分析/">源码分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/09/08/Dubbo漏洞分析/"><span>Dubbo漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/08/Dubbo漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-08T05:47:32.000Z">
+          2021-09-08
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        之前审计的过程中，遇到过Dubbo这个组件，虽然知道这个组件存在反序列化漏洞，但是关于漏洞的详情和利用一概不知，所以下面对Dubbo的漏洞进行分析。</p>
+<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>​        Dubbo是一款开源的RPC和微服务治理的框架，最早是阿里开发的后来归到了Apache下面，支持多种协议，比如gRPC、Thrift、JsonRPC、Hessian2、REST、RMI、HTTP。</p>
+<p>​        下面是官网对于Dubbo架构的介绍。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/08/26/shiro权限绕过漏洞分析/"><span>shiro权限绕过漏洞分析</span></a></h3>
     
   
@@ -466,112 +578,6 @@
       
         <p>​        前阵子vcenter爆出了<code>CVE-2021-21985</code>漏洞，师傅们对这个漏洞提出了多种不同的利用方案，都非常的精彩，因此我搭建好了vcenter的环境，并对师傅们公开的利用方法进行了分析。</p>
 <h3 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h3><p>​        本来打算通过OVA来安装，试了7.0和6.5的版本，由于各种坑试了两天都没搭建成功，最后无奈在windows下进行安装，需要注意的是在SSO设置域名时，如果是在内网搭建的没有域名，改一下本地的hosts文件随便给个域名就可以了，最终选择6.7的版本进行安装。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/05/20/某微RCE回显利用分析/"><span>某微RCE回显利用分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/05/20/某微RCE回显利用分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-05-20T07:03:08.000Z">
-          2021-05-20
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        最近某微爆出RCE漏洞，本想着通过相对路径写入shell，但是不知是什么原因，在实际渗透中并没有成功，内存马这里也考虑了一下，但是由于这里的利用需要将class经过BCEL编码，由于无法将两个类进行BCEL编码，所以只能放弃了种内存马的想法，那目前最稳妥的方法就是获得命令执行的结果，让攻击者根据自己的需求去完成后续的利用。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞利用/">漏洞利用</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/05/15/泛微Xstream反序列化漏洞分析/"><span>泛微Xstream反序列化漏洞分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/05/15/泛微Xstream反序列化漏洞分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-05-15T08:58:33.000Z">
-          2021-05-15
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="泛微Xstream反序列化漏洞分析"><a href="#泛微Xstream反序列化漏洞分析" class="headerlink" title="泛微Xstream反序列化漏洞分析"></a>泛微Xstream反序列化漏洞分析</h2><h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>​        POC大致如下</p>
         
       
     </div>

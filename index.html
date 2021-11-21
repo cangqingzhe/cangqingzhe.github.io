@@ -67,6 +67,114 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/11/16/CodeQL学习笔记/"><span>CodeQL学习笔记</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/11/16/CodeQL学习笔记/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-11-16T10:37:18.000Z">
+          2021-11-16
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    在挖了一段时间的漏洞后，逐渐感觉挖洞变成了一个体力活，虽然也使用正则匹配的方式减少了部分工作量，但这种方式还是有很大的缺陷，准确率比较低，因此希望找到一种新的方式来辅助挖洞，最近CodeQL比较火，很多师傅也写了相应的文章，相对来说学习成本已经算比较低了。尽管看了很多师傅的文章，但感觉上自己对原理或者语法的学习还是比较迟钝，因此打算去分析师傅们已经写好的一些query语法，帮助自己理解。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/CodeQL/">CodeQL</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/11/11/CVE-2021-40539-ManageEngine-ADSelfService-Plus漏洞分析/"><span>CVE-2021-40539 ManageEngine ADSelfService Plus漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/11/11/CVE-2021-40539-ManageEngine-ADSelfService-Plus漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-11-11T10:31:47.000Z">
+          2021-11-11
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>​    该漏洞影响版本在<code>6113</code>版本以前，但是在官网上已经下载不到这个版本了，我在<a href="https://fs2.download82.com/software/bbd8ff9dba17080c0c121804efbd61d5/manageengine-adselfservice-plus/ManageEngine_ADSelfService_Plus_64bit.exe" target="_blank" rel="noopener">其他网站</a>下载了5.8的版本进行分析。</p>
+<p>​    下载好后双击exe安装，但启动过程中会卡在一个地方不动，后来我是通过双击<code>bin/run.bat</code>解决的，需要注意在选择版本的时候选择<code>free</code>版本。启动后的界面如下：</p>
+<p><img src="/2021/11/11/CVE-2021-40539-ManageEngine-ADSelfService-Plus%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211112113129673.png" alt="image-20211112113129673"></p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/11/11/代码审计阶段性总结/"><span>代码审计阶段性总结</span></a></h3>
     
   
@@ -489,111 +597,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/webshell/">webshell</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/10/20/Java-Agent修改Shiro-key/"><span>Java Agent修改Shiro key</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/20/Java-Agent修改Shiro-key/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-20T05:40:29.000Z">
-          2021-10-20
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    之前佬哥给我提了个需求，如何修改<code>Shiro Key</code>，我们知道<code>Shiro</code>在高版本<code>key</code>默认是随机生成的，没有在配置文件中，即使在配置文件中配置了<code>key</code>,也要重启服务器完成修改也不太好，虽然之前知道可以通过<code>Java Agent</code>的方式完成修改，但当时没有了解过这个技术，最近刚好学习了<code>Java Agent</code>，所以抽空完成提过的需求。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞利用/">漏洞利用</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/10/15/Valve内存马研究/"><span>Valve内存马研究</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/15/Valve内存马研究/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-15T08:41:12.000Z">
-          2021-10-15
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/内存马/">内存马</a>
     </span>
     
 
