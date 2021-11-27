@@ -67,166 +67,6 @@
 
   
     
-    <h3 class="article-title"><a href="/2021/05/20/某微RCE回显利用分析/"><span>某微RCE回显利用分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/05/20/某微RCE回显利用分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-05-20T07:03:08.000Z">
-          2021-05-20
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        最近某微爆出RCE漏洞，本想着通过相对路径写入shell，但是不知是什么原因，在实际渗透中并没有成功，内存马这里也考虑了一下，但是由于这里的利用需要将class经过BCEL编码，由于无法将两个类进行BCEL编码，所以只能放弃了种内存马的想法，那目前最稳妥的方法就是获得命令执行的结果，让攻击者根据自己的需求去完成后续的利用。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞利用/">漏洞利用</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/05/15/泛微Xstream反序列化漏洞分析/"><span>泛微Xstream反序列化漏洞分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/05/15/泛微Xstream反序列化漏洞分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-05-15T08:58:33.000Z">
-          2021-05-15
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="泛微Xstream反序列化漏洞分析"><a href="#泛微Xstream反序列化漏洞分析" class="headerlink" title="泛微Xstream反序列化漏洞分析"></a>泛微Xstream反序列化漏洞分析</h2><h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>​        POC大致如下</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/04/16/Spring-Boot-Fat-Jar-写文件getshell技术分析/"><span>Spring Boot Fat Jar 写文件getshell技术分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/04/16/Spring-Boot-Fat-Jar-写文件getshell技术分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-04-16T03:31:57.000Z">
-          2021-04-16
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    之前在审计的过程中发现，很多JAVA开发的网站经常使用springboot，而springboot又是可以独立于tomcat部署web项目的，而且在不做特殊配置的情况下，也并不解析jsp文件，当时也在想，如果在渗透的过程中发现了一个任意文件上传漏洞，并且目标网站没有内置jsp或者jspx的解析引擎，我该如何getshell？</p>
-<p>​        以我目前的知识积累来看，在linux下且高权限的情况下，可以通过写入计划任务反弹shell。在windows下高权下可以通过写自启动的方式getshell，但是使用这些方式显然要求都比较高，一方面是需要高权限，另一方面在windows下可能有些上传点并不支持上传exe或者dll，也需要等到程序下次启动时才能上线，但是对于服务器来讲，可能管理员很久也不上来操作，这显然也是不行的。后来也想过替换jar包的方式getshell，但想到jar在运行期间替换也是不可行的。最近刚好看到<a href="https://landgrey.me/blog/22/" target="_blank" rel="noopener">Spring Boot Fat Jar 写文件漏洞到稳定 RCE 的探索</a>,作者通过分析JDK中自带且在运行期间默认没有加载的JAR完成了getshell的操作，我本着学习的态度写下了这个文章。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞利用/">漏洞利用</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
     <h3 class="article-title"><a href="/2021/01/05/jsp文件加载shellcode上线cobaltstrike实现/"><span>jsp文件加载shellcode上线cobaltstrike实现</span></a></h3>
     
   
@@ -598,6 +438,170 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/11/13/MSSQL注入绕过360主机卫士/"><span>MSSQL注入绕过360主机卫士</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/13/MSSQL注入绕过360主机卫士/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="参数污染"><a href="#参数污染" class="headerlink" title="参数污染"></a>参数污染</h2><p>这个之前bypass写过，我这次测试的目标同样是可以使用参数污染来进行绕过的，会出现这个问题，是因为360主机卫士在处理post请求时，没有处理post请求中的get参数，所以可以使用这种方式来进行全局绕过。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/11/13/关于sqlserver注入另类技巧的学习/"><span>关于sqlserver注入另类技巧的学习</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/13/关于sqlserver注入另类技巧的学习/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​    最近看到国外一篇关于<a href="https://swarm.ptsecurity.com/advanced-mssql-injection-tricks/" target="_blank" rel="noopener">mssql注入利用</a>的文章，里面用了很多技巧我之前一直不知道，所以自己对这些技巧进行了复现,本次测试的环境为SQLSERVER2008</p>
+<h2 id="报错注入"><a href="#报错注入" class="headerlink" title="报错注入"></a>报错注入</h2><p>​    之前对于SQLSERVER报错注入理解仅限于类型转换导致的报错的利用方法，这次看到有很多新的函数可以进行报错注入利用，我把每个函数的测试单独取出来进行测试。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/11/13/关于windows执行shellcode的方式学习/"><span>关于windows执行shellcode的方式学习</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/13/关于windows执行shellcode的方式学习/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h3 id="regsvr32"><a href="#regsvr32" class="headerlink" title="regsvr32"></a>regsvr32</h3><p><strong>Regsvr32是什么？</strong></p>
+<p> Regsvr32命令用来向系统注册控件或者卸载控件的命令。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">语法：Regsvr32 [&#x2F;s][&#x2F;u] [&#x2F;n] [&#x2F;i[:cmdline]] &lt;dllname&gt;</span><br><span class="line">· &#x2F;u：注销服务器；</span><br><span class="line">· &#x2F;i：调用DllInstall传递一个可选的[cmdline]，当它与&#x2F;u一起使用时，它会调用dll uninstall。</span><br><span class="line">· &#x2F;n：不要调用DllRegisterServer，此选项必须与&#x2F;i一起使用</span><br><span class="line">· &#x2F; s ：沉默，不显示消息框；</span><br></pre></td></tr></table></figure>
+
+<p><strong>如何使用regsvr32执行exe？</strong></p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内网渗透/">内网渗透</a>
     </span>
     
 

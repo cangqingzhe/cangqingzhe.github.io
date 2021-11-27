@@ -67,111 +67,6 @@
 
   
     
-    <h3 class="article-title"><a href="/2021/10/20/Java-Agent修改Shiro-key/"><span>Java Agent修改Shiro key</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/20/Java-Agent修改Shiro-key/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-20T05:40:29.000Z">
-          2021-10-20
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    之前佬哥给我提了个需求，如何修改<code>Shiro Key</code>，我们知道<code>Shiro</code>在高版本<code>key</code>默认是随机生成的，没有在配置文件中，即使在配置文件中配置了<code>key</code>,也要重启服务器完成修改也不太好，虽然之前知道可以通过<code>Java Agent</code>的方式完成修改，但当时没有了解过这个技术，最近刚好学习了<code>Java Agent</code>，所以抽空完成提过的需求。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞利用/">漏洞利用</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/10/15/Valve内存马研究/"><span>Valve内存马研究</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/15/Valve内存马研究/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-15T08:41:12.000Z">
-          2021-10-15
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/内存马/">内存马</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
     <h3 class="article-title"><a href="/2021/10/14/JSP内存马研究/"><span>JSP内存马研究</span></a></h3>
     
   
@@ -317,59 +212,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/10/09/beanUtils利用链分析/"><span>beanUtils利用链分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/09/beanUtils利用链分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-09T08:41:09.000Z">
-          2021-10-09
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    之前搞Shiro时看到P神发的一篇文章<a href="https://www.leavesongs.com/PENETRATION/commons-beanutils-without-commons-collections.html" target="_blank" rel="noopener">CommonsBeanutils与无commons-collections的Shiro反序列化利用</a>,提到了可以<code>CommonsBeanutils</code>的原生利用链对Shiro系统进行利用，当时刚好有一个项目就是找不到利用链的情况，按着P神的代码魔改了一下打成了，但还是不清楚原理,所以先补一下<code>CommonsBeanutils</code>利用链的相关知识。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/反序列化/">反序列化</a>
     </span>
     
 
@@ -590,6 +432,172 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/安全研究/">安全研究</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/09/10/Dubbo源码分析/"><span>Dubbo源码分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/10/Dubbo源码分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-10T05:50:49.000Z">
+          2021-09-10
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        最近准备对Dubbo的历史漏洞进行分析，但觉得不懂Dubbo的设计和实现直接去分析漏洞比较困难，所以在分析漏洞前先分析Dubbo的源码及实现，值得一提的是Dubbo的官网也有非常详细的源码分析的过程。</p>
+<h3 id="SPI机制及实现"><a href="#SPI机制及实现" class="headerlink" title="SPI机制及实现"></a>SPI机制及实现</h3><p>​        Dubbo的SPI是对JDK自身SPI的扩展实现，增加了IOC和AOP的功能，是Dubbo实现的核心，Dubbo SPI需要的配置文件放在<code>/meta-inf/dubbo</code>目录下，通过键值对的方式配置，如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">adaptive&#x3D;org.apache.dubbo.common.extension.factory.AdaptiveExtensionFactory</span><br><span class="line">spi&#x3D;org.apache.dubbo.common.extension.factory.SpiExtensionFactory</span><br></pre></td></tr></table></figure>
+
+<p>​        Dubbo的SPI和JDK自身的SPI对比如下，这也是Dubbo没有选择使用JDK自带SPI的原因。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/源码分析/">源码分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/09/08/Dubbo漏洞分析/"><span>Dubbo漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/08/Dubbo漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-08T05:47:32.000Z">
+          2021-09-08
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        之前审计的过程中，遇到过Dubbo这个组件，虽然知道这个组件存在反序列化漏洞，但是关于漏洞的详情和利用一概不知，所以下面对Dubbo的漏洞进行分析。</p>
+<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>​        Dubbo是一款开源的RPC和微服务治理的框架，最早是阿里开发的后来归到了Apache下面，支持多种协议，比如gRPC、Thrift、JsonRPC、Hessian2、REST、RMI、HTTP。</p>
+<p>​        下面是官网对于Dubbo架构的介绍。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/08/26/shiro权限绕过漏洞分析/"><span>shiro权限绕过漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/08/26/shiro权限绕过漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-08-26T09:39:40.000Z">
+          2021-08-26
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        之前协助渗透做审计的时候遇到了shiro版本不高，当时想到了shiro的权限绕过漏洞，但是在网上试了好几个payload都没成功 ，现在空下来了分析下shiro权限绕过的原理及触发条件。</p>
+<h3 id="为什么会导致权限绕过？"><a href="#为什么会导致权限绕过？" class="headerlink" title="为什么会导致权限绕过？"></a>为什么会导致权限绕过？</h3><p>​        首先观察一下shiro权限绕过的payload为<code>/xx/..;/</code>，并且在官方也强调了是和spring配合使用时出现的问题，不难判断出出现这个问题的原因在于shiro和spring处理url的不一致导致的，而spring在请求处理过程中会去除/./和/;xxxasxdasd/中的内容，通过这种方式变形的url可能和shiro配置的filter不一致，导致了权限绕过。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
     </span>
     
 
