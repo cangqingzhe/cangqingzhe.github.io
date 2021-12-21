@@ -1,0 +1,264 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>fastjson反序列化漏洞分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="fastjson反序列化漏洞分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>fastjson反序列化漏洞分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/08/06/fastjson反序列化漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-08-06T05:47:24.000Z">
+          2021-08-06
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        最近做项目遇到存在漏洞的fastjson,虽然最终还是打下来了，但是要深入利用如果不了解原理就比较难受，因此专门花时间了解下fastjson反序列化漏洞形成的原理。我不想长篇大论的去写很多关于fastjson的问题，主要是解决我这个没接触过fastjson漏洞的一些疑惑。</p>
+<h3 id="有没有特殊编码可以绕WAF？"><a href="#有没有特殊编码可以绕WAF？" class="headerlink" title="有没有特殊编码可以绕WAF？"></a><strong>有没有特殊编码可以绕WAF？</strong></h3><p>​        之前做渗透，当json数据包中出现<code>&quot;@type&quot;:&quot;com.sun.rowset.JdbcRowSetImpl&quot;</code>数据包就会被拦截，因此分析下有没有替代方案可以绕过WAF。</p>
+<p>​        在<code>com.alibaba.fastjson.parser.DefaultJSONParser#parseObject(java.util.Map, java.lang.Object)</code>中会对JSON进行词法解析。当解析到第一个内容是,时，会忽略后面的,和其他空白字符。</p>
+<span id="more"></span>![image-20210809195430699](fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809195430699.png)
+
+<p>​        所以使用下面的内容仍然可以解析。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809200029784.png" alt="image-20210809200029784"></p>
+<p>​        当解析的内容为”,会通过scanSymbol解析key的内容，当当前的内容为\会进入if的逻辑。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809200956010.png" alt="image-20210809200956010"></p>
+<p>​        下面会解析\后的字符，根据\后的字符执行不同的操作。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809201034510.png" alt="image-20210809201034510"></p>
+<p>​        当解析到\x或\u会取后面的内容会接收内容并转换成char。所以可以通过16进制或unicode编码绕过拦截。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">@\u0074ype     -&gt;     @type</span><br><span class="line">@\x74ype       -&gt;     @type</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809201156390.png" alt="image-20210809201156390"></p>
+<p>​        获取key后，继续调用skipWhitespace对后面的内容进行处理，会将:前的空字符替换为空。所以下面的内容也不会影响解析<code>&#123;\&quot;@type\&quot;\t\n\r:\&quot;com.spring.Student\&quot;,\&quot;age\&quot;:6,\&quot;name\&quot;:\&quot;Mi1k7ea\&quot;&#125;</code></p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809201927817.png" alt="image-20210809201927817"></p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809202116641.png" alt="image-20210809202116641"></p>
+<p>​        在往下走，将:后和空白字符也替换为空。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809203925768.png" alt="image-20210809203925768"></p>
+<p>​        当key的内容为@type，会进入if语句中，并且再次通过scanSymbol获取value的内容，所以value也可以使用十六进制或者unicode编码绕过。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809204100959.png" alt="image-20210809204100959"></p>
+<p>​        下面通过<code>com.alibaba.fastjson.util.TypeUtils#loadClass(java.lang.String, java.lang.ClassLoader)</code>加载value对应的类的信息。注意下面，当以L开头并和；结尾，会去掉这两个字符并重复调用<code>TypeUtils#loadClass</code>,所以<code>Lcom.spring.Student;</code>或者<code>LLcom.spring.Student;;</code>都会解析出<code>com.spring.Student</code>,所以也可以通过这种方式绕过。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210809204814799.png" alt="image-20210809204814799"></p>
+<p>​        所以总结一下，绕过方法如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">1. 在@type的双引号前加,和其他空白字符，比如 \b \n \t等等</span><br><span class="line">2. 在&quot;和：的中间加空白字符</span><br><span class="line">3. 对内容进行16进制或unicode编码，当然可以一起混合使用</span><br><span class="line">4. 在class的内容前加L之后加;</span><br></pre></td></tr></table></figure>
+
+<h3 id="反序列化过程中会调用什么方法？有何限制？"><a href="#反序列化过程中会调用什么方法？有何限制？" class="headerlink" title="反序列化过程中会调用什么方法？有何限制？"></a><strong>反序列化过程中会调用什么方法？有何限制？</strong></h3><p>​        通过ClassLoader加载到@type指定的类后，接下来会根据类名获取对应的反序列化器，当没有匹配到合适的反序列化器时，会通过<code>createJavaBeanDeserializer</code>创建JavaBeanDeserializer反序列化器。createJavaBeanDeserializer反序列化器中，调用<code>JavaBeanInfo.build</code>方法中动态创建一个JavaBeanInfo对象，最后根据得到的JavaBeanInfo对象,通过<code>asmFactory.createJavaBeanDeserializer</code>动态构建一个JavaBeanDeserializer类。</p>
+<p>​        首先通过<code>getDefaultConstructor</code>获取构造器</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810115316825.png" alt="image-20210810115316825"></p>
+<p>​        在<code>getDefaultConstructor</code>默认会获取无参构造器，如果不存在无参构造器，如果不存在无参构造器，则获取参数为当前Class类型的1个参数构造器。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810115008162.png" alt="image-20210810115008162"></p>
+<p>​        如果没有无参构造方法或者参数为当前class类型的有参构造方法，则通过注解获取构造方法，对于挖洞或者利用漏洞来讲，我们一般找的会是一个通用的类，一般不会有fastjson的注解信息，所以这段不分析了。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810115703210.png" alt="image-20210810115703210"></p>
+<p>​        总结一下构造方法的调用。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1. 默认情况下调用无参构造方法，</span><br><span class="line">2. 如果没有无参构造方法，调用参数为当前class类型的1个参数的构造方法</span><br></pre></td></tr></table></figure>
+
+<p>​        下面再看看对setter method的处理</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">1. methodName名称大于4</span><br><span class="line">2. method不能为static</span><br><span class="line">3. method的返回值为void或当前class的类型0</span><br><span class="line">4. parm长度为1</span><br><span class="line">5. methodName以set开头</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810120808140.png" alt="image-20210810120808140"></p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810121307901.png" alt="image-20210810121307901"></p>
+<p>​        接下来找到set方法设置的字段名，并将这些信息添加到fieldList中。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810140411609.png" alt="image-20210810140411609"></p>
+<p>​        下面也会对getter方法做判断，但是对getter方法的返回值有一些要求，不太容易满足。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813095915259.png" alt="image-20210813095915259"></p>
+<p>​        接下来将得到的class，构造方法，filed等信息封装到JavaBeanInfo对象中并返回。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810174755608.png" alt="image-20210810174755608"></p>
+<p>​        得到JavaBeanInfo后，通过asm动态创建JavaBeanDeserializer的实现类。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810181457685.png" alt="image-20210810181457685"></p>
+<p>​        我们不去分析具体的生成过程，把动态生成的class文件看看即可。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811100951035.png" alt="image-20210811100951035">        这个文件比较长，在<code>deserialze</code>中，会调用构造方法，还有对应的setter方法。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811101036551.png" alt="image-20210811101036551"></p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811101049087-16286478493461.png" alt="image-20210811101049087"></p>
+<p>​        通过parse反序列化得到对应的对象后，会判断反序列化得到的对象类型是否为JSONObject类型，如果不是则调用toJSON进行类型转换。    </p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811150655676.png" alt="image-20210811150655676"></p>
+<p>​        在toJSON中，根据obj的类型得到clazz，根据clazz通过<code> config.getObjectWriter(clazz);</code>获取由ASM动态构建的继承了JavaBeanSerializer的序列化器，这个过程和pase的过程有些类似，不同的是，得到序列化器时构造beaninfo信息时通过<code>com.alibaba.fastjson.util.TypeUtils#computeGetters</code>方法，computeGetters中会对getter方法进行限制。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">1. 非静态方法</span><br><span class="line">2. 返回值非空</span><br><span class="line">3. 参数不能为空</span><br><span class="line">4. 返回类型不能为ClassLoader</span><br><span class="line">5. 不能调用getMetaClass方法</span><br><span class="line">6. 不能调用getClass方法或getDeclaringClass方法</span><br><span class="line">7. get开头并且不能小于4个字符</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811164406216.png" alt="image-20210811164406216"></p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811164803524.png" alt="image-20210811164803524"></p>
+<p>​            将filed method等属性封装到FiledInfo中。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811165020874.png" alt="image-20210811165020874"></p>
+<p>​        得到动态构建的序列化器后，调用getFileValuesMap获取字段的值，由于ASM动态构造的反序列化器没有这个方法，因此会调用父类JavaBeanSerializer的getFieldValuesMap方法。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811153553795.png" alt="image-20210811153553795"></p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811154100302.png" alt="image-20210811154100302"></p>
+<p>​        getFieldValuesMap中，根据sortedGetters中保存的FieldSerializer，调用getPropertyValue方法，实际最终是通过反射调用了对应的getter方法。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811154316625.png" alt="image-20210811154316625"></p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811154544475.png" alt="image-20210811154544475"></p>
+<h3 id="反序列化利用链原理是什么？"><a href="#反序列化利用链原理是什么？" class="headerlink" title="反序列化利用链原理是什么？"></a>反序列化利用链原理是什么？</h3><p>​        通过上面的分析，当执行parseObject时，会执行构造方法和setter和getter方法，所以我们要通过控制getter和setter方法来对属性赋值从而执行恶意操作。</p>
+<h4 id="TemplateImpl"><a href="#TemplateImpl" class="headerlink" title="TemplateImpl"></a>TemplateImpl</h4><p>​        这个利用方式之前分析Hibernate利用链时分析过，其实fastjson的利用限制和hibernate的差不多。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210811182520612.png" alt="image-20210811182520612"></p>
+<p>​        通过之前我们对TemplatesImpl利用链的理解，我们需要对下面的属性赋值。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1. _bytecodes</span><br><span class="line">2. _name</span><br></pre></td></tr></table></figure>
+
+<p>​        并且其存在无参的public构造方法或者参数为当前类型的构造方法。而TemplateImpl类刚好有无参的public构造方法。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210812092914276.png" alt="image-20210812092914276"></p>
+<p>​        另外，触发TemplatesImpl的方法是getOutputProperties方法，也就是一个gettter方法，只有在parseObject方法中，才会在执行完parse后调用toJSON，在toJSON中调用getter方法，所以这也限定了<strong>只有在通过parseObject解析时才可以使用TemplatesImpl利用链</strong>。</p>
+<p><strong>如何给_bytecodes传入字节数组？</strong></p>
+<p>​        在不了解fastjson内部实现的情况下，我们可以构造一个字节数组，通过toJSONString进行序列化，并查看序列化后的结果，可以看到fastjson将字节数组进行base64后输出。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210812094129036.png" alt="image-20210812094129036">.        跟进fastjson序列化代码，首先通过getClass获取对象类型，再找到对应的序列化器，而我们传入的byte数组会交给PrimitiveArraySerializer序列化器进行处理，PrimitiveArraySerializer的write方法，根据数组的类型进行匹配，当匹配到为字节数组，则通过writeByteArray进行base64编码。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210812094740688.png" alt="image-20210812094740688"></p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210812194941931.png" alt="image-20210812194941931"></p>
+<p>​        所以可以通过base64编码解决byte[]传值问题。</p>
+<p><strong>为什么getOutputProperties会被执行？</strong></p>
+<p>​        虽然有对应的setter方法可以给 <code>_name</code>和<code>_bytecodes</code>属性赋值，但是这些方法都不是public的，所以默认情况下都不能调用，但在fastjson1.2.22引入了一个SupportNonPublicField特性，可以给非public的属性赋值 ,所以要使用这种方式，需要在反序列化时开启这个属性。可是开启了这个属性后，就会调两个参数的parseObject方法，在这个方法中并不会执行toJSon方法，也就是不会调用getter方法。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210812201408245.png" alt="image-20210812201408245"></p>
+<p>​        那么为什么网上的payload可以攻击成功呢？    </p>
+<p>​        首先看下网上的payload</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">  String text1 = <span class="string">&quot;&#123;\&quot;@type\&quot;:\&quot;com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl\&quot;,\&quot;_bytecodes\&quot;:[\&quot;xxxxxxx\&quot;],&#x27;_name&#x27;:&#x27;a.b&#x27;,&#x27;_tfactory&#x27;:&#123; &#125;,\&quot;_outputProperties\&quot;:&#123; &#125;,&quot;</span> +</span><br><span class="line"><span class="string">&quot;\&quot;_name\&quot;:\&quot;a\&quot;,\&quot;_version\&quot;:\&quot;1.0\&quot;,\&quot;allowedProtocols\&quot;:\&quot;all\&quot;&#125;\n&quot;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>​        在<code>getOutputProperties</code>处打个断点，发现确实可以执行到该方法，并且也没有调用toJSON。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">getOutputProperties:507, TemplatesImpl (com.sun.org.apache.xalan.internal.xsltc.trax)</span><br><span class="line">invoke0:-1, NativeMethodAccessorImpl (sun.reflect)</span><br><span class="line">invoke:62, NativeMethodAccessorImpl (sun.reflect)</span><br><span class="line">invoke:43, DelegatingMethodAccessorImpl (sun.reflect)</span><br><span class="line">invoke:498, Method (java.lang.reflect)</span><br><span class="line">setValue:85, FieldDeserializer (com.alibaba.fastjson.parser.deserializer)</span><br><span class="line">parseField:83, DefaultFieldDeserializer (com.alibaba.fastjson.parser.deserializer)</span><br><span class="line">parseField:773, JavaBeanDeserializer (com.alibaba.fastjson.parser.deserializer)</span><br><span class="line">deserialze:600, JavaBeanDeserializer (com.alibaba.fastjson.parser.deserializer)</span><br><span class="line">deserialze:188, JavaBeanDeserializer (com.alibaba.fastjson.parser.deserializer)</span><br><span class="line">deserialze:184, JavaBeanDeserializer (com.alibaba.fastjson.parser.deserializer)</span><br><span class="line">parseObject:368, DefaultJSONParser (com.alibaba.fastjson.parser)</span><br><span class="line">parse:1327, DefaultJSONParser (com.alibaba.fastjson.parser)</span><br><span class="line">deserialze:45, JavaObjectDeserializer (com.alibaba.fastjson.parser.deserializer)</span><br><span class="line">parseObject:639, DefaultJSONParser (com.alibaba.fastjson.parser)</span><br><span class="line">parseObject:339, JSON (com.alibaba.fastjson)</span><br><span class="line">parseObject:302, JSON (com.alibaba.fastjson)</span><br><span class="line">main:44, Test (com.spring)</span><br></pre></td></tr></table></figure>
+
+<p>​        根据调用栈可以看到，还是通过调用setter方法调用的<code>getOutputProperties</code>，这是怎么做到的，查看setValue方法，发现在调用时，将<code> fieldInfo.method</code>属性设置为getOutputProperties。通过前面对于反序列化流程的分析，这个值主要是在<code>com.alibaba.fastjson.util.JavaBeanInfo#build</code>中设置的。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813092820948.png" alt="image-20210813092820948"></p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813093152616.png" alt="image-20210813093152616"></p>
+<p>​        在构建JavaBeanInfo过程中，会获取构造方法，和属性的public的getter和setter方法，再根据beaninfo的信息通过asm动态生成javabean反序列化器，在反序列化器中只会调用setter方法，不会调用getter方法，那么为什么在这个栗子中getter方法会被调用呢？</p>
+<p>​        经过分析，asmEnable属性控制了是否通过asm创建反序列化器，当这个属性为false时，会直接创建<code>JavaBeanDeserializer</code>对象作为反序列化器，而不会通过asm动态生成。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813093744619.png" alt="image-20210813093744619"></p>
+<p>​        而在处理outputProperties属性时，由于getOnly属性为true，会将asmEnalbe的值设置为false，也就是不会通过asm动态创建反序列化器。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813093928169.png" alt="image-20210813093928169"></p>
+<p>​        在FieldInfo的构造方法中，当方法的参数不为1个时，会给这个属性设置为true。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813094300234.png" alt="image-20210813094300234"></p>
+<p>​        原本我猜想是因为<code>getOutputProperties</code>方法只有public的getter方法，没有setter方法所以<code>getOutputProperties</code>才会被设置到method属性中，但我用自己编写的demo测试并没有成功。所以还要分析在<code>com.alibaba.fastjson.util.JavaBeanInfo#build</code>中，满足什么条件的getter方法才会被设置。可以看到除了要满足以get开头的非静态方法，且参数为空之外，还要满足返回类型是为Map\Collection\AutomicBoolean等类型的子类或者实现类。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813095254988.png" alt="image-20210813095254988"></p>
+<p>​        而<code>getOutputProperties</code>的返回类型Properties其父类正好是Map的实现类，因此满足条件。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813095537523.png" alt="image-20210813095537523"></p>
+<p>​        上面我们已经分析了getOutputProperties对反序列化过程改变的原因，现在由于使用JavaBeanDeserializer构建反序列化器，之后的行为也会发生一些改变，在JavaBeanDeserializer中，首先会创建一个实例。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813103623363.png" alt="image-20210813103623363"></p>
+<p>​        下面循环给实例的属性赋值，首先从sortedFieldDeserializers中解析反序列化器，并判断这些反序列化器的类型是否为基本类型，如果是基本类型则读取对应字段的内容进行处理，如果不是则跳过。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813110100329.png" alt="image-20210813110100329"></p>
+<p>​        下面通过词法解析获取key的内容，判断key的内容是否为$ref或@type等引用类型，如果不是则通过parseFiled解析value的内容并赋值给object对象。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813111157386.png" alt="image-20210813111157386"></p>
+<p>​        在<code>com.alibaba.fastjson.parser.deserializer.JavaBeanDeserializer#parseField</code>中获取字段的反序列化器并通过parseFiled进行解析。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813111508572.png" alt="image-20210813111508572"></p>
+<p>​        在<code>com.alibaba.fastjson.parser.deserializer.DefaultFieldDeserializer#parseField</code>中，通过反序列化器对value的内容进行处理后，通过setValue将值赋值给对象。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813111758681.png" alt="image-20210813111758681"></p>
+<p>​        当getOnly为true且method的返回值为Map的子类或者实现类时，会通过反射调用调用对应的方法。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813112008054.png" alt="image-20210813112008054"></p>
+<p><strong>为什么设置了SupportNonPublicField后可以完成利用？</strong></p>
+<p>​        在<code>com.alibaba.fastjson.parser.deserializer.JavaBeanDeserializer#parseField</code>中会解析字段的值，如果没有设置<code>Feature.SupportNonPublicField</code>属性，则只会在smartMatch中通过之前解析到的sortedFieldDeserializers寻找反序列化器，不会通过其他方式获取Filed反序列化器。</p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813122104986.png" alt="image-20210813122104986"></p>
+<p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210813121742456.png" alt="image-20210813121742456"></p>
+<p>​        最后我们对TemplateImpl这种利用方式做一个总结，首先由于 _bytecodes和 _name属性的setter方法不是public的，所以默认情况下无法调用，因此需要在parseObject加上SupportNonPublicField，但是加上这个设置后就无法通过toJSON调用getter方法，但是getOutputProperties返回类型是Map的子类，所以在javaBeanInfo.build的过程中，可以得到getOutputProperties方法并设置到filedInfo中，由于getOutputProperties没有一个参数的方法，所以不会通过asm动态构建反序列化器而是使用JavaBeanDeserializer构造，当解析到OutputProperties属性时，通过反射调用了getOutputProperties方法完成利用。据作者所说，这个利用链是参考jackson反序列化利用链找到的，我没了解过jackson是如何解析json数据的，可能他们的解析存在一种共性，所以导致利用链也可以迁移。</p>
+<h3 id="AutoType如何影响反序列化过程？"><a href="#AutoType如何影响反序列化过程？" class="headerlink" title="AutoType如何影响反序列化过程？"></a>AutoType如何影响反序列化过程？</h3>
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

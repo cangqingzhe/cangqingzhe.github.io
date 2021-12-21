@@ -1,0 +1,234 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Dubbo漏洞分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="Dubbo漏洞分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>Dubbo漏洞分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/08/Dubbo漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-08T05:47:32.000Z">
+          2021-09-08
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        之前审计的过程中，遇到过Dubbo这个组件，虽然知道这个组件存在反序列化漏洞，但是关于漏洞的详情和利用一概不知，所以下面对Dubbo的漏洞进行分析。</p>
+<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>​        Dubbo是一款开源的RPC和微服务治理的框架，最早是阿里开发的后来归到了Apache下面，支持多种协议，比如gRPC、Thrift、JsonRPC、Hessian2、REST、RMI、HTTP。</p>
+<p>​        下面是官网对于Dubbo架构的介绍。</p>
+<span id="more"></span>
+
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210909112048090.png" alt="image-20210909112048090"></p>
+<p>​    主要包含<code>消费者</code>、<code>服务提供者</code>、<code>注册中心</code>、<code>监控中心</code>、<code>容器</code>等等。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210909112713522.png" alt="image-20210909112713522"></p>
+<p>​    provider在启动时会将服务注册到注册中心，consumer在使用时会从注册中心获取到已经注册的服务，再根据consumer中配置的路由决定调用哪个服务，consumer通过RPC协议调用provider的服务并获取返回结果。</p>
+<h3 id="CVE-2019-17564"><a href="#CVE-2019-17564" class="headerlink" title="CVE-2019-17564"></a>CVE-2019-17564</h3><h4 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h4><p>​        github下载官方提供的<code>https://github.com/apache/dubbo-samples</code>项目，导入simple-http。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210909134909810.png" alt="image-20210909134909810"></p>
+<p>​        直接下载的项目跑不起来，要更改<code>http-provider.xml</code>和<code>http-consumer.xml</code>的内容。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">beans</span> <span class="attr">xmlns</span>=<span class="string">&quot;http://www.springframework.org/schema/beans&quot;</span></span></span><br><span class="line"><span class="tag">       <span class="attr">xmlns:xsi</span>=<span class="string">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span></span></span><br><span class="line"><span class="tag">       <span class="attr">xmlns:dubbo</span>=<span class="string">&quot;http://code.alibabatech.com/schema/dubbo&quot;</span></span></span><br><span class="line"><span class="tag">       <span class="attr">xsi:schemaLocation</span>=<span class="string">&quot;http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://code.alibabatech.com/schema/dubbo</span></span></span><br><span class="line"><span class="string"><span class="tag">http://code.alibabatech.com/schema/dubbo/dubbo.xsd&quot;</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210909135032905.png" alt="image-20210909135032905"></p>
+<p>​        由于漏洞影响的版本为2.7.3所以要更改pom.xml的配置，注意是在dependency下面新增一个version标签，<code>&lt;version&gt;2.7.3&lt;/version&gt;</code>。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210909135127465.png" alt="image-20210909135127465"></p>
+<p>​        还有坑点，原本的配置是用<code>$&#123;&#125;</code>包含配置文件的，但是低版本解析过程并没有解析<code>$&#123;&#125;</code>中的内容，所以要进行更改。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210909152940873.png" alt="image-20210909152940873"></p>
+<p>​        更改后<code>zookeeper</code>更改后如下，<code>port</code>和<code>server</code>的参数更改类似。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210909153148030.png" alt="image-20210909153148030"></p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210909153121415.png" alt="image-20210909153121415"></p>
+<p>​        下面依次启动zookeeper，provider和Consumer即可，调试好后可以添加低版本的CC依赖，可以直观的看到利用结果。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.commons<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>commons-collections4<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>4.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h4><p>​        在漏洞分析前我们还要再铺垫一些前置知识，provider在导出服务并注册到注册中心zookeeper时，实际上注册的是一个URL地址，但是这个URL并不是<code>java.net.URL</code>而是Dubbo自定义的URL，包含了下面几个属性。</p>
+<ul>
+<li><p>protocol：一般是 dubbo 中的各种协议 如：dubbo thrift http zk</p>
+</li>
+<li><p>username/password：用户名/密码</p>
+</li>
+<li><p>host/port：主机/端口</p>
+</li>
+<li><p>path：接口名称</p>
+</li>
+<li><p>parameters：参数键值对</p>
+<p>​    下面是URL的一些栗子。</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">dubbo://192.168.1.6:20880/moe.cnkirito.sample.HelloService?timeout=3000</span><br><span class="line">zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=demo-consumer&amp;dubbo=2.0.2&amp;interface=org.apache.dubbo.registry.RegistryService&amp;pid=1214&amp;qos.port=33333&amp;timestamp=1545721981946</span><br></pre></td></tr></table></figure>
+
+<p>​        其中访问的path可以在dubbo service的bean配置中通过path属性进行设置，如果没有设置，则默认使用interface的名称当作path。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210910105505997.png" alt="image-20210910105505997"></p>
+<p>​        同样，由于Dubbo在进行RPC调用时支持多种协议，也可以在Bean配置中通过<code>protocol</code>的<code>name</code>属性进行配置，由于<code>CVE-2019-17564</code>是Dubbo以http协议通信时出现的问题，因此我们这里配置也使用http的方式。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dubbo:protocol</span> <span class="attr">name</span>=<span class="string">&quot;http&quot;</span> <span class="attr">id</span>=<span class="string">&quot;http&quot;</span> <span class="attr">port</span>=<span class="string">&quot;8080&quot;</span> <span class="attr">server</span>=<span class="string">&quot;tomcat&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>​        通过上面的配置，假如我们要访问<code>DemoService</code>服务，可以通过下面的url访问。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://127.0.0.1:8080/org.apache.dubbo.samples.http.api.DemoService</span><br></pre></td></tr></table></figure>
+
+<p>​        现在我们再回到这个漏洞本身，通过官网的介绍Dubbo在实现http协议时使用的是spring的HttpInvoker来实现的。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915115832578.png" alt="image-20210915115832578"></p>
+<p>​        我们再来了解HttpInvoker的介绍，其实现是基于标准的Java的序列化和反序列化机制，这里之所以要通过序列化和反序列化来实现，是因为在进行RPC调用时，调用的参数和返回值不一定是基本类型，也有可能是对象，而对象的传递肯定是要基于序列化和反序列，值得一提的是Dubbo在实现RPC调用时，会将我们要调用的方法和参数封装到<code>RemoteInvocation</code>对象中，服务端再接收到请求后，会将请求的内容反序列化为<code>RemoteInvocation</code>对象再去做其他操作，当我们了解了这些以后，即使不去看实现也能想到，在服务端provider接收到请求并进行反序列化时可能出现反序列化漏洞。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915120037799.png" alt="image-20210915120037799"></p>
+<h5 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h5><p>​        之前在分析Dubbo源码时已经分析了Http请求的处理过程，这里就不仔细分析了，把重点的代码说明一下即可。在<code>org.springframework.remoting.httpinvoker.AbstractHttpInvokerRequestExecutor#executeRequest</code>中，会对<code>RemoteInvocation</code>对象进行序列化。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915134000020.png" alt="image-20210915134000020"></p>
+<p>​        在<code>RemoteInvocation</code>对象中封装了调用的方法名、请求参数类型、参数值等信息。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915134055775.png" alt="image-20210915134055775"></p>
+<p>​        下面通过<code>org.springframework.remoting.httpinvoker.SimpleHttpInvokerRequestExecutor#doExecuteRequest</code>发送请求，<code>prepareConnection</code>主要完成请求发送前的一些设置。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915134326504.png" alt="image-20210915134326504"></p>
+<p>​        在<code>org.springframework.remoting.httpinvoker.SimpleHttpInvokerRequestExecutor#prepareConnection</code>中可以看到通过<code>POST</code>发送请求。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915134410725.png" alt="image-20210915134410725"></p>
+<p>​        <code>writeRequestBody</code>中将序列化的<code>RemoteInvocation</code>对象作为post请求的内容发送给服务端。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915134603620.png" alt="image-20210915134603620"></p>
+<h5 id="服务端"><a href="#服务端" class="headerlink" title="服务端"></a>服务端</h5><p>​        当请求过来时，交给DispatcherServlet会将请求交给<code>org.springframework.remoting.httpinvoker.HttpInvokerServiceExporter#handleRequest</code>处理，这个方法会通过<code>readRemoteInvocation</code>将request中的内容转换为<code>RemoteInvocation</code>对象。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915134928830.png" alt="image-20210915134928830"></p>
+<p>​        获取request对象中的请求内容，在<code>doReadRemoteInvocation</code>中通过<code>readObject</code>反序列化,如果反序列化的对象不是RemoteInvocation对象则抛出异常。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915135352990.png" alt="image-20210915135352990"></p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915135507598.png" alt="image-20210915135507598"></p>
+<p>​        通过上面的分析，我们可以看出Dubbo Provider服务端在执行Consumer过来的请求时直接从<code>POST</code>中获取对象并进行反序列化，在反序列化之前并没有做其他安全的判断，所以我们以<code>POST</code>发送任意一个对象到Provider都会被反序列化，如果我们传入一个特殊构造的对象，Provider反序列化后则有可能造成命令执行或其他操作。</p>
+<p><strong>是不是一定要知道要调用的Provider提供服务的method和参数才能触发反序列化？</strong></p>
+<p>​        这里需要了解服务导出的操作,我是以Tomcat做为服务端的，可以看到在构造Tomcat服务器时，添加了<code>ServletMapping</code>为<code>*</code>，也就是所有的请求都会被我们注册的handler处理。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915140614106.png" alt="image-20210915140614106"></p>
+<p>​        但是在<code>org.apache.dubbo.rpc.protocol.http.HttpProtocol.InternalHandler#handle</code>中会做如下处理。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915141019389.png" alt="image-20210915141019389"></p>
+<p>​        首先获取请求uri并判断是否能找到对应的<code>Exporter</code>处理，如果找不到则会导致异常，<code>SkeletonMap</code>中保存的路径如果没有在provider的service元素中配置path属性，则默认使用interface的内容。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915141146132.png" alt="image-20210915141146132"></p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915141347876.png" alt="image-20210915141347876"></p>
+<p>​        <strong>所以并不是访问服务端的任意接口都能触发漏洞的</strong>。</p>
+<h4 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h4><p>​        漏洞复现就比较简单了，首先生成EXP</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -jar e:\tools\ysoserial.jar CommonsCollections4 &quot;calc.exe&quot; &gt; c:\users\admin\desktop\payload.ser</span><br></pre></td></tr></table></figure>
+
+<p>​        发送序列化的数据即可利用成功。    <img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915151843418.png" alt="image-20210915151843418"></p>
+<h4 id="漏洞修复"><a href="#漏洞修复" class="headerlink" title="漏洞修复"></a>漏洞修复</h4><p>​        在Dubbo <code>2.7.4</code>或<code> 2.6.8 or 2.6.9</code>修复了这个漏洞，我们看下漏洞的修复，首先看下服务导出的变化，在<code>org.apache.dubbo.rpc.protocol.http.HttpProtocol#doExport</code>中，不再使用<code>HttpServiceExporter</code>而是使用<code>JsonRpcServer</code>作为Exporter。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915155904494.png" alt="image-20210915155904494"></p>
+<p>​            当我们请求服务时，也不再使用<code>HttpServiceExporter</code>处理请求而是使用<code>JsonRpcBasicServer</code>处理请求。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915161417835.png" alt="image-20210915161417835"></p>
+<p>​        <code>handleNode</code>中根据类型的不同做不同的处理。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915161808168.png" alt="image-20210915161808168"></p>
+<p>​        从ObjectNode中获取参数和调用方法等信息。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915161849645.png" alt="image-20210915161849645"></p>
+<p>​        得到要调用方法的method对象和参数值和实现类的代理对象后调用 invoke方法。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915162441189.png" alt="image-20210915162441189"></p>
+<p>​        将参数类型做转换后通过反射完成调用。</p>
+<p><img src="/2021/09/08/Dubbo%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210915162626988.png" alt="image-20210915162626988"></p>
+<p>​        这个过程中并没有涉及到JAVA本身的反序列化，不过还是涉及到JSON的反序列化操作，使用JACKSON进行反序列化，不过我并不熟悉JACKSON的漏洞，所以先放过吧。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

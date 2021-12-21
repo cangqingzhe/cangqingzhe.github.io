@@ -1,0 +1,177 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>DedeCMS RCE漏洞分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="DedeCMS RCE漏洞分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>DedeCMS RCE漏洞分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/09/DedeCMS-RCE漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-09T14:06:08.000Z">
+          2021-10-09
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近看到几个公众号都披露了DedeCMS的漏洞，很久也没有分析过PHP的漏洞了，趁着周末没什么事情分析下这两个漏洞。</p>
+<h2 id="V5-8-1内测版前台RCE"><a href="#V5-8-1内测版前台RCE" class="headerlink" title="V5.8.1内测版前台RCE"></a>V5.8.1内测版前台RCE</h2><p>​    这个漏洞在<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/KZ7O0JRLvk4_O1GvL5lMVw">这篇文章</a>有过分析，但我还是决定自己搭建好环境分析一下，以便自己能理解的更加深刻。</p>
+<h3 id="分析过程"><a href="#分析过程" class="headerlink" title="分析过程"></a>分析过程</h3><p>​    在DedeCMS中，当访问出现某些异常，Dede会弹出一个窗口给用户提示。</p>
+<span id="more"></span>
+
+<p><img src="/2021/10/09/DedeCMS-RCE%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211010175426875.png" alt="image-20211010175426875"></p>
+<p>​    而这个页面的生成和处理主要是由<code>ShowMsg</code>方法完成的。生成的页面包含一个跳转地址，如果这个地址在函数调用时设置为<code>-1</code>，则会去接收Referer头中的地址。</p>
+<p><img src="/2021/10/09/DedeCMS-RCE%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211010175536974.png" alt="image-20211010175536974"></p>
+<p>​    将Referer中接收的内容放到<code>msg</code>中，并通过Dede的模板渲染。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">    <span class="variable">$func</span> .= <span class="string">&quot;var pgo=0;</span></span><br><span class="line"><span class="string">  function JumpUrl()&#123;</span></span><br><span class="line"><span class="string">    if(pgo==0)&#123; location=&#x27;<span class="subst">$gourl</span>&#x27;; pgo=1; &#125;</span></span><br><span class="line"><span class="string">  &#125;\r\n&quot;</span>;</span><br><span class="line">    <span class="variable">$rmsg</span> = <span class="variable">$func</span>;</span><br><span class="line"> ...</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="variable">$msg</span> = <span class="variable">$htmlhead</span> . <span class="variable">$rmsg</span> . <span class="variable">$htmlfoot</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="variable">$tpl</span> = <span class="keyword">new</span> DedeTemplate();</span><br><span class="line"><span class="variable">$tpl</span>-&gt;LoadString(<span class="variable">$msg</span>);</span><br><span class="line"><span class="variable">$tpl</span>-&gt;Display();</span><br></pre></td></tr></table></figure>
+
+<p>​    在<code>Display</code>函数中，通过<code>WriteCache</code>将内容写入到缓存文件并进行文件包含。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">Display</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">global</span> <span class="variable">$gtmpfile</span>;</span><br><span class="line">    extract(<span class="variable">$GLOBALS</span>, EXTR_SKIP);</span><br><span class="line">    <span class="keyword">$this</span>-&gt;WriteCache();</span><br><span class="line">    <span class="keyword">include</span> <span class="keyword">$this</span>-&gt;cacheFile;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/10/09/DedeCMS-RCE%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211010181536464.png" alt="image-20211010181536464"></p>
+<p>​    虽然看上去可以直接命令执行，但是我们注意到在写入缓存前会先调用<code>CheckDisabledFunctions</code>检查Disablefunction， 这里检查了常见的敏感函数，但是我们仔细分析会发现这里其实只是<code>检查了敏感的字符串</code>，我们可以直接利用反引号命令执行。</p>
+<p><img src="/2021/10/09/DedeCMS-RCE%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211010181956866.png" alt="image-20211010181956866"></p>
+<p><img src="/2021/10/09/DedeCMS-RCE%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211010182203874.png" alt="image-20211010182203874"></p>
+<h3 id="漏洞总结"><a href="#漏洞总结" class="headerlink" title="漏洞总结"></a>漏洞总结</h3><h4 id="是否有其他点可以造成漏洞？"><a href="#是否有其他点可以造成漏洞？" class="headerlink" title="是否有其他点可以造成漏洞？"></a>是否有其他点可以造成漏洞？</h4><p>​    虽然看网上的文章是利用了<code>flink.php</code>这个文件来进行利用的，可了解漏洞原理后会发现，只要是调用了<code>ShowMsg</code>函数并且第二个参数为<code>-1</code>的都有可能导致这个漏洞。而似乎能够未授权访问的都在<code>plus</code>目录下，所以只要在这个目录下找都是可以无限制RCE的。</p>
+<p>​    比如在<code>search.php</code>中，当<code>keyword</code>包含一些敏感字符串或者字符长度小于2时，也会导致这个漏洞。</p>
+<p><img src="/2021/10/09/DedeCMS-RCE%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211010210420074-16338710603921.png" alt="image-20211010210420074"></p>
+<p>​    再仔细分析一下，其实也不是只有在<code>ShowMsg</code>中才能造成漏洞，只要在加载模板的过程中通过<code>LoadString</code>加载，并且<code>$msg</code>的内容可控就可以了。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$tpl</span> = <span class="keyword">new</span> DedeTemplate();</span><br><span class="line"><span class="variable">$tpl</span>-&gt;LoadString(<span class="variable">$msg</span>);</span><br><span class="line"><span class="variable">$tpl</span>-&gt;Display();</span><br></pre></td></tr></table></figure>
+
+<p>​    但是除了<code>ShowMsg</code>直接调用了<code>LoadString</code>只有在<code>SetString</code>中调用了，而<code>SetString</code>并没有任何调用。</p>
+<p><img src="/2021/10/09/DedeCMS-RCE%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211010210805011.png" alt="image-20211010210805011"></p>
+<p>​    还有一种可能也可以导致漏洞，就是如果<code>Showmsg</code>函数中的<code>msg</code>或<code>gourl</code>的值可控也可以导致漏洞。</p>
+<p>​    比如在<code>user-do.php</code>中，当用户名不合法时，我们输入的用户名会被带入到<code>ShowMsg</code>的参数中。</p>
+<p><img src="/2021/10/09/DedeCMS-RCE%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211010214456729.png" alt="image-20211010214456729"></p>
+<p>​    也有些文件第二个参数可控也可以造成漏洞。</p>
+<p><img src="/2021/10/09/DedeCMS-RCE%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211010214852158.png" alt="image-20211010214852158"></p>
+<h4 id="其他版本是否受影响"><a href="#其他版本是否受影响" class="headerlink" title="其他版本是否受影响"></a>其他版本是否受影响</h4><p>​    下载<code>DedeCMS 5.7.7</code>版本测试，在<code>Showmsg</code>中并不会接收refere头中的信息，所以此处无法利用。</p>
+<p><img src="/2021/10/09/DedeCMS-RCE%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211010212232293.png" alt="image-20211010212232293"></p>
+<p>​    但前面分析过也可以通过控制<code>msg</code>或者<code>gourl</code>参数来利用，仅仅从上面来看不能说一定没有，主要还是看下面，在这个版本的Dedecms中，获得<code>msg</code>后直接通过echo输出，并没有通过模板渲染所以从根源上就不会出现上面的问题了。</p>
+<p><img src="/2021/10/09/DedeCMS-RCE%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211010215213408.png" alt="image-20211010215213408"></p>
+<p>并且在<code>Display</code>函数中也是直接输出解析模板，没有文件包含操作。</p>
+<p><img src="/2021/10/09/DedeCMS-RCE%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211010215558125.png" alt="image-20211010215558125"></p>
+<p>​    下载最新的<code>5.8.0</code>版本和<code>5.7.7</code> 版本一样，都没有使用模板处理，所以也不会导致漏洞。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

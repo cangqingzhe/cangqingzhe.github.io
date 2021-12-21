@@ -1,0 +1,647 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Page 5 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/11/13/关于sqlserver注入另类技巧的学习/"><span>关于sqlserver注入另类技巧的学习</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/13/关于sqlserver注入另类技巧的学习/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​    最近看到国外一篇关于<a target="_blank" rel="noopener" href="https://swarm.ptsecurity.com/advanced-mssql-injection-tricks/">mssql注入利用</a>的文章，里面用了很多技巧我之前一直不知道，所以自己对这些技巧进行了复现,本次测试的环境为SQLSERVER2008</p>
+<h2 id="报错注入"><a href="#报错注入" class="headerlink" title="报错注入"></a>报错注入</h2><p>​    之前对于SQLSERVER报错注入理解仅限于类型转换导致的报错的利用方法，这次看到有很多新的函数可以进行报错注入利用，我把每个函数的测试单独取出来进行测试。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/11/13/关于windows执行shellcode的方式学习/"><span>关于windows执行shellcode的方式学习</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/13/关于windows执行shellcode的方式学习/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h3 id="regsvr32"><a href="#regsvr32" class="headerlink" title="regsvr32"></a>regsvr32</h3><p><strong>Regsvr32是什么？</strong></p>
+<p> Regsvr32命令用来向系统注册控件或者卸载控件的命令。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">语法：Regsvr32 [/s][/u] [/n] [/i[:cmdline]] &lt;dllname&gt;</span><br><span class="line">· /u：注销服务器；</span><br><span class="line">· /i：调用DllInstall传递一个可选的[cmdline]，当它与/u一起使用时，它会调用dll uninstall。</span><br><span class="line">· /n：不要调用DllRegisterServer，此选项必须与/i一起使用</span><br><span class="line">· / s ：沉默，不显示消息框；</span><br></pre></td></tr></table></figure>
+
+<p><strong>如何使用regsvr32执行exe？</strong></p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内网渗透/">内网渗透</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/11/13/我的渗透之路/"><span>我的渗透之路</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/13/我的渗透之路/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近可能是因为技术处于一个瓶颈期，又或者说对未来技术发展方向有些迷茫，所以写下这篇文章梳理一下当前自身的技能树以及未来的发展方向。</p>
+<h2 id="我的渗透观"><a href="#我的渗透观" class="headerlink" title="我的渗透观"></a>我的渗透观</h2><p>​    根据我自己对于渗透的理解，把渗透分为如下几个步骤：</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/随笔/">随笔</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/11/13/记MSSQL绕过阿里云/"><span>记MSSQl绕过阿里云</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/13/记MSSQL绕过阿里云/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">最近一直在学习关于WAF绕过的知识，本次选择阿里云这款云WAF来测试关于MSSQL注入的绕过。因为阿里云主站可能不</span><br><span class="line">是ASP+IIS的环境，所以我不清楚如果真的是ASP+IIS的环境，阿里云的拦截规则是否会有相应的变化。</span><br></pre></td></tr></table></figure>
+
+<h2 id="绕过过程"><a href="#绕过过程" class="headerlink" title="绕过过程"></a>绕过过程</h2><h3 id="逻辑判断语句绕过"><a href="#逻辑判断语句绕过" class="headerlink" title="逻辑判断语句绕过"></a>逻辑判断语句绕过</h3><p>我们知道在检测一个注入点的时候，首先会加上and 1=1之类的判断语句，如果页面返回的逻辑符合我们设想的逻辑，那么就有可能有注入。</p>
+<p><strong>利用%特性绕过</strong></p>
+<p>在iis+asp的环境中，在关键字中间加%不会影响程序的正常执行，因此可以在关键字and中添加%来绕过阿里云的检测。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/11/09/关于免杀的技术总结（-）/"><span>关于免杀的技术总结（-）</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/09/关于免杀的技术总结（-）/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-09T12:26:00.000Z">
+          2020-11-09
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​    在钓鱼或者渗透的过程中，如果我们不会免杀，使用Cobaltstrike生成的exe可能直接就被干掉了，还会触发目标的告警，导致之前的工作前功尽弃，因此在往更高阶的攻防对抗中，免杀能力是必不可少的能力，不是说每个人都必须掌握这种能力，但是如果一个团队中，一个会免杀的人都没有，那就很僵了。</p>
+<p>​    回到正题，本片文章并不会讲到免杀方法可能很多已经都不可用了，之所以写这篇总结文章，是希望大家能对免杀的方法能有一个系统的认知。</p>
+<h2 id="远程线程调用"><a href="#远程线程调用" class="headerlink" title="远程线程调用"></a>远程线程调用</h2><p>​    要讲远程线程调用，我们首先看一下本地的调用，代码如下：</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/免杀/">免杀</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/10/30/weblogic漏洞分析系列之CVE-2017-10271漏洞分析/"><span>weblogic漏洞分析系列之CVE-2017-10271漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/10/30/weblogic漏洞分析系列之CVE-2017-10271漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-10-30T15:15:58.000Z">
+          2020-10-30
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​    CVE-2017-10271漏洞是由于通过readobject解析webservice接口中的xml代码导致命令执行的，今天我们一起学习一下这个漏洞是如何导致的并分析一下漏洞的检测方法。</p>
+<h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><p>​        这里直接给出文件写入的poc，数据包如下：</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/10/30/weblogic漏洞分析系列之调试环境搭建/"><span>weblogic漏洞分析系列之调试环境搭建</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/10/30/weblogic漏洞分析系列之调试环境搭建/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-10-30T12:32:17.000Z">
+          2020-10-30
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        最近一直在做一些项目，因为对一些原理性的知识不懂感觉渗透很难再继续往上走，因此接下来打算将精力放在漏洞的理解和分析，工具的编写和优化上面，而不再执着于更多的技巧。</p>
+<p>​        weblogic是一款比较经常使用的java容器，当然它爆出的漏洞也是层出不穷，为了能让自己更加了解weblogic漏洞的形成原因，我决定和大家一起调试weblogic各个版本的一些漏洞，并最终编写一个简单的weblogic漏洞检测工具，在这片文章中，我们首先一起来学习一下如何搭建weblogic的调试环境。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/08/记基于cobaltstrike基础设施架构设计尝试/"><span>记基于cobaltstrike基础设施架构设计尝试</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/08/记基于cobaltstrike基础设施架构设计尝试/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-08T03:11:22.000Z">
+          2020-09-08
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        通过之前的介绍我们了解了cobaltstrike的一些混淆或者隐藏的策略，这次我们主要对学到的这些策略进行实践，设计一个比较好用的不容易被反查的方案。</p>
+<p>​        设计思路如下：</p>
+<ul>
+<li><p>自定义mallable c2 profile文件，自定义通讯流量</p>
+</li>
+<li><p>前置机通过mod_rewrite对不同流量进行不同的转发</p>
+</li>
+<li><p>给前置机配置CDN保护前置机的真实IP</p>
+</li>
+<li><p>teamserver主机配置防火墙仅允许前置机和teamserver主机的特定端口通信</p>
+<p>因为CDN配置需要等待一段时间才能生效，所以我们先来配置CDN。</p></li></ul>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/04/关于Mod-Rewrite重定向cobaltstrike流量的学习总结/"><span>关于Mod_Rewrite重定向cobaltstrike流量的学习总结</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/04/关于Mod-Rewrite重定向cobaltstrike流量的学习总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-04T09:20:35.000Z">
+          2020-09-04
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        通过使用socat进行重定向虽然可以将我们的teamserver隐藏起来，但是我们如果想做的更好一些，对请求我们重定向主机的流量做一个区分，如果请求来自客户端则重定向到teamserver，如果请求来自其他请求则重定向到其他网站。或者在请求中设置白名单，仅仅允许来自某个特定的ip来访问。这就需要通过apache 的Mod_rewrite来实现。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/02/关于CobaltStrike各种协议beacon的使用总结/"><span>关于CobaltStrike各种协议beacon的使用总结</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/02/关于CobaltStrike各种协议beacon的使用总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-02T12:15:47.000Z">
+          2020-09-02
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        在之前的学习中我们了解了关于CobaltStrike beacon运行的流程，以及流量的修改，今天我们一起来学习一下CobaltStrike自带的各种beacon的使用。</p>
+<h3 id="http-beacon"><a href="#http-beacon" class="headerlink" title="http beacon"></a>http beacon</h3><p>​        http beacon 使用get方式去获取服务端下发的任务，同时使用post方式向服务端获取数据。关于使用ip上线我相信大家都已经非常熟悉了，所以我主要讲一下关于域名上线需要注意的问题。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+
+<nav class="pagination">
+  
+  <a href="/page/4/" class="pagination-prev">Prev</a>
+  
+  
+  <a href="/page/6/" class="pagination-next">Next</a>
+  
+</nav>
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>我的渗透之路 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="我的渗透之路"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>我的渗透之路</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/13/我的渗透之路/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近可能是因为技术处于一个瓶颈期，又或者说对未来技术发展方向有些迷茫，所以写下这篇文章梳理一下当前自身的技能树以及未来的发展方向。</p>
+<h2 id="我的渗透观"><a href="#我的渗透观" class="headerlink" title="我的渗透观"></a>我的渗透观</h2><p>​    根据我自己对于渗透的理解，把渗透分为如下几个步骤：</p>
+<span id="more"></span>
+
+<p><strong>信息搜集</strong></p>
+<p>​    这里的信息搜集不仅仅局限于对于目标开放的web资产的情况进行搜集，也可以是人员信息，一些历史漏洞，或者信息泄露的收集，总之一些有利于我们对目标系统进行攻击的信息都可以是我们收集的范围之内。在信息搜集的过程中，我们需要根据自己搜集的结果分析目标可能比较脆弱的点，比如一些VPN,OA,邮件系统或者说是企业内部自用的一些系统。对于这些系统的攻击，我们除了可以猜弱口令或爆破外，也可以去通过钓鱼，信息泄露或者其他途径获取的密码去获得这些系统的访问权限。又或者说有一些比较知名并且非常方便去利用的RCE，比如Weblogic，Shior，Thinkphp,Struts2等等，目标哪些系统使用了这些框架也是我们在信息搜集过程中要做的。</p>
+<p>​    总之，我认为渗透的信息搜集不仅仅是包含了资产收集的步骤，还应该包含目标分析的步骤，这个阶段的结果对我们来说尤其重要，直接决定了我们后续活动的重心，因此，我认为在这个阶段我们可以花费较多的时间去搜集、整理、分析、筛选目标。</p>
+<p><strong>漏洞挖掘</strong></p>
+<p>​    同样，这里的漏洞挖掘并非狭义的指一些web漏洞的挖掘，而是目标整个防御体系的缺陷，任何有可能帮助我们突破目标防御的点都值得我们去深入挖掘。这个步骤我们需要注意的就是明确目标，我们所挖掘的任何信息或者漏洞目的只有一个，为了帮助我们获取目标的一个根据点，不要花费精力去挖一些对于本次活动没什么帮助的漏洞。</p>
+<p>​    就我个人来讲，我不是很喜欢这个过程，可能因为我很少挖到那种比较开脑洞的漏洞，让我觉得挖洞是一个体力活，相比漏洞挖掘，我更喜欢下一个过程。</p>
+<p><strong>漏洞利用</strong></p>
+<p>​    这个过程的目的就是通过我们前面这些步骤操作所挖掘到系统存在的问题，然后通过一些组合利用，让我们获取一个进入目标内网的一个口子，也可以说是突破目标边界。</p>
+<p>​    为什么我喜欢这个过程，因为我喜欢了解漏洞的原理，而且在漏洞利用这个过程我认为比较有趣，尤其是遇到各种拦截，需要我们通过自己的知识去bypass，还有就是因为可能目标环境的问题影响，可能导致虽然是同一种漏洞，但是利用的方法都不太一样。</p>
+<p>​    通过漏洞的组合利用，我们最终构建了一个进入目标内网的通道，这个通道可以是一个反弹shell,一个马，一个http隧道，socks隧道。</p>
+<p><strong>内网信息搜集</strong></p>
+<p>​    当我们进入内网后，我们可能对目标内网是一无所知的，也不知道我们最终的目标在哪里，所以需要进行各种信息搜集，搜集这些信息的目的，主要还是为了定位目标的地址，构建一个从我们至目标的一个可达的途径。主要搜集的一个是目标内网的一个拓扑，通过这个拓扑我们就可以知道目标在哪个位置，还有一个就是目标内网的各种主机和服务的密码，很多时候，我们渗透内网的方式非常的简单粗暴，就是不停的搜集资产，抓密码，撞密码的过程。</p>
+<p>​    因为在某些活动中，我们获取一个内网权限来之不易，为了防止我们在操作的过程中被发现导致权限丢掉了，我认为在内网信息搜集前，应该先想办法去巩固我们的权限，比如多种几个隐秘的shell，还有就是对当前主机的一个权限维持。</p>
+<p><strong>内网横向渗透</strong></p>
+<p>​    关于内网横向渗透，我认为这个过程和漏洞挖掘的过程类似，就是一定要明确我们的目标，假如我们的目的只是内网中的某一个系统，那么去打一圈，控很多系统对我们实际是没有用的，我认为在内网渗透，应该尽量减少我们不必要的操作，因为我们每个操作都有可能给对方留下日志，增加了被发现的风险。</p>
+<p>​    单纯从控更多主机来看的话，首选是通过主机密码去撞，现在还是有很多内网使用通用密码的，其次是通过各种服务的弱口令去搞，比如MSSQL，redis等，这些服务也比较容易帮助我们获取主机权限。再次，就是通过各种高危的web服务，weblogic,struts2等等去搞，最后再去搞目标的其他内网的系统。</p>
+<p>​    也有一种思路就是去针对指定用户比如科技部，信息安全部的内网的邮件，oa系统进行攻击，这些人员可能有内网的各种系统的账号密码，如果能控这个人员的个人机也是非常不错的。</p>
+<p><strong>最后</strong></p>
+<p>​    为什么直接到最后了，经过内网的横向渗透，我们可能已经拿到了我们想要的目标，这时剩下的操作就是两个，一个是权限维持，另一个是痕迹清理，根据自己的需要执行对应的操作就可以了。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/随笔/">随笔</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

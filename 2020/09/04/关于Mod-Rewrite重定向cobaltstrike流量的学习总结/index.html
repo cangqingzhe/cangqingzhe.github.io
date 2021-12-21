@@ -1,0 +1,218 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>关于Mod_Rewrite重定向cobaltstrike流量的学习总结 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="关于Mod_Rewrite重定向cobaltstrike流量的学习总结"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>关于Mod_Rewrite重定向cobaltstrike流量的学习总结</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/04/关于Mod-Rewrite重定向cobaltstrike流量的学习总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-04T09:20:35.000Z">
+          2020-09-04
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        通过使用socat进行重定向虽然可以将我们的teamserver隐藏起来，但是我们如果想做的更好一些，对请求我们重定向主机的流量做一个区分，如果请求来自客户端则重定向到teamserver，如果请求来自其他请求则重定向到其他网站。或者在请求中设置白名单，仅仅允许来自某个特定的ip来访问。这就需要通过apache 的Mod_rewrite来实现。</p>
+<span id="more"></span>
+
+<h3 id="mod-rewrite入门"><a href="#mod-rewrite入门" class="headerlink" title="mod_rewrite入门"></a>mod_rewrite入门</h3><p><strong>什么是mod_rewrite？</strong></p>
+<p>​        mod_rewrite是Apache的一个模块，此模块提供了一个基于正则表达式分析器的重写引擎来实时重写URL请求。它支持每个完整规则可以拥有不限数量的子规则以及附加条件规则的灵活而且强大的URL操作机制。此URL操作可以依赖于各种测试，比如服务器变量、环境变量、HTTP头、时间标记，甚至各种格式的用于匹配URL组成部分的查找数据库。 –<a target="_blank" rel="noopener" href="https://my.oschina.net/u/2326780/blog/385304">mod_rewrite模块作用介绍</a></p>
+<p>​         此模块可以操作URL的所有部分(包括路径信息部分)，在服务器级的(httpd.conf)和目录级的(.htaccess)配置都有效，还可以生成最终请求字符串。此重写操作的结果可以是内部子处理，也可以是外部请求的转向，甚至还可以是内部代理处理。<strong>一般mod_rewrite默认是不启动的，这时我们需要手动启用它</strong>  –<a target="_blank" rel="noopener" href="https://my.oschina.net/u/2326780/blog/385304">mod_rewrite模块作用介绍</a></p>
+<p><strong>怎么使用mod_rewrite？</strong></p>
+<p>​        首先安装apache</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install httpd</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200904183349947.png" alt="image-20200904183349947"></p>
+<p>​        安装好以后，查看是否开启mod_rewrite模块,在下面的路径下，我们可以看到我这里默认已经开启了这个模块。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/etc/httpd/conf.modules.d/00-base.conf</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907092649577.png" alt="image-20200907092649577"></p>
+<p>​        也可以使用下面的命令检查是否开启,如果能在输出中找到rewrite_module，则说明开启成功</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">httpd -M</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907095113772.png" alt="image-20200907095113772"></p>
+<p>​        然后我们需要开启.htaccess的支持，找到/etc/httpd/conf/httpd.conf文件，找到下面的内容，将AllowOverride None 替换为AllowOverride All,注意，这里的<strong>Directory是/var/www/html</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;Directory &quot; /var/www/html&quot;&gt;</span><br><span class="line">....</span><br><span class="line">    AllowOverride None  //替换为AllowOverride All</span><br><span class="line">    Require all granted</span><br><span class="line">&lt;/Directory&gt;</span><br></pre></td></tr></table></figure>
+
+<p>​        设置好以后启动apache服务,再访问一下看是否开启成功</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">service httpd start</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907092757010.png" alt="image-20200907092757010"></p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907092849077.png" alt="image-20200907092849077"></p>
+<p>​    开启后我们在/var/www/html/下编写一个2.html文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;html&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">2.html</span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+
+<p>​        再编写一个.htaccess文件，文件内容如下，我大概先解释一下里面的语法</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mod_rewrite.c&gt;</span><br><span class="line">RewriteEngine on   </span><br><span class="line">RewriteRule 1.html 2.html</span><br><span class="line">&lt;/IfModule&gt;</span><br></pre></td></tr></table></figure>
+
+<p>​        RewriteEngine on,RewriteEngine 是rewrite功能的总开关，用来开启是否启动url rewrite。</p>
+<p>​        RewriteRule 是指令允许我们基于URL将请求重新映射到Apache。一个<code>.htaccess</code>文件可以容纳多个重写规则，但在运行时，Apache按照定义的顺序应用规则。RewriteRule的语法规则如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RewriteRule Pattern Substitution [Flags]</span><br></pre></td></tr></table></figure>
+
+<p>​        Pattern需要匹配的字符串，Substitution替换为其他的url</p>
+<p>​        编写好以后我们测试一下，访问1.html，实际上这个文件是不存在的，但是经过.htaccess的RewriteRule规则，我们访问到了2.html的内容</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907102919483.png" alt="image-20200907102919483"></p>
+<p>​        最后，我们再介绍一个关于mod_rewrite的语法:RewriteCond。</p>
+<p>​        <code>RewriteCond</code>指令允许我们为重写规则添加条件。重写条件包括以下结构：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RewriteRule TestString  Condition  [Flags]</span><br></pre></td></tr></table></figure>
+
+<p>​        TestString:要测试的字符串，Condition：匹配的模式,flag如果是NC则代表忽略大小写的匹配</p>
+<p>​        这样可能不好理解，我们通过一些实例来帮助我们理解,我们再设置一个.htaccess文件，内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mod_rewrite.c&gt;</span><br><span class="line">RewriteEngine on</span><br><span class="line">RewriteCond &quot;%&#123;HTTP_USER_AGENT&#125;&quot; &quot;test666&quot; [NC]</span><br><span class="line">RewriteRule 1.html 2.html</span><br><span class="line">&lt;/IfModule&gt;</span><br></pre></td></tr></table></figure>
+
+<p>​        当我们使用上面的.htaccess后，我们直接通过浏览器去访问1.html文件，会显示文件不存在，也就是说RewriteRule这个规则没有生效。</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907103945803.png" alt="image-20200907103945803"></p>
+<p>​        我们尝试抓包将user_agent部分修改为test666，这样就可以正常访问到。也就是说规则生效了。</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907104222145.png" alt="image-20200907104222145"></p>
+<p>案例一：根据referer来进行筛选</p>
+<p>​        .htaccess文件内容如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mod_rewrite.c&gt;</span><br><span class="line">RewriteEngine on</span><br><span class="line">RewriteCond &quot;%&#123;HTTP_REFERER&#125;&quot; &quot;test666.com&quot; [NC]</span><br><span class="line">RewriteRule 1.html 2.html</span><br><span class="line">&lt;/IfModule&gt;</span><br></pre></td></tr></table></figure>
+
+<p>​        直接访问1.html仍然访问不到</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907104525076.png" alt="image-20200907104525076"></p>
+<p>​        通过添加referer内容为test666.com则可以正常访问到</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907104621874.png" alt="image-20200907104621874"></p>
+<h3 id="mod-rewrite重定向cobaltstrike"><a href="#mod-rewrite重定向cobaltstrike" class="headerlink" title="mod_rewrite重定向cobaltstrike"></a>mod_rewrite重定向cobaltstrike</h3><p>​        根据目标访问的目录不同来进行重定向操作，只有当目标访问到某个特定的地址时，将流量重定向到我们的teamserver，将其他的流量重定向到百度。</p>
+<p>​        我这里cobaltstrike流量这里还是以github上开源的msu_edu.profile的流量来进行配置。我们主要关注下get和post请求部分的url。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">set uri &quot;/siteindex/a/ /siteindex/b/ /siteindex/c/&quot;;  //get请求部分</span><br><span class="line"> set uri &quot;/getsearchresults&quot;;   //post部分</span><br><span class="line">set uri_x86 &quot;/Events&quot;;  //stager部分</span><br><span class="line">set uri_x64 &quot;/events&quot;   //stager部分</span><br></pre></td></tr></table></figure>
+
+<p>​        好的，得到了这个以后我们在重定向的那台主机上设置.htaccess的规则,</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">RewriteEngine On</span><br><span class="line">RewriteCond %&#123;REQUEST_URI&#125; ^/(siteindex/a/|siteindex/c/|siteindex/c/|getsearchresults|Events|events)/?$</span><br><span class="line">RewriteRule ^.*$ http://teamserver-ip:8080%&#123;REQUEST_URI&#125; [P]</span><br><span class="line">RewriteRule ^.*$ https://www.baidu.com/? [L,R=302]</span><br></pre></td></tr></table></figure>
+
+<p>​        设置好以后我们在cobaltstrike中创建一个listener,地址填入重定向主机的地址，这里需要注意，http port(C2)的端口需要和重定向主机apache的端口一致。apache的端口修改在/etc/httpd/conf/httpd.conf中,修改后重启apache服务即可。</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907151628805.png" alt="image-20200907151628805"></p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907115815700.png" alt="image-20200907115815700"></p>
+<p>​        设置好以后我们生成一个shell看下能否正常上线并执行命令</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907151750637.png" alt="image-20200907151750637"></p>
+<p>​        <img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907151845447.png" alt="image-20200907151845447"></p>
+<p>​        但是我们直接去访问重定向的那台主机，如果加入其他路径是无法访问成功的。</p>
+<p><img src="/2020/09/04/%E5%85%B3%E4%BA%8EMod-Rewrite%E9%87%8D%E5%AE%9A%E5%90%91cobaltstrike%E6%B5%81%E9%87%8F%E7%9A%84%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20200907152105597.png" alt="image-20200907152105597"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过上面的学习，我们了解了如何通过mod_rewrite的规则设置来进行流量的控制，通过这种方法可以进行访问控制，从而在一定程度上提升溯源的难度。也可以通过https来设置重定向，这样抓到的流量也看不到具体的路径信息。我们也可以给前置服务器加上CDN，这样也可以在一定层面上增加溯源的难度。</p>
+<p><strong>参考文章</strong></p>
+<p><a target="_blank" rel="noopener" href="https://bluescreenofjeff.com/2016-06-28-cobalt-strike-http-c2-redirectors-with-apache-mod_rewrite/">Cobalt Strike HTTP C2 Redirectors with Apache mod_rewrite</a></p>
+<p><a target="_blank" rel="noopener" href="https://3gstudent.github.io/3gstudent.github.io/CIA-Hive-Beacon-Infrastructure%E5%A4%8D%E7%8E%B01-%E4%BD%BF%E7%94%A8Apache-mod_rewrite%E5%AE%9E%E7%8E%B0http%E6%B5%81%E9%87%8F%E5%88%86%E5%8F%91/">CIA Hive Beacon Infrastructure复现1——使用Apache mod_rewrite实现http流量分发</a></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

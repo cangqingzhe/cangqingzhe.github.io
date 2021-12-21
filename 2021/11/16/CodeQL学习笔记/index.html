@@ -1,0 +1,271 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>CodeQL学习笔记 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="CodeQL学习笔记"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>CodeQL学习笔记</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/11/16/CodeQL学习笔记/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-11-16T10:37:18.000Z">
+          2021-11-16
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    在挖了一段时间的漏洞后，逐渐感觉挖洞变成了一个体力活，虽然也使用正则匹配的方式减少了部分工作量，但这种方式还是有很大的缺陷，准确率比较低，因此希望找到一种新的方式来辅助挖洞，最近CodeQL比较火，很多师傅也写了相应的文章，相对来说学习成本已经算比较低了。尽管看了很多师傅的文章，但感觉上自己对原理或者语法的学习还是比较迟钝，因此打算去分析师傅们已经写好的一些query语法，帮助自己理解。</p>
+<span id="more"></span>
+
+<h2 id="java-sec-code"><a href="#java-sec-code" class="headerlink" title="java-sec-code"></a>java-sec-code</h2><p>​    第一个Demo来自文章<code>Codeql 入门</code>,师傅以<code>java-sec-code</code>项目为例编写了多个query语句。</p>
+<h3 id="查询所有内容为空的方法"><a href="#查询所有内容为空的方法" class="headerlink" title="查询所有内容为空的方法"></a>查询所有内容为空的方法</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">import java</span><br><span class="line"></span><br><span class="line">from Method m, BlockStmt block</span><br><span class="line">where</span><br><span class="line">  block = m.getBody() and</span><br><span class="line">  block.getNumStmt() = 0</span><br><span class="line">select m</span><br></pre></td></tr></table></figure>
+
+<p>from语句为变量定义，where语句相当于数据库查询中的搜索条件的限制语句，select为查询语句。在QL中，方法称作<code>谓词</code>。</p>
+<p>Method类型是方法类，表示获取当前项目中所有的方法。<code>getBody</code>谓词返回body体，<code>BlockStmt</code>代表一个语句块。<code>getNumStmt</code>谓词获取块<code>child statements</code>的数量。关于<code>BlockStmt</code>这部分应该是和AST有一些关系。</p>
+<h3 id="Local-Data-Flow分析SPEL"><a href="#Local-Data-Flow分析SPEL" class="headerlink" title="Local Data Flow分析SPEL"></a>Local Data Flow分析SPEL</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">import java</span><br><span class="line">import semmle.code.java.frameworks.spring.SpringController</span><br><span class="line">import semmle.code.java.dataflow.TaintTracking</span><br><span class="line"></span><br><span class="line">from Call call,Callable parseExpression,SpringRequestMappingMethod route</span><br><span class="line">where</span><br><span class="line">    call.getCallee() = parseExpression and </span><br><span class="line">    parseExpression.getDeclaringType().hasQualifiedName(&quot;org.springframework.expression&quot;, &quot;ExpressionParser&quot;) and</span><br><span class="line">    parseExpression.hasName(&quot;parseExpression&quot;) and </span><br><span class="line">   TaintTracking::localTaint(DataFlow::parameterNode(route.getARequestParameter()),DataFlow::exprNode(call.getArgument(0))) </span><br><span class="line">select route.getARequestParameter(),call</span><br></pre></td></tr></table></figure>
+
+<h4 id="本地数据流"><a href="#本地数据流" class="headerlink" title="本地数据流"></a>本地数据流</h4><p>​    本地数据流是<code>单个方法</code>或<code>可调用对象</code>中的数据流。本地数据流通常比全局数据流更容易、更快、更精确。</p>
+<p>​    本地数据流库位于模块 DataFlow 中，该模块定义了表示数据可以流经的任何元素的类 Node。节点分为表达式节点(ExprNode)和参数节点(ParameterNode)。您可以使用成员谓词 asExpr 和 asParameter 在数据流节点和表达式/参数之间进行映射或使用谓词 exprNode 和 parameterNode。</p>
+<p>​    如果存在从节点nodeFrom到节点nodeTo的即时数据流边，则谓词localFlowStep(Node nodeFrom, Node nodeTo)成立。您可以通过使用+和运算符*，或者通过使用定义的递归谓词localFlow（相当于localFlowStep）来递归应用该谓词。</p>
+<p>​    例如，可以在零个或多个本地步骤中找到从参数源到表达式接收器的污点传 播:<code>DataFlow::localFlow(DataFlow::parameterNode(source), DataFlow::exprNode(sink))</code></p>
+<h4 id="本地污点跟踪"><a href="#本地污点跟踪" class="headerlink" title="本地污点跟踪"></a>本地污点跟踪</h4><p>​    本地污点跟踪通过包括非保留值步骤来扩展本地数据流。例如: </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">String temp = x;</span><br><span class="line">String y = temp + &quot;, &quot; + temp;</span><br></pre></td></tr></table></figure>
+
+<p>​    如果x是一个污点字符串，那么y也是污点。 </p>
+<p>​    本地污染跟踪库位于<code>TaintTracking</code>模块中。像本地数据流一样，如果从<code>nodeFrom</code> 节点到nodeTo节点之间存在直接的污点传播边线，则谓词<code>localTaintStep(DataFlow::Node nodeFrom, DataFlow::Node nodeTo)</code>成立。您可以使用<code>+和``*</code>运算符，也可以使用预定义的递归谓词<code>localTaint</code>（等效于<code>localTaintStep*</code>）来递归地应用谓词。</p>
+<p>​    所以我们再来看下面的代码,是不是就可以理解了。即使用本地污点跟踪的方式查询从参数节点<code>route.getARequestParameter()</code>到表达式节点<code>call.getArgument(0)</code>的数据流是否成立。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TaintTracking::localTaint(DataFlow::parameterNode(route.getARequestParameter()),DataFlow::exprNode(call.getArgument(0))) </span><br></pre></td></tr></table></figure>
+
+<h4 id="Call和Callable"><a href="#Call和Callable" class="headerlink" title="Call和Callable"></a>Call和Callable</h4><blockquote>
+<p>Callable表示可调用的方法或构造器的集合。</p>
+<p>Call表示调用Callable的这个过程（方法调用，构造器调用等等）</p>
+</blockquote>
+<p>​    那么<code>call.getCallee() = parseExpression </code>就代表获取方法调用为<code>parseExpression</code>。</p>
+<p>​    再通过下面的语句对<code>parseExpression</code>进行限制，也就是<code>org.springframework.expression</code>包下的<code>ExpressionParser</code>类的<code>parseExpression</code>方法，我们可以记住这个语句，用到的时候直接套也可以。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">parseExpression.getDeclaringType().hasQualifiedName(&quot;org.springframework.expression&quot;, &quot;ExpressionParser&quot;) and</span><br><span class="line">    parseExpression.hasName(&quot;parseExpression&quot;)</span><br></pre></td></tr></table></figure>
+
+<h4 id="SpringRequestMappingMethod"><a href="#SpringRequestMappingMethod" class="headerlink" title="SpringRequestMappingMethod"></a>SpringRequestMappingMethod</h4><p>​    <code>SpringRequestMappingMethod</code>可以获取所有的Spring Controller的方法。</p>
+<blockquote>
+<p>getARequestParameter 获取请求的参数</p>
+<p>getArgument 获取方法调用时的参数</p>
+</blockquote>
+<p>​    所以再来看下面的代码，意思就是获取所有RequestMapping方法的参数到调用<code>parseExpression</code>方法第一个参数的数据流。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TaintTracking::localTaint(DataFlow::parameterNode(route.getARequestParameter()),DataFlow::exprNode(call.getArgument(0)))</span><br></pre></td></tr></table></figure>
+
+<h3 id="照猫画虎"><a href="#照猫画虎" class="headerlink" title="照猫画虎"></a>照猫画虎</h3><p>​    理解了上面代码的意思，我们完全可以照猫画虎，追踪所有Controller中的命令执行。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">import java</span><br><span class="line">import semmle.code.java.frameworks.spring.SpringController</span><br><span class="line">import semmle.code.java.dataflow.TaintTracking</span><br><span class="line"></span><br><span class="line">from Call call,Callable parseExpression,SpringRequestMappingMethod route</span><br><span class="line">where</span><br><span class="line">    call.getCallee() = parseExpression and </span><br><span class="line">    parseExpression.getDeclaringType().hasQualifiedName(&quot;java.lang&quot;, &quot;Runtime&quot;) and</span><br><span class="line">    parseExpression.hasName(&quot;exec&quot;) and </span><br><span class="line">   TaintTracking::localTaint(DataFlow::parameterNode(route.getARequestParameter()),DataFlow::exprNode(call.getArgument(0))) </span><br><span class="line">select route.getARequestParameter(),call</span><br></pre></td></tr></table></figure>
+
+<h4 id="全局数据流"><a href="#全局数据流" class="headerlink" title="全局数据流"></a>全局数据流</h4><p>​    本地数据流虽然分析效率比较高，但是会存在一些遗漏，举个栗子。我想分析SSRF漏洞，假如我找到的Sink是<code>new URL(&quot;xx&quot;)</code>，但是在下面的Controller中并没有直接调用，而是调用了<code>HttpUtils.URLConnection(url);</code>。而在<code>URLConnection</code>创建了<code>URL</code>对象，那么我使用本地数据流分析是分析不到的，因为他只能在单个方法中分析，跨方法的调用就不行了，这个时候就需要全局数据流。</p>
+<p><img src="/2021/11/16/CodeQL%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/image-20211117160226654.png" alt="image-20211117160226654"></p>
+<p>可以通过继承类<code>DataFlow::Configuration</code>来使用全局数据流库。如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">import semmle.code.java.dataflow.DataFlow</span><br><span class="line"></span><br><span class="line">class MyDataFlowConfiguration extends DataFlow::Configuration &#123;</span><br><span class="line">  MyDataFlowConfiguration() &#123; this = &quot;MyDataFlowConfiguration&quot; &#125;</span><br><span class="line"></span><br><span class="line">  override predicate isSource(DataFlow::Node source) &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  override predicate isSink(DataFlow::Node sink) &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>​    可能对QL中的Class比较陌生，Class简单介绍如下。</p>
+<p><img src="/2021/11/16/CodeQL%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/image-20211117160956245.png" alt="image-20211117160956245"></p>
+<p>​    所以上例中的<code>isSource</code>和<code>isSink</code>都是父类<code>DataFlow::Configuration</code>的非私有谓词。<code>predicate </code>代表当前的谓词没有返回值。下面是关于<code>DataFlow::Configuration</code>谓词的介绍。</p>
+<blockquote>
+<p><code>isSource</code>-定义数据可能来源</p>
+<p><code>isSink</code>-定义数据可能流向的位置</p>
+<p><code>isBarrier</code>—可选，限制数据流</p>
+<p><code>isAdditionalFlowStep</code>—可选，添加额外的数据流步骤</p>
+</blockquote>
+<p>​    这里的Source代表输入点，Sink代表执行点，<code>isAdditionalFlowStep</code>它的作用是将一个可控节点A强制传递给另外一个节点B，那么节点B也就成了可控节点。</p>
+<h4 id="全局污点追踪"><a href="#全局污点追踪" class="headerlink" title="全局污点追踪"></a>全局污点追踪</h4><p>​    全局污点跟踪是针对全局数据流而言，就像本地污点跟踪是针对本地数据流一样。也就是说，全局污点跟踪通过额外的non-value-preserving步骤扩展了全局数据流。我们可以通过扩展类<code>TaintTracking::Configuration</code>来使用全局污点跟踪库：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">import semmle.code.java.dataflow.TaintTracking</span><br><span class="line"></span><br><span class="line">class MyTaintTrackingConfiguration extends TaintTracking::Configuration &#123;</span><br><span class="line">  MyTaintTrackingConfiguration() &#123; this = &quot;MyTaintTrackingConfiguration&quot; &#125;</span><br><span class="line"></span><br><span class="line">  override predicate isSource(DataFlow::Node source) &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  override predicate isSink(DataFlow::Node sink) &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>isSource</code>-定义污点的可能来源</p>
+<p><code>isSink</code>-定义污点可能流向的位置　　</p>
+<p><code>isSanitizer</code>—可选，限制污点流</p>
+<p><code>isAdditionalTaintStep</code>—可选，添加额外污点步骤</p>
+</blockquote>
+<p>​    这里解释下<code>isSanitizer</code>也就是净化函数，代表污点传播到这里就会被阻断。</p>
+<p>​    下面我们用全局污点追踪分析SSRF漏洞，就可以分析到<code>HttpUtils.URLConnection</code>中的URL请求了。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">import semmle.code.java.dataflow.DataFlow</span><br><span class="line">import semmle.code.java.frameworks.spring.SpringController</span><br><span class="line">import semmle.code.java.dataflow.TaintTracking</span><br><span class="line"></span><br><span class="line">class Configuration extends DataFlow::Configuration &#123;</span><br><span class="line">  Configuration() &#123;</span><br><span class="line">    this = &quot;Configer&quot;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  override predicate isSource(DataFlow::Node source) &#123;</span><br><span class="line">    exists( SpringRequestMappingMethod route| source.asParameter()=route.getARequestParameter() )</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  override predicate isSink(DataFlow::Node sink) &#123;</span><br><span class="line">    exists(Call call ,Callable parseExpression|</span><br><span class="line">      sink.asExpr() = call.getArgument(0) and</span><br><span class="line">      call.getCallee()=parseExpression and </span><br><span class="line">   parseExpression.getDeclaringType().hasQualifiedName(&quot;java.net&quot;, &quot;URL&quot;) and</span><br><span class="line">      parseExpression.hasName(&quot;URL&quot;)</span><br><span class="line">    )</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">from  DataFlow::Node src, DataFlow::Node sink, Configuration config</span><br><span class="line">where config.hasFlow(src, sink)</span><br><span class="line">select src,sink</span><br></pre></td></tr></table></figure>
+
+<p>​    这里有必要讲下<code>exists</code>语句</p>
+<blockquote>
+<p>它根据内部的子查询返回true or false，来决定筛选出哪些数据。格式为exists(Obj obj| somthing)</p>
+</blockquote>
+<h2 id="Shiro反序列化漏洞"><a href="#Shiro反序列化漏洞" class="headerlink" title="Shiro反序列化漏洞"></a>Shiro反序列化漏洞</h2><p>​    之前有师傅也讲了如何使用CodeQL分析Shiro的反序列化漏洞，我们也学习一下思路，首先根据之前我们对Shiro反序列化漏洞的了解，这个洞还是稍微有点复杂的，所以肯定是要使用全局污点追踪的方法分析的。</p>
+<h3 id="数据库构建"><a href="#数据库构建" class="headerlink" title="数据库构建"></a>数据库构建</h3><p>​    首先从github下载shiro的源码并且切换到<code>1.2.4</code>版本。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/apache/shiro.git</span><br><span class="line">cd shiro</span><br><span class="line">git checkout 9549384</span><br></pre></td></tr></table></figure>
+
+<p>​    构建数据库</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CodeQL database create shiro1.2.4 --language=java --overwrite --command=&quot;mvn clean install -Dmaven.test.skip=true-Dmaven.test.skip=true&quot;</span><br></pre></td></tr></table></figure>
+
+<p>​    直接构建会有一个错误。</p>
+<p><img src="/2021/11/16/CodeQL%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/image-20211118100254113.png" alt="image-20211118100254113"></p>
+<p>​    经过查找资料，主要是<code>aspectj</code>依赖包的问题。</p>
+<blockquote>
+<p>   aspectjweaver 1.8.9之前的版本不支持JDK1.8， aspectjweaver 1.8.9是在使用JDK1.8时的最低版本。</p>
+<pre><code>   所以对于此有两种方法进行解决：
+        
+   一： 降低JDK的版本，如果aspectjweaver的版本是1.8.9之前的，那么可以使用JDK1.7
+        
+   二：升级aspectjweaver的版本， 如果aspectjweaver的版本是1.8.9之前的，那么可以使用1.8.9来解决这个问题。
+</code></pre>
+</blockquote>
+<p>​    虽然说是这么说，但是我改了pom.xml里的版本后并没有解决问题，切换JDK版本为1.7可以顺利构建成功。</p>
+<p>​    导入数据库后就可以通过下面的查询语句分析啦</p>
+<h3 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line">import java</span><br><span class="line">import semmle.code.java.dataflow.FlowSources</span><br><span class="line">import DataFlow::PathGraph</span><br><span class="line"></span><br><span class="line">predicate isCookiegetValue(Expr expSrc, Expr expDest) &#123;</span><br><span class="line">exists(Method method, MethodAccess call|</span><br><span class="line">expSrc.getType().toString()=&quot;Cookie&quot; and</span><br><span class="line">expDest=call and</span><br><span class="line">call.getMethod() = method and</span><br><span class="line">method.hasName(&quot;getValue&quot;) and</span><br><span class="line">method.getDeclaringType().toString() = &quot;Cookie&quot;</span><br><span class="line">)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">predicate isReadObject(Expr expSrc, Expr expDest) &#123;</span><br><span class="line">exists(Method method, MethodAccess call|</span><br><span class="line">expSrc.getType().toString()=&quot;ObjectInputStream&quot; and</span><br><span class="line">expDest=call and</span><br><span class="line">call.getMethod() = method and</span><br><span class="line">method.hasName(&quot;readObject&quot;) and</span><br><span class="line">method.getDeclaringType().toString() = &quot;ObjectInputStream&quot;</span><br><span class="line">)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">predicate isBase64(Expr expSrc, Expr expDest) &#123;</span><br><span class="line">exists(Method method, MethodAccess call|</span><br><span class="line">expSrc.getType().toString()=&quot;String&quot; and</span><br><span class="line">expDest=call and</span><br><span class="line">call.getMethod() = method and</span><br><span class="line">method.hasName(&quot;decode&quot;) and</span><br><span class="line">method.getDeclaringType().toString() = &quot;Base64&quot;</span><br><span class="line">)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">predicate isdecrypt(Expr expSrc, Expr expDest) &#123;</span><br><span class="line">exists(Method method, MethodAccess call|</span><br><span class="line">expSrc.getType().toString()=&quot;byte&quot; and</span><br><span class="line">expDest=call and</span><br><span class="line">call.getArgument(0)=expSrc and</span><br><span class="line">call.getMethod() = method and</span><br><span class="line">method.hasName(&quot;decrypt&quot;) and</span><br><span class="line">method.getDeclaringType().toString() = &quot;CipherService&quot;</span><br><span class="line">)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class VulConfig extends TaintTracking::Configuration &#123;</span><br><span class="line">VulConfig() &#123; this = &quot;shiroConfig&quot; &#125;</span><br><span class="line"></span><br><span class="line">override predicate isSource(DataFlow::Node source) &#123;</span><br><span class="line">exists(MethodAccess call |</span><br><span class="line">call.getMethod().getName()=&quot;getCookies&quot; and</span><br><span class="line">source.asExpr()=call</span><br><span class="line">)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">override predicate isSink(DataFlow::Node sink) &#123;</span><br><span class="line">exists(MethodAccess call |</span><br><span class="line">call.getMethod().getName()=&quot;readObject&quot; and</span><br><span class="line">sink.asExpr()=call</span><br><span class="line">)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">override predicate isAdditionalTaintStep(DataFlow::Node node1, DataFlow::Node node2) &#123;</span><br><span class="line">isCookiegetValue(node1.asExpr(), node2.asExpr()) or</span><br><span class="line">isReadObject(node1.asExpr(), node2.asExpr()) or</span><br><span class="line">isBase64(node1.asExpr(), node2.asExpr()) or</span><br><span class="line">isdecrypt(node1.asExpr(), node2.asExpr())</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">from VulConfig config, DataFlow::PathNode source, DataFlow::PathNode sink</span><br><span class="line">where config.hasFlowPath(source, sink)</span><br><span class="line">select sink.getNode(), source, sink, &quot;source are&quot;</span><br></pre></td></tr></table></figure>
+
+<p>​    但是还有一个坑,直接使用上述代码是切换不到<code>alert</code>中查看污点传播路径的，需要在开始加上下面的内容。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * @kind path-problem</span><br><span class="line"> */</span><br></pre></td></tr></table></figure>
+
+<p>​    上面的内容虽然可以出现结果，但是好像比较麻烦，我们可以直接将<code>readValue</code>的返回值当作Source，将readObject当作Sink。</p>
+<p><img src="/2021/11/16/CodeQL%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/image-20211118144929941.png" alt="image-20211118144929941"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * @kind path-problem</span><br><span class="line"> */</span><br><span class="line">import java</span><br><span class="line">import semmle.code.java.dataflow.FlowSources</span><br><span class="line">import DataFlow::PathGraph</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">class VulConfig extends TaintTracking::Configuration &#123;</span><br><span class="line">    VulConfig() &#123; this = &quot;shiroConfig&quot; &#125;</span><br><span class="line">    </span><br><span class="line">    override predicate isSource(DataFlow::Node source) &#123;</span><br><span class="line">    exists(MethodAccess call |</span><br><span class="line">    call.getMethod().getName()=&quot;readValue&quot; and</span><br><span class="line">    source.asExpr()=call</span><br><span class="line">    )</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    override predicate isSink(DataFlow::Node sink) &#123;</span><br><span class="line">    exists(MethodAccess call |</span><br><span class="line">    call.getMethod().getName()=&quot;readObject&quot; and</span><br><span class="line">    sink.asExpr()=call</span><br><span class="line">    )</span><br><span class="line">    &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    from VulConfig config, DataFlow::PathNode source, DataFlow::PathNode sink</span><br><span class="line">    where config.hasFlowPath(source, sink)</span><br><span class="line">    select sink.getNode(), source, sink, &quot;source are&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/11/16/CodeQL%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/image-20211118145119754.png" alt="image-20211118145119754"></p>
+<p>​    如果将<code>getCookie</code>的返回值当作Source并不能获取结果，所以我们要将<code>getCookie</code>和<code>readValue</code>链接起来。这里用到了<code>isAdditionalTaintStep</code>谓词。 </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">predicate isCookiegetValue(Expr expSrc, Expr expDest) &#123;</span><br><span class="line">    exists(Method method, MethodAccess call|</span><br><span class="line">    expSrc.getType().toString()=&quot;Cookie&quot; and</span><br><span class="line">    expDest=call and</span><br><span class="line">    call.getMethod() = method and</span><br><span class="line">    method.hasName(&quot;readValue&quot;) and</span><br><span class="line">    method.getDeclaringType().toString() = &quot;Cookie&quot;</span><br><span class="line">    )</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override predicate isAdditionalTaintStep(DataFlow::Node node1, DataFlow::Node node2) &#123;</span><br><span class="line">        isCookiegetValue(node1.asExpr(), node2.asExpr()) </span><br><span class="line">        &#125;</span><br><span class="line">       </span><br></pre></td></tr></table></figure>
+
+<p>​    主要分析下exists中的语句，</p>
+<ul>
+<li><code> expSrc.getType().toString()=&quot;Cookie&quot;</code>主要是获取第一个表达式的类型为<code>Cookie</code>的。</li>
+<li><code>expDest=call</code>第二个表达式为方法调用，后面是对调用的限制</li>
+<li><code>call.getMethod() = method and method.hasName(&quot;readValue&quot;)</code>限制调用的方法为<code>readValue</code></li>
+<li><code>method.getDeclaringType().toString() = &quot;Cookie&quot;</code>限制方法类型为<code>Cookie</code>。也就是调用<code>Cookie</code>类里的<code>readValue</code>方法。</li>
+</ul>
+<p>​    上面代码实现的功能是将所有返回类型为Cookie的表达式和<code>readValue</code>表达式连接起来。但是假如我只想把<code>getCookie</code>表达式和<code>readValue</code>表达式链接起来呢？</p>
+<p>​    再次照猫画虎</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">predicate isCookiegetValue(Expr expSrc, Expr expDest) &#123;</span><br><span class="line">    exists(Method method,Method methodsrc, MethodAccess call,MethodAccess callsrc|</span><br><span class="line">        expSrc=callsrc and callsrc.getMethod() = methodsrc and methodsrc.hasName(&quot;getCookie&quot;)  and methodsrc.getDeclaringType().toString() = &quot;CookieRememberMeManager&quot; and</span><br><span class="line">    expDest=call and</span><br><span class="line">    call.getMethod() = method and</span><br><span class="line">    method.hasName(&quot;readValue&quot;) and</span><br><span class="line">    method.getDeclaringType().toString() = &quot;Cookie&quot;</span><br><span class="line">    )</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/11/16/CodeQL%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/image-20211118160505663.png" alt="image-20211118160505663"></p>
+<h2 id="apache-kylin命令执行漏洞"><a href="#apache-kylin命令执行漏洞" class="headerlink" title="apache kylin命令执行漏洞"></a>apache kylin命令执行漏洞</h2><p>​    这个项目比较大，我们就不自己构建数据库了，可以从<code>https://lgtm.com/projects/g/apache/kylin/</code>直接下载现成的数据库</p>
+<p><img src="/2021/11/16/CodeQL%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/image-20211118161726606.png" alt="image-20211118161726606"></p>
+<p>​    甚至可以直接在<code>lgtm.com</code>中直接编写查询语句。</p>
+<p><img src="/2021/11/16/CodeQL%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/image-20211118161805113.png" alt="image-20211118161805113"></p>
+<p>​    这个漏洞的Source是SpringMapping，Sink是<code>ProcessBuilder</code>,编写查询语句也比较简单</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * @kind path-problem</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">import semmle.code.java.frameworks.spring.SpringController</span><br><span class="line">import semmle.code.java.dataflow.TaintTracking</span><br><span class="line">import DataFlow::PathGraph</span><br><span class="line">import semmle.code.java.dataflow.FlowSources</span><br><span class="line"></span><br><span class="line">class Configuration extends TaintTracking::Configuration &#123;</span><br><span class="line">  Configuration() &#123;</span><br><span class="line">    this = &quot;Configer&quot;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  override predicate isSource(DataFlow::Node source) &#123;</span><br><span class="line">    exists( SpringRequestMappingMethod route| source.asParameter()=route.getARequestParameter() )</span><br><span class="line"></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  override predicate isSink(DataFlow::Node sink) &#123;</span><br><span class="line">    exists(Call call ,Callable parseExpression|</span><br><span class="line">        sink.asExpr() = call.getArgument(0) and</span><br><span class="line">        call.getCallee()=parseExpression and </span><br><span class="line">     parseExpression.getDeclaringType().hasQualifiedName(&quot;java.lang&quot;, &quot;ProcessBuilder&quot;) and</span><br><span class="line">        parseExpression.hasName(&quot;ProcessBuilder&quot;)</span><br><span class="line">      )</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">from  DataFlow::PathNode src, DataFlow::PathNode sink, Configuration config</span><br><span class="line">where config.hasFlowPath(src, sink)</span><br><span class="line">select sink.getNode(), src, sink, &quot;source are&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/11/16/CodeQL%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/image-20211118171537390.png" alt="image-20211118171537390"></p>
+<p>​    除了上面的方式获取<code>source</code>还可以使用下面的方式。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">override predicate isSource(DataFlow::Node source) &#123;</span><br><span class="line">  source instanceof RemoteFlowSource </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    <code>RemoteFlowSource</code>类内置了主流的获取参数的方式，因此也可以使用这种方式获取source。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>​    通过上面的学习，已经可以编写一些简单的查询语句分析了，CodeQL上手虽然并不复杂，而且比较高效，而且官方也对很多漏洞提供了相应的查询语法，用来分析一些有源码的项目还是可以的，但是似乎目前不能分析jar包里的代码，目前也没有比较好的解决方法。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/CodeQL/">CodeQL</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

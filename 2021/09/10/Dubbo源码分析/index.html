@@ -1,0 +1,389 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Dubbo源码分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="Dubbo源码分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>Dubbo源码分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/10/Dubbo源码分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-10T05:50:49.000Z">
+          2021-09-10
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        最近准备对Dubbo的历史漏洞进行分析，但觉得不懂Dubbo的设计和实现直接去分析漏洞比较困难，所以在分析漏洞前先分析Dubbo的源码及实现，值得一提的是Dubbo的官网也有非常详细的源码分析的过程。</p>
+<h3 id="SPI机制及实现"><a href="#SPI机制及实现" class="headerlink" title="SPI机制及实现"></a>SPI机制及实现</h3><p>​        Dubbo的SPI是对JDK自身SPI的扩展实现，增加了IOC和AOP的功能，是Dubbo实现的核心，Dubbo SPI需要的配置文件放在<code>/meta-inf/dubbo</code>目录下，通过键值对的方式配置，如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">adaptive=org.apache.dubbo.common.extension.factory.AdaptiveExtensionFactory</span><br><span class="line">spi=org.apache.dubbo.common.extension.factory.SpiExtensionFactory</span><br></pre></td></tr></table></figure>
+
+<p>​        Dubbo的SPI和JDK自身的SPI对比如下，这也是Dubbo没有选择使用JDK自带SPI的原因。</p>
+<span id="more"></span>
+
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910141629401.png" alt="image-20210910141629401"></p>
+<p>​        可以通过<code>@SPI</code>注解将接口声明由Dubbo的SPI机制加载实现类。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910143121791.png" alt="image-20210910143121791"></p>
+<h4 id="Dubbo如何实现SPI"><a href="#Dubbo如何实现SPI" class="headerlink" title="Dubbo如何实现SPI?"></a>Dubbo如何实现SPI?</h4><p>​        <code>ExtensionLoader </code>是Dubbo SPI实现的核心类，每个定义的spi的接口都会构建一个ExtensionLoader实例。一般通过<code>ExtensionLoader.getExtensionLoader</code>获取ExtensionLoader实例。</p>
+<p>​        <code>getExtensionLoader</code>首先判断是否为接口类型并且由<code>@SPI</code>注解修饰，也就是说只有<code>@SPI</code>修饰的接口才会由Dubbo的SPI机制去寻找实现类。下面会通过<code>EXTENSION_LOADERS</code>寻找是否已经有loader的实例，没有的话会创建一个并添加到<code>EXTENSION_LOADERS</code>中。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910142641943.png" alt="image-20210910142641943"></p>
+<p>​        下面分析<code>ExtensionLoader</code>构造方法，如果type类型不为<code>ExtensionFactory</code>则先执行<code>ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension()</code></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910144520134.png" alt="image-20210910144520134"></p>
+<p>​        <code>getAdaptiveExtension</code>首先从缓存中获取实例，没有则通过<code>createAdaptiveExtension</code>创建实例。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910144916264.png" alt="image-20210910144916264"></p>
+<p>​        <code>createAdaptiveExtension</code>首先通过<code> getAdaptiveExtensionClass().newInstance()</code>创建实例，再通过<code>injectExtension</code>包装。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910145047509.png" alt="image-20210910145047509"></p>
+<p>​        <code>getAdaptiveExtensionClass</code>首先通过<code>getExtensionClasses</code>获取Class,找不到则通过<code>createAdaptiveExtensionClass</code>创建。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910145421185.png" alt="image-20210910145421185"></p>
+<p>​        <code>getExtensionClasses</code>首先通过缓存获取Class获取不到则通过<code>loadExtensionClasses</code>方法获取，获取后放到<code>classes</code>Map中。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910145535084.png" alt="image-20210910145535084"></p>
+<p>​     <code>loadExtensionClasses</code>首先获取SPI注解的属性值放到缓存中，下面通过<code>loadDirectory</code>从配置文件中加载Class，主要从<code>META-INF/dubbo/</code>、<code>META-INF/services/</code>、<code>META-INF/dubbo/internal</code>几个目录下加载文件。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910150018733.png" alt="image-20210910150018733"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910150328371.png" alt="image-20210910150328371"></p>
+<p>​            根据dir和type作为文件名加载资源，并通过<code>loadResource</code>加载类的信息并放到<code>extensionClasses</code>中。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910151027677.png" alt="image-20210910151027677">        <code>loadResource</code>中读取文件并解析文件内容获取<code>name</code>和<code>接口实现类的名称</code>，下面通过<code>loadClass</code>加载。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910151554367.png" alt="image-20210910151554367"></p>
+<p>​        在<code>loadClass</code>中首先检查<code>clazz</code>是否是type的实现类，再去检测clazz的接口是否有<code>Adaptive</code>注解存在的话放到将类放到<code>cachedAdaptiveClass</code>缓存中，下面再通过是否有参数为<code>clazz</code>的构造方法，有的话将clazz存到<code>cachedWrapperClasses</code>中，下面查看实现类是否有<code>Extension</code>注解，有的话取出这个注解的值并赋值给name。下面获取name的值，可以通过<code>xxx,xxx,xx=xxx.com</code>等形式传入多个name，并通过<code>saveInExtensionClass</code>将<code>name</code>和<code>class</code>的值保存到<code>extensionClasses</code>中。<img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910153042790.png" alt="image-20210910153042790"></p>
+<p>​        下面在回到<code>getAdaptiveExtensionClass</code>方法中，首先在缓存中查找，找不到则会通过<code>createAdaptiveExtensionClass</code>创建Class。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910155850737.png" alt="image-20210910155850737"></p>
+<p>​        <code>createAdaptiveExtensionClass</code>首先根据<code>type</code>和<code>SPI配置的value</code>的值生成Adaptive包装类并编译为Class，也就是说我们获取的类型不是配置的实现类对象，而是Adaptive包装类对象。<img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910160909268.png" alt="image-20210910160909268"></p>
+<p>​        生成代码的逻辑比较复杂，我们就不深入分析了，不过我们可以拿到生成的代码，可以看看生成的代码主要做了什么。首先它是type接口的实现类，如果接口中的方法没有通过<code>Adaptive</code>修饰，则直接抛出异常。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910162020436.png" alt="image-20210910162020436"></p>
+<p>​        对于<code>Adaptive</code>注解修饰的方法则会生成实现，首先检查Invoker的url是否为空，再获取协议信息，如果没有配置协议则默认使用<code>dubbo</code>协议，下面获取Protocol的实现类并执行实现类的export方法，其实也就是对export进行了一些包装，在执行export前加了一些验证逻辑。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910162254562.png" alt="image-20210910162254562"></p>
+<p>​        <code>refer</code>方法逻辑类似，只是最后调用实现类的<code>refer</code>方法。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910162528606.png" alt="image-20210910162528606"></p>
+<p>​        下面我们再回到<code>createAdaptiveExtension</code>方法中，通过<code>getAdaptiveExtensionClass()</code>已经拿到了动态创建的<code>Adaptive</code>类并通过<code>newInstance创建对象</code>，下面通过<code>injectExtension</code>完成依赖注入。<img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910163122043.png" alt="image-20210910163122043"></p>
+<h4 id="如何实现IOC"><a href="#如何实现IOC" class="headerlink" title="如何实现IOC?"></a>如何实现IOC?</h4><p><code>injectExtension</code>获取setter方法，并通过<code>objectFactory.getExtension(pt, property);</code>获取需要注入的对象，通过反射调用setter方法完成依赖注入。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910163959267.png" alt="image-20210910163959267"></p>
+<p>​        <code>objectFactory</code>可能是下面三种实现类，也就是说除了可以通过<code>Spi</code>获取注入的对象也可以从spring中获取注入对象。而<code>AdaptiveExtensionFactory</code>则会循环调用多个factory获取对象。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910164637510.png" alt="image-20210910164637510"></p>
+<p>​        一般objectFactory经过初始化后会封装为<code>AdaptiveExtensionFactory</code>并且包含了<code>spi</code>和<code>spring</code>两个工厂，也就是说默认会通过<code>spi</code>和<code>spring</code>两种方式加载需要注入的对象。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910165458497.png" alt="image-20210910165458497"></p>
+<h4 id="为什么可以得到AdaptiveExtentionFactory"><a href="#为什么可以得到AdaptiveExtentionFactory" class="headerlink" title="为什么可以得到AdaptiveExtentionFactory?"></a>为什么可以得到AdaptiveExtentionFactory?</h4><p>​        在容器启动时，会解析<code>&lt;dubbo:service</code>对象，并创建一个serviceBean实例，这个实例是<code>serviceConfig</code>的子类，创建<code>serviceBean</code>实例的过程中也会执行父类的static属性，会执行如下操作。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910173512877.png" alt="image-20210910173512877"></p>
+<p>​        跳过一些已经分析过的步骤，在执行<code>ExtensionLoader</code>构造方法时，会判断类型是否为<code>ExtensionFactory</code>类型，如果不是则会执行后面的代码。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910173558737.png" alt="image-20210910173558737"></p>
+<p>​        进入<code>getExtensionLoader</code>方法，如果缓存中没有extensionLoader则重新创建一个，也就是说这里还会再调用一次<code>ExtensionLoader</code>的构造方法。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910174331550.png" alt="image-20210910174331550"></p>
+<p>​        由于这次<code>type</code>的类型为<code>ExtensionFactory</code>,所以会返回一个<code>ExtensionLoader</code>对象但是此时<code>objectFactory</code>属性为空。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910174450700.png" alt="image-20210910174450700"></p>
+<p>​        下面通过<code>getAdaptiveExtesion</code>获取<code>ExtensionFactory</code>的实现类，同样中间的过程不分析了，主要关注在<code>loadExtensionClasses</code>中获取了<code>ExtensionFactory</code>的实现类。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910191335022.png" alt="image-20210910191335022"></p>
+<p>​        但是<code>ExtensionFactory</code>中明明配置了三个实现类，为什么加载后变成了两个而没有<code>AdaptiveExtensionFactory</code>。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910191637278.png" alt="image-20210910191637278"></p>
+<p>​        我们跟进资源加载部分的代码，可以看到确实读取到了<code>AdaptiveExtensionFactory</code>。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910192020803.png" alt="image-20210910192020803"></p>
+<p>​        在<code>loadClass</code>中，由于<code>AdaptiveExtensionFactory</code>实现类由<code>Adaptive</code>注解修饰，因此会该类到缓存<code>cachedAdaptiveClass</code>中并返回，并不会执行后面的<code>saveInExtensionClass</code>方法。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910192607693.png" alt="image-20210910192607693"></p>
+<p>​                在执行完<code>getExtensionClasses</code>后，会判断<code>cachedAdaptiveClass</code>中是否有值，有的话则直接返回，所以这里其实通过<code>getAdaptiveExtensionClass</code>返回了<code>AdaptiveExtensionFactory</code>类。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910193304740.png" alt="image-20210910193304740"></p>
+<p>​        所以下面是创建了<code>AdaptiveExtensionFactory</code>的实例。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910204329809.png" alt="image-20210910204329809"></p>
+<p>​        而在<code>AdaptiveExtensionFactory</code>的构造方法中，通过<code> loader.getSupportedExtensions()</code>获取扩展名，并通过<code>loader.getExtension(&quot;spring&quot;)</code>获取对应的工厂封装到factorties中。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913094202333.png" alt="image-20210913094202333"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913094252060.png" alt="image-20210913094252060">    </p>
+<p>​        除了动态生成ProtocolAdaptive包装类外，还生成了<code>proxyFactoryAdaptive</code>包装类。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910170319633.png" alt="image-20210910170319633"></p>
+<p>​        在Dubbo中主要使用了两种代理方式，即JDK和javassist。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910170540525.png" alt="image-20210910170540525"></p>
+<p>​        <code>proxyFactoryAdaptive</code>中主要实现了<code>getProxy</code>和<code>getInvoker</code>方法，如果没有配置代理则默认使用javaassist动态代理。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910170647244.png" alt="image-20210910170647244"></p>
+<p>​        <code>getInvoker</code>中则根据传入的参数完成方法的调用。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210910171257814.png" alt="image-20210910171257814"></p>
+<h3 id="标签解析过程"><a href="#标签解析过程" class="headerlink" title="标签解析过程"></a>标签解析过程</h3><p>​        上面分析了Dubbo SPI机制的实现过程，下面分析下Dubbo 中配置的标签是如何解析的？</p>
+<p>​        <code>NamespaceHandler</code>用来解析Spring遇到的所有这个特定的namespace配置文件中的所有elements，Dubbo 实现了<code>DubboNamespaceHandler</code>作为Dubbo标签中属性的处理器，在它的init方法中，配置了不同element的标签解析器。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913101339434.png" alt="image-20210913101339434"></p>
+<p>​        并且Dubbo扩展了<code>BeanDefinitionParser</code>,自定义了<code>DubboBeanDefinitionParser</code>将标签中配置的属性值设置到Bean中，会对bean的属性赋值。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913113221590.png" alt="image-20210913113221590"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913113753051.png" alt="image-20210913113753051"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913113907181.png" alt="image-20210913113907181"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913114042839.png" alt="image-20210913114042839"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913114129549.png" alt="image-20210913114129549"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913114350703.png" alt="image-20210913114350703"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913114650696.png" alt="image-20210913114650696"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913114438826.png" alt="image-20210913114438826"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913114755892.png" alt="image-20210913114755892"></p>
+<h3 id="服务导出过程"><a href="#服务导出过程" class="headerlink" title="服务导出过程"></a>服务导出过程</h3><p>​        通过<code>DubboNamespaceHandler</code>中的配置，可以知道service元素的配置信息会被方法<code>ServiceBean</code>中。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913115400466.png" alt="image-20210913115400466"></p>
+<p>​        而<code>ServiceBean</code>中实现了<code>ApplicationListener</code>监听器接口，每当ApplicationContext发布ApplicationEvent时，实现ApplicationListener的Bean将自动被触发。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913115527858.png" alt="image-20210913115527858"></p>
+<p>​        所以会触发<code>ServiceBean.onApplicationEvent</code>方法。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913120106343.png" alt="image-20210913120106343"></p>
+<p>​        在<code>ServiceBean.onApplicationEvent</code>中通过export方法导出服务。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913120403548.png" alt="image-20210913120403548"></p>
+<p>​        在<code>ServiceBean#export</code>中，调用父类<code>ServiceConfig.export</code>，首先判断做了一些检查，检测是否导出，和延时导出后通过<code>doExport</code>完成导出。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913120556258.png" alt="image-20210913120556258"></p>
+<p>​        <code>doExport</code>中首先判断是否已经导出过了，再判断是否设置path如果没有则将interfaceName作为path并调用doExportUrls方法。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913134215238.png" alt="image-20210913134215238"></p>
+<p>​        <code>doExportUrls</code>首先通过<code>loadRegistries</code>加载注册中心的地址，其次通过<code>buildKey</code>获取接口名，将接口名、实现类实例、接口Class封装到ProviderModel中。再通过<code>initProviderModel</code>将serviceName和providerModel 放到<code>providedServices</code>中。最后通过<code>doExportUrlsFor1Protocol</code>导出服务。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913135243969.png" alt="image-20210913135243969"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913140236459.png" alt="image-20210913140236459"></p>
+<p>​        <code>doExportUrlsFor1Protocol</code>首先获取name属性值，为空则默认name为dubbo。创建一个存放参数的map，将一些配置的参数放到map中。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913141411753.png" alt="image-20210913141411753"></p>
+<p>​        下面通过接口Class构造了接口的包装类，通过包装类获取所有的method，并将methed添加到map中。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913141940752.png" alt="image-20210913141940752"></p>
+<p>​    <img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913142046319.png" alt="image-20210913142046319"></p>
+<p>​        下面获取host和port，并通过这些信息和map中的信息构造一个<code>org.apache.dubbo.common.URL</code>对象，其中path为interfaceName，map中保存的信息被当作参数。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913142433464.png" alt="image-20210913142433464"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913142928529.png" alt="image-20210913142928529"></p>
+<p>​        当scope属性没有配置时，则默认先通过<code>exportLocal</code>先发布到本地，再发布到远程。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913143155375.png" alt="image-20210913143155375"></p>
+<h4 id="本地导出"><a href="#本地导出" class="headerlink" title="本地导出"></a>本地导出</h4><p>​        本地导出主要在<code>exportLocal</code>中实现，首先判断协议名是否为<code>injvm</code>，如果是则表示已经导出过了，不再进行导出。下面构建本地导出的url，获取Invoker并导出。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913144237104.png" alt="image-20210913144237104"></p>
+<p>​        这里的<code>proxyFacory</code>为之前分析SPI机制时动态生成的ProxyFactoryAdaptive类，它的<code>getInvoker</code>方法如下，默认情况下会使用javasist代理。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913144809592.png" alt="image-20210913144809592"></p>
+<p>​        <code>JavassistProxyFactory#getInvoker</code>首先创建了实现类的包装类，再创建了<code>AbstractProxyInvoker</code>对象并重写了doInvoke方法</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913150629589.png" alt="image-20210913150629589"></p>
+<p>​        而<code>protocol</code>也是在SPI机制动态生成的Adaptor，其export方法如下，</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913151358964.png" alt="image-20210913151358964"></p>
+<p>​        而具体调用哪个<code>Protocol</code>的export方法是由<code>(org.apache.dubbo.rpc.Protocol)ExtensionLoader.getExtensionLoader(org.apache.dubbo.rpc.Protocol.class).getExtension(extName)</code>的返回结果决定的，如果我们配置的是是<code>injvm</code>协议，则返回<code>injvmProtocol</code>的包装对象。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913155617492.png" alt="image-20210913155617492"></p>
+<p>​        在<code>ProtocolFilterWrapper#export</code>中，首先判断是否是<code>registry</code>协议，如果是则直接导出否则通过<code>buildInvokerChain</code>构建过滤器链后再导出。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913155910479.png" alt="image-20210913155910479"></p>
+<p>​        <code>buildInvokerChain</code>构造过滤器链，只有当左右的Filter执行完后才会执行invoker的invoke方法。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913161909275.png" alt="image-20210913161909275"></p>
+<p>​        <code>InjvmProtocol#export</code>创建<code>InjvmExporter</code>对象完成本地导出。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913162133815.png" alt="image-20210913162133815"></p>
+<h4 id="远程导出"><a href="#远程导出" class="headerlink" title="远程导出"></a>远程导出</h4><p>​            远程导出首先还是获取Invoker，再将Invoker和serviceBean封装到<code>DelegateProviderMetaDataInvoker</code>中，最后调用export方法导出。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913163041659.png" alt="image-20210913163041659"></p>
+<h5 id="服务导出"><a href="#服务导出" class="headerlink" title="服务导出"></a><strong>服务导出</strong></h5><p>​        下面分析<code>RegistryProtocol#export</code>,在export方法中，主要通过<code>RegistryProtocol#doLocalExport</code>完成服务导出。首先从Invoker中获取key，其次创建了<code>InvokerDelegate</code>作为Invoker的委托类，最终通过<code>protocol.export完成导出</code>。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913170935219.png" alt="image-20210913170935219"></p>
+<p>​        由于我这里使用的是http协议，但HttpProtocol没有export方法，因此会调用父类<code>AbstractProxyProtocol</code>的export方法。在<code>AbstractProxyProtocol#export</code>中，首先判断是否已经导出过，如果没有则通过<code>doExport</code>完成导出。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913171719001.png" alt="image-20210913171719001"></p>
+<p>​        在<code>HttpProtocol#doExport</code>中，首先互获取绑定地址，从<code>serverMap</code>缓存中获取server，没有的话通过bind创建server。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913173653552.png" alt="image-20210913173653552"></p>
+<p>​        bind的同时创建了<code>InternalHandler</code>,其中handle方法内容为当通过post请求时，会通过<code>HttpInvokerServiceExporter.handleRequest</code>处理请求。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913173903099.png" alt="image-20210913173903099"></p>
+<p>​        httpBinder也是Adaptive类，其内容如下,在export方法中，从url中获取server属性并根据server属性得到HttpBinder的实现类，并调用实现类的bind方法。如果没有配置server属性则默认为jetty。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">HttpBinder</span>$<span class="title">Adaptive</span> <span class="keyword">implements</span> <span class="title">org</span>.<span class="title">apache</span>.<span class="title">dubbo</span>.<span class="title">remoting</span>.<span class="title">http</span>.<span class="title">HttpBinder</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> org.apache.dubbo.remoting.http.<span class="function">HttpServer <span class="title">bind</span><span class="params">(org.apache.dubbo.common.URL arg0, org.apache.dubbo.remoting.http.HttpHandler arg1)</span>  </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (arg0 == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">&quot;url == null&quot;</span>);</span><br><span class="line">        org.apache.dubbo.common.URL url = arg0;</span><br><span class="line">        String extName = url.getParameter(<span class="string">&quot;server&quot;</span>, <span class="string">&quot;jetty&quot;</span>);</span><br><span class="line">        <span class="keyword">if</span>(extName == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">&quot;Failed to get extension (org.apache.dubbo.remoting.http.HttpBinder) name from url (&quot;</span> + url.toString() + <span class="string">&quot;) use keys([server])&quot;</span>);</span><br><span class="line">        org.apache.dubbo.remoting.http.HttpBinder extension = (org.apache.dubbo.remoting.http.HttpBinder)ExtensionLoader.getExtensionLoader(org.apache.dubbo.remoting.http.HttpBinder.class).getExtension(extName);</span><br><span class="line">        <span class="keyword">return</span> extension.bind(arg0, arg1);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        由于我们配置的server为tomcat因此会调用<code>TomcatHttpBinder#bind</code>方法，创建一个<code>TomcatHttpServer</code>.</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913174901860.png" alt="image-20210913174901860"></p>
+<p>​        下面构造Tomcat服务需要的一些参数，并且动态创建一个servlet，启动tomcat服务器。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913175327784.png" alt="image-20210913175327784"></p>
+<p>​        启动server后，获取path，并将path作为key,通过<code>createExporter</code>创建的<code>HttpInvokerServiceExporter</code>作为值put到skeletonMap中。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913180242019.png" alt="image-20210913180242019"></p>
+<p>​        给<code>HttpInvokerServiceExporter</code>添加接口信息和实现类.</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914203023130.png" alt="image-20210914203023130"></p>
+<p>​        最后创建一个Runnable对象并返回。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913180820871.png" alt="image-20210913180820871"></p>
+<p>​        回到<code>AbstractProxyProtocol#export</code>中，得到runnable对象后，创建<code>AbstractExporter</code>对象并返回，将exporter放到缓存中后返回。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913180958894.png" alt="image-20210913180958894"></p>
+<h5 id="服务注册"><a href="#服务注册" class="headerlink" title="服务注册"></a><strong>服务注册</strong></h5><p>​            首先获取registry实例，并且获取providerUrl，通过<code>registerProvider</code>将provider注册到<code>providerInvokers</code>中。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913183049914.png" alt="image-20210913183049914"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913183319343.png" alt="image-20210913183319343"></p>
+<p>​            下面调用register方法进行服务注册。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913202357260.png" alt="image-20210913202357260"></p>
+<p>​        register方法中主要通过doRegister完成注册。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913202655478.png" alt="image-20210913202655478"></p>
+<p>​        由于我们使用的是zookeeper作为注册中心，所以会通过<code>ZookeeperRegistry#doRegister</code>完成服务注册。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913202725502.png" alt="image-20210913202725502"></p>
+<h3 id="服务引用过程"><a href="#服务引用过程" class="headerlink" title="服务引用过程"></a>服务引用过程</h3><p>​        服务引用相当于生成了一个代理类，这个代理类可以给我们屏蔽远程调用的细节。</p>
+<p>​        服务引用分为三种，即本地引用，远程引用和注册中心引用。</p>
+<p>​        下面介绍来自<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_35190492/article/details/108461885">字节面试：dubbo的服务引用过程</a></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">本地引入不知道大家是否还有印象，之前服务暴露的流程每个服务都会通过搞一个本地暴露，走 injvm 协议（当然你要是 scope = remote 就没本地引用了），因为存在一个服务端既是 Provider 又是 Consumer 的情况，然后有可能自己会调用自己的服务，因此就弄了一个本地引入，这样就避免了远程网络调用的开销。</span><br><span class="line"></span><br><span class="line">直连远程引入服务，这个其实就是平日测试的情况下用用，不需要启动注册中心，由 Consumer 直接配置写死 Provider 的地址，然后直连即可。</span><br><span class="line"></span><br><span class="line">注册中心引入远程服务，这个就是重点了，Consumer 通过注册中心得知 Provider 的相关信息，然后进行服务的引入</span><br></pre></td></tr></table></figure>
+
+<p>​        服务引用主要通过<code>ReferenceBean</code>来实现，这个类实现了FactoryBean接口，在spring容器初始化时会调用<code>ReferenceBean#getObject</code>方法。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913205047434.png" alt="image-20210913205047434"></p>
+<p>​        <code>get</code>先调用<code>checkAndUpdateSubConfigs</code>检查属性值是否正确，再调用<code>init</code>完成服务引用。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913205302680.png" alt="image-20210913205302680"></p>
+<p>​        <code>init</code>方法首先将很多信息封装到map中，再调用<code>createProxy</code>创建代理。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913205600010.png" alt="image-20210913205600010"></p>
+<p>​            判断是否为本地调用，如果为本地调用，则调用<code>refprotocol.refer</code>创建一个InjvmInvoker对象返回。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913205929446.png" alt="image-20210913205929446"></p>
+<p>​            判断url是否为空，不为空则判断是远程引用还是注册中心引用。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913210629008.png" alt="image-20210913210629008"></p>
+<p>​            获取注册中心的地址，判断是否配置监控中心，如果没有则跳过，最后向url中加入refer参数。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210913211116652.png" alt="image-20210913211116652"></p>
+<p>​        下面当url只有一个时则直接调用<code>prtocol.refer</code>生成invoker。如果有多个url则取最后一个registry的url作为registryURL，获取多个invoker添加到invokers中，并将invokers封装到StaticDirectory中，通过cluster封装为一个invoker，而这个invoker的地址为registryURL。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914092258934.png" alt="image-20210914092258934"></p>
+<p>​        再看下<code>refprotocol.refer</code>是如何做的，由于我们使用的是registry协议，所以会调用<code>RegistryProtocol#refer</code>,首先获取url中的registry参数，并将参数的内容设置为url的协议名重新构造url，其次获取registry实例，如果要调用的接口名是RegistryService的实例，则直接构造Invoker返回，最后对group参数做处理，如果没有则直接调用<code>doRefer</code>完成核心的服务引用的逻辑。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914093935761.png" alt="image-20210914093935761"></p>
+<p>​        <code>doRefer</code>首先创建了<code>RegistryDirectory</code>对象，RegistryDirectory 是一种动态服务目录，实现了 NotifyListener 接口。当注册中心服务配置发生变化后，RegistryDirectory 可收到与当前服务相关的变化。接下来构造consumer的url并注册到注册中心，通过<code>subscribe</code>订阅provider和router等服务，订阅了之后 RegistryDirectory 会收到这几个节点下的信息，触发Invoker的生成。最后通过cluster封装directory得到Invoker，将Consumer的信息添加到<code>ProviderConsumerRegTable</code>后返回Invoker。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914101227398.png" alt="image-20210914101227398"></p>
+<p>​        现在主要关注<code>subscribe</code>订阅方法，订阅过程中会调用对应协议的refer方法，由于我们配置的是http协议，但<code>HttpProtocol</code>没有实现refer方法，因此会调用父类<code>AbstractProxyProtocol.refer</code>。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914102852897.png" alt="image-20210914102852897"></p>
+<p>​        <code>AbstractProxyProtocol#refer</code>首先调用<code>HttpInvoker.doRefer</code>获取http调用客户端代理类对象，并通过<code>getInvoker</code>将代理类转换为Invoker，创建<code>AbstractInvoker</code>对象并实现doInvoke方法，在doInvoke中调用invoker.invoke方法，完成服务调用并获取返回结果。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914111156433.png" alt="image-20210914111156433"></p>
+<p>​        <code>HttpInvoker.doRefer</code>创建了<code>HttpInvokerProxyFactoryBean</code>。</p>
+<p>​        在spring中提供了HttpInvoker 通过HTTP协议实现RPC调用，Spring HttpInvoker使用Java序列化来序列化参数和返回值，然后基于HTTP协议传输经序列化后的对象。<code>Spring HttpInvoker</code>的服务端和客户端分别由<code>HttpInvokerServiceExporter</code>和<code>HttpInvokerProxyFactoryBean</code>实现。</p>
+<p>服务端处理如下：</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914140905803.png" alt="image-20210914140905803"></p>
+<p>客户端处理如下：</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914142047540.png" alt="image-20210914142047540"></p>
+<p>​            创建<code>HttpInvokerProxyFactoryBean</code>对象后重写了<code>createRemoteInvocation</code>方法，根据不同的dubbo版本创建的不同的<code>RemoteInvocation</code>对象。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914114556775.png" alt="image-20210914114556775"></p>
+<p>​            下面设置url和intercepte属性，并且创建了发送请求的客户端并封装到httpProxyFactoryBean中。创建<code>SimpleHttpInvokerRequestExcutor</code>对象并设置到<code>httpProxyFactoryBean</code>中。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914143424395.png" alt="image-20210914143424395"></p>
+<p>​            下面调用<code>afterPropertiesSet</code>方法，创建<code>ProxyFactory</code>对象，通过<code>getProxy</code>获取AOP代理对象。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914143723921.png" alt="image-20210914143723921"></p>
+<p>​        这里传入的interceptor是<code>HttpInvokerProxyFactoryBean</code>，这个Bean的父类<code>HttpInvokerClientInterceptor</code>继承了<code>MethodInterceptor</code>，因此这里相当于添加了一个环绕通知。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914192347578.png" alt="image-20210914192347578"></p>
+<p>​        最后调用getObject实际上是返回<code>HttpProxyFactoryBean</code>的代理对象。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914143851670.png" alt="image-20210914143851670"></p>
+<h3 id="服务调用过程"><a href="#服务调用过程" class="headerlink" title="服务调用过程"></a>服务调用过程</h3><p>​            服务调用是通过消费者的代理对象发起的，这个代理对象中包含了之前创建的服务引用。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914145531602.png" alt="image-20210914145531602"></p>
+<p>​        查看<code>org.apache.dubbo.rpc.proxy.InvokerInvocationHandler#invoke</code>，封装调用的方法名和参数到<code>RpcInvocation</code>中，调用<code>MockClusterInvoker.invoke</code></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914160600831.png" alt="image-20210914160600831"></p>
+<p>​        <code>org.apache.dubbo.rpc.cluster.support.wrapper.MockClusterInvoker#invoke</code>首先判断是否使用Mock机制，如果没有则调用<code>AbstractClusterInvoker.invoke</code></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914161157472.png" alt="image-20210914161157472"></p>
+<p>​        <code>AbstractClusterInvoker.invoke</code>得到Invoker，初始化负载均衡调用<code>FailoverClusterInvoker.doInvoke</code></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914164347557.png" alt="image-20210914164347557"></p>
+<p>​        <code>FailoverClusterInvoker.doInvoke</code>利用负载均衡策略选择一个invoker，并通过<code>RpcContext</code>记录调用过的Invoker,最后执行invoker的invoke方法。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914164911276.png" alt="image-20210914164911276"></p>
+<p>​        回想一下服务引用的过程，真正执行请求的Invoker被封装为<code>AbstractInvoker</code>,所以会调用<code>AbstractInvoker.invoke</code>方法，设置invocation的invoker，并调用doInvoke方法。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914172239461.png" alt="image-20210914172239461"></p>
+<p>​            我们实现的<code>AbstractProxyProtocol</code>重写了doInvoke方法，执行代理类的invoke方法。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914173300914.png" alt="image-20210914173300914"></p>
+<p>​        这个代理类是<code>AbstractProxyInvoker</code>的实例，因此会调用<code>AbstractProxyInvoker.invoke</code></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914192727989.png" alt="image-20210914192727989"></p>
+<p>​        在<code>AbstractProxyInvoker.invoke</code>调用了重写的<code>doInvoke</code>方法，也就是通过<code>wapper.invokeMethod</code>调用。也就是调用proxy的methodname方法。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914192838250.png" alt="image-20210914192838250"></p>
+<p>​        由于我们添加了环绕通知，因此会调用<code>HttpInvokerClientInterceptor.invoke</code>执行调用请求。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914193337932.png" alt="image-20210914193337932"></p>
+<p>​            在<code>HttpInvokerClientInterceptor#executeRequest</code>中获取executer并执行<code>executeRequest</code>方法。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914193634269.png" alt="image-20210914193634269"></p>
+<p>​            由于我们之前服务引用在<code>HttpInvokerProxyFactoryBean</code>中设置的是<code>SimpleHttpInvokerRequestExecutor</code>，但<code>SimpleHttpInvokerRequestExecutor</code>中没有<code>executeRequest</code>，因此调用父类<code>AbstractHttpInvokerRequestExecutor.executeRequest</code>,在这个类中，将<code>RemoteInvocation</code>进行序列化后调用<code>SimpleHttpInvokerRequestExecutor#doExecuteRequest</code>完成请求发送。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914200306489.png" alt="image-20210914200306489"></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914200350526.png" alt="image-20210914200350526"></p>
+<p>​        之前在服务导出时我们已经开启了tomcat服务并且创建了<code>internalHandler</code>设置到DispatcherServlet中，当接收到请求时，将通过<code>internalHandler.handle</code>处理请求。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914201638562.png" alt="image-20210914201638562"></p>
+<p>​        获取<code>HttpInvokerServiceExporter</code>处理request请求。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914201705806.png" alt="image-20210914201705806"></p>
+<p>​        通过<code>readRemoteInvocation</code>将传入的数据反序列化为<code>RemoteInvocation</code>对象，调用<code>invokeAndCreateResult</code>完成请求处理。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914201741834.png" alt="image-20210914201741834"></p>
+<p>​        通过<code>RemoteInvocationBasedExporter.invoke</code>处理请求。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914201903323.png" alt="image-20210914201903323"></p>
+<p>​        由于<code>HttpInvokerServiceExporter</code>没有invoke方法，因此会调用父类<code>DefaultRemoteInvocationExecutor</code>的invoke方法，调用<code>RemoteInvocation.invoke</code></p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914203608528.png" alt="image-20210914203608528"></p>
+<p>​        最后调用<code>RemoteInvocation#invoke</code>，通过反射执行方法。</p>
+<p><img src="/2021/09/10/Dubbo%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/image-20210914203828393.png" alt="image-20210914203828393"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        第一次对框架的源码进行分析，可能有一些地方没有分析清楚，不过了解到这种程度对于分析漏洞应该够用了。</p>
+<h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://dubbo.apache.org/zh/docs/">https://dubbo.apache.org/zh/docs/</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_35190492/article/details/108461885">https://blog.csdn.net/qq_35190492/article/details/108461885</a></li>
+</ul>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/源码分析/">源码分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

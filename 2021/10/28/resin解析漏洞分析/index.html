@@ -1,0 +1,200 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>resin解析漏洞分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="resin解析漏洞分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>resin解析漏洞分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/28/resin解析漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-28T09:51:41.000Z">
+          2021-10-28
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    前阵子看有师傅在公众号上发表了<code>Resin解析漏洞分析</code>，我们也知道有个常用的OA用的就是<code>Resin</code>，因此我认为了解它的漏洞是十分必要的。</p>
+<span id="more"></span>
+
+<h2 id="原理分析"><a href="#原理分析" class="headerlink" title="原理分析"></a>原理分析</h2><p>​    这个漏洞和<code>IIS</code>解析漏洞比较像，可以通过创建一个<code>xxx.jsp</code>的文件夹，并在其中放置一个<code>txt</code>文件,文件的内容将会被当作<code>JSP</code>解析。</p>
+<p>​    我认为要分析这个漏洞原理，首先得先了解访问<code>jsp</code>文件时<code>Resin</code>是如何处理我们请求的。</p>
+<p>​    首先看下<code>*.jsp</code>是被哪个<code>Servlet</code>处理的,从配置<code>app-default.xml</code>中可以看出，我们的请求会被<code>com.caucho.jsp.JspServlet</code>处理。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">  <span class="tag">&lt;<span class="name">servlet</span> <span class="attr">servlet-name</span>=<span class="string">&quot;resin-jsp&quot;</span></span></span><br><span class="line"><span class="tag">           <span class="attr">servlet-class</span>=<span class="string">&quot;com.caucho.jsp.JspServlet&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">init</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">load-tld-on-init</span>&gt;</span>false<span class="tag">&lt;/<span class="name">load-tld-on-init</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">page-cache-max</span>&gt;</span>1024<span class="tag">&lt;/<span class="name">page-cache-max</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">init</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">load-on-startup</span>/&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">servlet</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">servlet-mapping</span> <span class="attr">url-pattern</span>=<span class="string">&quot;*.jsp&quot;</span> <span class="attr">servlet-name</span>=<span class="string">&quot;resin-jsp&quot;</span> <span class="attr">default</span>=<span class="string">&quot;true&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>​    本来以为在<code>JspServlet</code>下断点可以看到请求调用栈，但是在实际操作的过程中发现并没有执行到<code>JspServlet</code>中的方法就返回了，确实比较奇怪。</p>
+<p>​    在<code>Resin</code>中发起HTTP请求一定会经过<code>HttpRequest#handleRequest</code>方法处理，可以在这个方法中打断点排查问题，经过排查发现在<code>PageFilterChain#doFilter</code>中就完成了<code>JSP</code>的”编译”和执行工作，这点比较奇怪，因为之前分析Tomcat中”编译JSP”的操作是在<code>servlet</code>中完成的。所以其实针对<code>Resin</code>对<code>JSP</code>文件处理的分析重点就在<code>PageFilterChain#doFilter</code>中。</p>
+<ul>
+<li><code>JSP</code>编译后会被封装到<code>Page</code>对象中，而<code>Page</code>对象的引用被保存以<code>pageRef</code>属性中，因此首先检测<code>pageRef</code>是否为空，如果是则直接通过<code>  page.pageservice(req, res);</code>执行请求，不经过后面编译的逻辑。</li>
+<li>如果缓存中没有<code>page</code>对象，则通过<code>compilePage</code>编译<code>JSP</code>并封装为<code>Page</code>对象返回，<code>new SoftReference</code>创建引用对象，再通过<code>pageservice</code>执行请求。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doFilter</span><span class="params">(ServletRequest request, ServletResponse response)</span></span></span><br><span class="line"><span class="function">   <span class="keyword">throws</span> ServletException, IOException</span></span><br><span class="line"><span class="function"> </span>&#123;</span><br><span class="line">   HttpServletRequest req = (HttpServletRequest) request;</span><br><span class="line">   HttpServletResponse res = (HttpServletResponse) response;</span><br><span class="line">   FileNotFoundException notFound = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">   SoftReference&lt;Page&gt; pageRef = _pageRef;</span><br><span class="line"></span><br><span class="line">   Page page;</span><br><span class="line"><span class="comment">//首先从换从中获取Page对象的引用，如果有就不再编译。</span></span><br><span class="line">   <span class="keyword">if</span> (pageRef != <span class="keyword">null</span>)</span><br><span class="line">     page = pageRef.get();</span><br><span class="line">   <span class="keyword">else</span></span><br><span class="line">     page = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//如果缓存为空或者page对象被修改过则编译</span></span><br><span class="line">   <span class="keyword">if</span> (page == <span class="keyword">null</span> || page._caucho_isModified()) &#123;</span><br><span class="line">     <span class="keyword">try</span> &#123;</span><br><span class="line">       _pageRef = <span class="keyword">null</span>;</span><br><span class="line">	</span><br><span class="line">       page = compilePage(page, req, res);</span><br><span class="line">	<span class="comment">//得到page的引用并保存</span></span><br><span class="line">       <span class="keyword">if</span> (page != <span class="keyword">null</span>) &#123;</span><br><span class="line">         _pageRef = <span class="keyword">new</span> SoftReference&lt;Page&gt;(page);</span><br><span class="line">     </span><br><span class="line">         _isSingleThread = page <span class="keyword">instanceof</span> SingleThreadModel;</span><br><span class="line">       &#125;</span><br><span class="line">     &#125; <span class="keyword">catch</span> (FileNotFoundException e) &#123;</span><br><span class="line">       page = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">       notFound = e;</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> (page == <span class="keyword">null</span>) &#123;</span><br><span class="line">     <span class="comment">// jsp/01cg</span></span><br><span class="line">     <span class="keyword">if</span> (notFound == <span class="keyword">null</span>)</span><br><span class="line">       <span class="keyword">return</span>;</span><br><span class="line">     </span><br><span class="line">     String errorUri = (String) req.getAttribute(RequestDispatcher.ERROR_REQUEST_URI);</span><br><span class="line">     String uri = (String) req.getAttribute(RequestDispatcher.INCLUDE_REQUEST_URI);</span><br><span class="line">     String forward = (String) req.getAttribute(RequestDispatcher.FORWARD_REQUEST_URI);</span><br><span class="line"></span><br><span class="line">     <span class="comment">// jsp/01ch</span></span><br><span class="line">     <span class="keyword">if</span> (uri != <span class="keyword">null</span>) &#123;</span><br><span class="line">       <span class="comment">//throw new FileNotFoundException(uri);</span></span><br><span class="line">       <span class="keyword">throw</span> notFound;</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">else</span> <span class="keyword">if</span> (forward != <span class="keyword">null</span>) &#123;</span><br><span class="line">       <span class="comment">//throw new FileNotFoundException(req.getRequestURI());</span></span><br><span class="line">       <span class="keyword">throw</span> notFound;</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">else</span> <span class="keyword">if</span> (errorUri != <span class="keyword">null</span>) &#123;</span><br><span class="line">       <span class="comment">//throw new FileNotFoundException(errorUri);</span></span><br><span class="line">       <span class="keyword">throw</span> notFound;</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">else</span> &#123;</span><br><span class="line">       log.log(Level.FINER, notFound.toString(), notFound);</span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line">     ((HttpServletResponse) res).sendError(HttpServletResponse.SC_NOT_FOUND);</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">else</span> <span class="keyword">if</span> (req <span class="keyword">instanceof</span> HttpServletRequest) &#123;</span><br><span class="line">     <span class="keyword">try</span> &#123;</span><br><span class="line">       <span class="keyword">if</span> (_isSingleThread) &#123;</span><br><span class="line">         <span class="keyword">synchronized</span> (page) &#123;</span><br><span class="line">          <span class="comment">//执行请求</span></span><br><span class="line">           page.pageservice(req, res);</span><br><span class="line">         &#125;</span><br><span class="line">       &#125;</span><br><span class="line">       <span class="keyword">else</span></span><br><span class="line">         page.pageservice(req, res);</span><br><span class="line">     &#125; <span class="keyword">catch</span> (ServletException e) &#123;</span><br><span class="line">     ...</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    <code>Page#pageService--&gt;JavaPage#service--&gt;_aaa#_jspService</code>,最后通过<code>JSP</code>生成类的<code>_jspService</code>方法完成请求。</p>
+<p><img src="/2021/10/28/resin%E8%A7%A3%E6%9E%90%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211029102851562.png" alt="image-20211029102851562"></p>
+<h3 id="如何进入PageFilterChain"><a href="#如何进入PageFilterChain" class="headerlink" title="如何进入PageFilterChain?"></a>如何进入PageFilterChain?</h3><p>​    通过上面的分析我们可以知道，在<code>PageFilterChain</code>中完成了对JSP的编译和执行，所以我们分析的重点就在于如何才能进入<code>PageFilterChain</code>中？</p>
+<p>​    追踪创建<code>PageFilterChain</code>的过程，在<code>WebApp#buildInvocation</code>中，完成了<code>PageFilterChain</code>的创建，我摘了部分代码分析。</p>
+<ul>
+<li>首先从缓存中获取<code>FilterChains</code>,如果有的话则直接获取<code>chains</code>，缓存中保存的<code>Chains</code>和URL有关。</li>
+<li>如果缓存没有，则通过<code> _servletMapper.mapServlet(invocation);</code>获取Chains。</li>
+</ul>
+<p><img src="/2021/10/28/resin%E8%A7%A3%E6%9E%90%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211029110557770.png" alt="image-20211029110557770"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Invocation <span class="title">buildInvocation</span><span class="params">(Invocation invocation, <span class="keyword">boolean</span> isTop)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">  <span class="keyword">else</span> &#123;</span><br><span class="line">      FilterChainEntry entry = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// jsp/1910 - can&#x27;t cache jsp_precompile</span></span><br><span class="line">      String query = invocation.getQueryString();</span><br><span class="line"></span><br><span class="line">      <span class="keyword">boolean</span> isCache = <span class="keyword">true</span>;</span><br><span class="line">      <span class="keyword">if</span> (query != <span class="keyword">null</span> &amp;&amp; query.indexOf(<span class="string">&quot;jsp_precompile&quot;</span>) &gt;= <span class="number">0</span>)</span><br><span class="line">        isCache = <span class="keyword">false</span>;</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span> (_requestRewriteDispatch != <span class="keyword">null</span>)</span><br><span class="line">        isCache = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (isCache)</span><br><span class="line">        entry = _filterChainCache.get(invocation.getContextURI());</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (entry != <span class="keyword">null</span> &amp;&amp; ! entry.isModified()) &#123;</span><br><span class="line">        chain = entry.getFilterChain();</span><br><span class="line">        invocation.setServletName(entry.getServletName());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (! entry.isAsyncSupported())</span><br><span class="line">          invocation.clearAsyncSupported();</span><br><span class="line"></span><br><span class="line">        invocation.setMultipartConfig(entry.getMultipartConfig());</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        chain = _servletMapper.mapServlet(invocation);</span><br><span class="line">       ...   </span><br><span class="line">      &#125;</span><br><span class="line">        </span><br></pre></td></tr></table></figure>
+
+<p>​    在<code>mapServlet</code>中，主要做了下面的操作</p>
+<ul>
+<li>从<code>ServletInvocation</code>中获取URL并去除<code>;xxx</code>的内容</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"> String contextURI = invocation.getContextURI();</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">           cleanUri = Invocation.stripPathParameters(contextURI);</span><br><span class="line">     &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">       log.warning(L.l(<span class="string">&quot;Invalid URI &#123;0&#125;&quot;</span>, contextURI));</span><br><span class="line">       </span><br><span class="line">       <span class="keyword">return</span> <span class="keyword">new</span> ErrorFilterChain(<span class="number">404</span>);</span><br><span class="line">     &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>根据URL匹配获取<code>ServletMapping</code></li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ServletMapping servletMap = _servletMap.map(cleanUri, vars);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果根据URL没有匹配到<code>Servlet</code>处理则根据URL获取资源内容，并设置使用<code>_defaultServlet</code>处理。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"> servletName = servletMap.getServletName();</span><br><span class="line"><span class="keyword">if</span> (servletName == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        InputStream is;</span><br><span class="line">        is = _webApp.getResourceAsStream(contextURI);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (is != <span class="keyword">null</span>) &#123;</span><br><span class="line">          is.close();</span><br><span class="line"></span><br><span class="line">          servletName = _defaultServlet;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">      &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果URL以<code>j_security_check</code>结尾则使用<code>j_security_check</code>作为<code>Servlet</code></li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (matchResult == <span class="keyword">null</span> &amp;&amp; contextURI.endsWith(<span class="string">&quot;j_security_check&quot;</span>)) &#123;</span><br><span class="line">   servletName = <span class="string">&quot;j_security_check&quot;</span>;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果匹配成功则设置<code>servletPath</code>和<code>servletName</code>等属性到<code>invocation</code>对象中，根据<code>Servletname</code>从<code>_servletManager</code>获取<code>ServletConfigImpl</code>对象，创建FilterChains</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ArrayList&lt;String&gt; vars = <span class="keyword">new</span> ArrayList&lt;String&gt;();</span><br><span class="line">vars.add(contextURI);</span><br><span class="line">String servletPath = vars.get(<span class="number">0</span>);</span><br><span class="line">invocation.setServletPath(servletPath);</span><br><span class="line">invocation.setServletName(servletName);</span><br><span class="line">ServletConfigImpl newConfig = _servletManager.getServlet(servletName);</span><br><span class="line">FilterChain chain= _servletManager.createServletChain(servletName, config, invocation);</span><br></pre></td></tr></table></figure>
+
+<p>​    所以这个漏洞的重点在于为什么<code>/test.jsp/xxx.txt</code>可以被<code> _servletMap.map(cleanUri, vars);</code>匹配到。</p>
+<p>​    进入到<code>UrlMap#map</code>中，发现默认情况下<code>*.jsp</code>会交给<code>^.*\.jsp(?=/)|^.*\.jsp\z</code>正则处理。</p>
+<p><img src="/2021/10/28/resin%E8%A7%A3%E6%9E%90%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211029141714407.png" alt="image-20211029141714407"></p>
+<p>​    主要出问题的是<code>^.*\.jsp(?=/)</code>部分，这个正则的逻辑是匹配<code>xxxx.jsp/xxxx</code>所以我们传入的路径会被匹配到,这也是这个漏洞的本质原因。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>​    其实我认为<code>Resin</code>这么写可能对作者来说这本身是个正常功能，因为之前<code>Resin</code>也实现了<code>Invoker</code>的功能，可以直接根据路径加载任意类。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/eZAG3Ze0ytd5l7ci1nb-qg">Resin容器文件解析漏洞深入分析</a></li>
+</ul>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

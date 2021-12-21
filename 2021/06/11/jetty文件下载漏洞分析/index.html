@@ -1,0 +1,200 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>jetty文件下载漏洞分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="jetty文件下载漏洞分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>jetty文件下载漏洞分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/06/11/jetty文件下载漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-06-11T03:14:17.000Z">
+          2021-06-11
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​        前段时间在分析Jetty漏洞时无意捡了个CVE，下面是当时分析该漏洞并挖掘到CVE的记录。</p>
+<h2 id="CVE-2021-28164"><a href="#CVE-2021-28164" class="headerlink" title="CVE-2021-28164"></a>CVE-2021-28164</h2><p>​        该漏洞影响<code>9.4.37.v20210219</code> ，<code>9.4.38.v20210224</code>版本，攻击者可通过<code>/%2e/WEB-INF/</code>绕过WEB-INF下文件的访问限制，读取WEB-INF下的文件内容。目前该漏洞我仅在<code>9.4.38.v20210224</code>复现成功。</p>
+<span id="more"></span>
+
+<h3 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h3><p>​        首先使用IDEA创建一个maven的web项目，修改POM文件添加Jetty依赖,这个依赖使用阿里云的源是找不到的，可以修改为maven的官方源，并为maven设置socks代理来解决下载依赖的问题，下面是我的POM文件配置。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">project</span> <span class="attr">xmlns</span>=<span class="string">&quot;http://maven.apache.org/POM/4.0.0&quot;</span> <span class="attr">xmlns:xsi</span>=<span class="string">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span> <span class="attr">xsi:schemaLocation</span>=<span class="string">&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd&quot;</span>&gt;</span></span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">modelVersion</span>&gt;</span>4.0.0<span class="tag">&lt;/<span class="name">modelVersion</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">packaging</span>&gt;</span>war<span class="tag">&lt;/<span class="name">packaging</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">name</span>&gt;</span>jetty_CVE-2021-28169<span class="tag">&lt;/<span class="name">name</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.example<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jetty_CVE-2021-28169<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0-SNAPSHOT<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">build</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">plugins</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">plugin</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.eclipse.jetty<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jetty-maven-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>9.4.38.v20210224<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">configuration</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">httpConnector</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">port</span>&gt;</span>8082<span class="tag">&lt;/<span class="name">port</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;/<span class="name">httpConnector</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">webApp</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">contextPath</span>&gt;</span>/<span class="tag">&lt;/<span class="name">contextPath</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;/<span class="name">webApp</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">plugins</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">build</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">project</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>​        加载依赖后，通过<code>mvn jetty:run</code>命令运行jetty，访问<code>/%2e/WEB-INF/web.xml</code>读取xml文件，至此漏洞复现成功。</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210611115919722.png" alt="image-20210611115919722"></p>
+<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>​        根据Jetty官网的描述，这个漏洞是由于servlet和url解析产生了不一致导致的。所以当使用<code>/%2e</code>进行绕过时，一定会进入到servlet，由于在Jetty中所有HTTPservlet的请求都会过<code>javax.servlet.http.HttpServlet#service(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletRespons)</code>,所以可以在该函数打断点观察程序后续的执行逻辑。</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210611162904299.png" alt="image-20210611162904299">            接下来会进入到<code>org.eclipse.jetty.servlet.DefaultServlet#doGet</code>，在该方法中又会调用<code>org.eclipse.jetty.server.ResourceService#doGet</code>方法。</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210611162957047.png" alt="image-20210611162957047"></p>
+<p>​            在<code>org.eclipse.jetty.server.ResourceService#doGet</code>中会根据传入的路径获取文件内容。</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210611173821872.png" alt="image-20210611173821872"></p>
+<p>​            当获取的内容为目录时，则列出目录结构,所以也可以通过<code>/%2e/WEB-INF/</code>读取<code>WEB-INF</code>下的目录<img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617103728909.png" alt="image-20210617103728909"></p>
+<p>​            当正常读取到文件内容时，则将读取到的文件内容发送到客户端。</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617103814228.png" alt="image-20210617103814228"></p>
+<p>​            通过上面的分析，<strong>之所以能进行文件读取操作，是因为DefaultServlet的处理导致的</strong>,通过查阅文档，DefaultServlet映射路径为<code>/</code>,主要作用为上下文提供对静态内容的处理。所以如果程序中将其他的servlet mapping设置为<code>/</code>,访问<code> /%2e/WEB-INF/web.xml</code>将不会触发读取漏洞，因为请求不会交给DefaultServlet处理。</p>
+<p>​            <strong>那么为什么直接访问<code>/./WEB-INF/web.xml</code>不会触发漏洞呢？</strong></p>
+<p>​            在<code>org.eclipse.jetty.server.Request#setMetaData</code>中会对请求的URI进行解析，在这个过程中会获取URL解码后的url并通过setPathInfo进行设置。<img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617113525349.png" alt="image-20210617113525349"></p>
+<p>​            在<code>org.eclipse.jetty.server.handler.ContextHandler#isProtectedTarget</code>中会判断请求的路径是否以<code>/WEB-INF</code>开头，由于url解码后的url并不满足条件，因此绕过了此处黑名单的检测，才能顺利的执行到DefaultServlet的方法，否则会直接返回。<img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617113724406.png" alt="image-20210617113724406"></p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617114153492.png" alt="image-20210617114153492"></p>
+<p>​            <strong>为什么通过<code>/./WEB-INF/web.xml</code>可以顺利的请求到<code>/WEB-INF/web.xml</code>文件呢？</strong></p>
+<p>​            这个取决于<code>org.eclipse.jetty.server.handler.ContextHandler#getResource</code>方法，在该方法中通过<code>canonicalPath</code>对路径进行处理，所有的<code>/./</code>都会被转换为<code>/</code>。</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617114648546.png" alt="image-20210617114648546"></p>
+<p>​        <strong>除了%2e编码绕过，能否通过其他方式绕过？</strong></p>
+<p>​        在获取<code>org.eclipse.jetty.http.HttpURI#getDecodedPath</code>获取解码参数时，主要是通过获取<code>_decodedPath</code>属性的值来实现的，而这个属性在<code>org.eclipse.jetty.http.HttpURI#parse(org.eclipse.jetty.http.HttpURI.State, java.lang.String, int, int)</code>方法中别赋值，首先通过<code>canonicalPath</code>对<code>/./</code>或<code>/../</code>形式的url进行转换，再通过<code>decodePath</code>进行解码。</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617140914230.png" alt="image-20210617140914230"></p>
+<p>​        在<code>decodePath</code>中还会将<code>%u002e</code>,<code>%2e;;;</code>转换为<code>.</code>，因此也可以使用这种方式绕过。</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617141322126.png" alt="image-20210617141322126"></p>
+<p>​            我们知道，这个漏洞之所以使用url编码，是为了绕过<code>canonicalPath</code>对<code>/./</code>的转换，但经过我们上面的分析也可以通过<code>/.;/WEB-INF/web.xml</code>来绕过，那么为什么不能使用这种方式绕过呢？</p>
+<p>​            首先确实可以通过<code>/.;/</code>来绕过canonicalPath方法，但是实际使用这种方式会爆400,这是为什么呢？</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617143621772.png" alt="image-20210617143621772"><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617143917629-1623911957932.png" alt="image-20210617143917629"></p>
+<p>​        根据报错定位到<code>org.eclipse.jetty.server.Request#setMetaData</code>,<code>isAmbiguous</code>的返回结果是由<code>_ambiguous</code>决定的，所以要找到哪里给<code>_ambiguous</code>赋值。<img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617144314517.png" alt="image-20210617144314517"></p>
+<p>​        在<code>org.eclipse.jetty.http.HttpURI#checkSegment</code>中，当要处理的字符的前一个字符为.或者..时，会返回false，并给<code>_ambiguous</code>赋值。</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617145147766.png" alt="image-20210617145147766"></p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617145222043.png" alt="image-20210617145222043"></p>
+<p>​        注意代码<code>__ambiguousSegments.put(&quot;%2e&quot;, Boolean.TRUE);</code>，这里如果改为false，那么就无法使用<code>/%2e/WEB-INF/web.xml</code>来绕过。</p>
+<p>​        <strong>除了读取xml文件，能否读取WEB-INF下的class或者jsp文件？</strong></p>
+<p>​        当读取jsp文件时，并不会得到jsp文件的内容，因为HTTPServlet会将请求交给JettyJspServlet，会去解析jsp的内容，但使用这种方式也可以让我们直接去执行WEB-INF下的jsp文件。</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617152001682.png" alt="image-20210617152001682"></p>
+<p>​        至于class或者jar文件，可以直接读取内容，所以利用该漏洞读取源码。</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617153253099.png" alt="image-20210617153253099"></p>
+<h3 id="漏洞修复"><a href="#漏洞修复" class="headerlink" title="漏洞修复"></a>漏洞修复</h3><p>​        最后看下官方是如何修复这个漏洞，有无绕过的可能。</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617154935767.png" alt="image-20210617154935767"></p>
+<p>​        只有当ambiguous为true时才会执行上面的代码，但如果我们用<code>%u002e</code>就可以绕过该限制。</p>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210617163502809.png" alt="image-20210617163502809"></p>
+<h3 id="联系jetty获取CVE"><a href="#联系jetty获取CVE" class="headerlink" title="联系jetty获取CVE"></a>联系jetty获取CVE</h3><p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210621103311443.png" alt="image-20210621103311443"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​        通过对这个漏洞的分析，一方面觉得花费时间去跟进漏洞是值得的，另外身为一个做漏洞挖掘的，深入分析漏洞的原理是必要的，这也是能挖掘到新漏洞的前提。最后总结下这个漏洞的利用</p>
+<ul>
+<li>目录遍历，枚举/WEB-INF下的目录结构</li>
+</ul>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210621103858903.png" alt="image-20210621103858903"></p>
+<ul>
+<li>源码读取，除了可以读取配置文件，也可以读取class文件</li>
+</ul>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210621103934823.png" alt="image-20210621103934823"></p>
+<ul>
+<li>执行/WEB-INF下的JSP文件</li>
+</ul>
+<p><img src="/2021/06/11/jetty%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210621104048112.png" alt="image-20210621104048112"></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

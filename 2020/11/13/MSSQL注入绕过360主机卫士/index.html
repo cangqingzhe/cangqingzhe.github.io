@@ -1,0 +1,169 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>MSSQL注入绕过360主机卫士 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="MSSQL注入绕过360主机卫士"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>MSSQL注入绕过360主机卫士</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/11/13/MSSQL注入绕过360主机卫士/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
+          2020-11-13
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="参数污染"><a href="#参数污染" class="headerlink" title="参数污染"></a>参数污染</h2><p>这个之前bypass写过，我这次测试的目标同样是可以使用参数污染来进行绕过的，会出现这个问题，是因为360主机卫士在处理post请求时，没有处理post请求中的get参数，所以可以使用这种方式来进行全局绕过。</p>
+<span id="more"></span>
+
+<p><img src="/2020/11/13/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726165735149.png" alt="image-20200726165735149"></p>
+<h2 id="静态资源白名单"><a href="#静态资源白名单" class="headerlink" title="静态资源白名单"></a>静态资源白名单</h2><p>之前我自己也经过测试，在php+apache或aspx+iis的站上，加静态后缀是不会影响程序的正常解析。同时，这个也能绕过安全卫士</p>
+<p><img src="/2020/11/13/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726170717888.png" alt="image-20200726170717888"></p>
+<h2 id="改变请求为multipart-form-data"><a href="#改变请求为multipart-form-data" class="headerlink" title="改变请求为multipart/form-data"></a>改变请求为multipart/form-data</h2><p>这个方法直接使用是绕不过的，不过可以配合数据填充的方法进行绕过</p>
+<p><img src="/2020/11/13/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726171115095.png" alt="image-20200726171115095"></p>
+<h2 id="语义上的绕过"><a href="#语义上的绕过" class="headerlink" title="语义上的绕过"></a>语义上的绕过</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">上面的绕过是全局绕过的方法，下面我们回归到正常语句的绕过</span><br></pre></td></tr></table></figure>
+
+<p>现在我们要测试多语句，需要使用waitfor delay来进行判断，我们知道，很多waf在遇到%00是会忽略后面的语句的，但是在ASPX+IIS的环境中，并不会影响正常解析，我们尝试使用这个特性绕过。</p>
+<p><img src="/2020/11/13/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726180930445.png" alt="image-20200726180930445"></p>
+<p><strong>DNS外带</strong></p>
+<p>我们再测试能否绕过WAF发起DNS请求，首先我还是使用%00代替空格，但是这里是绕不过的</p>
+<p><img src="/2020/11/13/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726194613652.png" alt="image-20200726194613652"></p>
+<p>这里的拦截一般就是exec和xp_dirtree的拦截，首先我测试在exec和xp_dirtree之间，能否又什么字符可以绕过，这里可以使用换行加注释进行绕过。</p>
+<p><img src="/2020/11/13/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726200253396.png" alt="image-20200726200253396"></p>
+<p>exec和xp_dirtree之间的空格也可以使用空白字符，我测了%11绕不过去，也可以fuzz一下，不过这个站速度挺慢的，这里就简单提供一个思路。针对aspx的站，虽然也可以使用unicode编码，不过使用的比较受限，这里测试了字符e的unicode编码%004e，是绕不过去的。</p>
+<p><strong>命令执行</strong></p>
+<p>也可以使用–xxx%0a这样的语法进行绕过。</p>
+<p><img src="/2020/11/13/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726212927798.png" alt="image-20200726212927798"></p>
+<p>其实也有其他的绕过方式，比如通过exec函数来执行命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Exec(&#x27;x&#x27;+&#x27;p_c&#x27;+&#x27;mds&#x27;+&#x27;hell &#x27;&#x27;whoami&#x27;&#x27;&#x27;)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726213916436.png" alt="image-20200726213916436"></p>
+<p>或者通过变量定义的方式</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">declare @test nvarchar(50) set @test=&#x27;e&#x27;+&#x27;x&#x27;+&#x27;e&#x27;+&#x27;c x&#x27;+&#x27;p_&#x27;+&#x27;c&#x27;+&#x27;mdshell &#x27;&#x27;whoami&#x27;&#x27;&#x27; exec--%0asp_executesql @test--</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/11/13/MSSQL%E6%B3%A8%E5%85%A5%E7%BB%95%E8%BF%87360%E4%B8%BB%E6%9C%BA%E5%8D%AB%E5%A3%AB/image-20200726214833741.png" alt="image-20200726214833741"></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p> 在进行WAF绕过时，其实我认为最好还是先去测那种通用绕过方案，比如参数污染，静态资源白名单，改变请求类型，因为这样可以全局绕过WAF，又能最少的触发拦截规则，如果要手动去根据规则绕的话，难免某些语句会触发拦截规则，如果在某些红蓝对抗的项目中，不就被发现了。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

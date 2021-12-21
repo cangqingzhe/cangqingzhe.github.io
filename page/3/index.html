@@ -1,0 +1,634 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Page 3 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/09/10/Dubbo源码分析/"><span>Dubbo源码分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/10/Dubbo源码分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-10T05:50:49.000Z">
+          2021-09-10
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        最近准备对Dubbo的历史漏洞进行分析，但觉得不懂Dubbo的设计和实现直接去分析漏洞比较困难，所以在分析漏洞前先分析Dubbo的源码及实现，值得一提的是Dubbo的官网也有非常详细的源码分析的过程。</p>
+<h3 id="SPI机制及实现"><a href="#SPI机制及实现" class="headerlink" title="SPI机制及实现"></a>SPI机制及实现</h3><p>​        Dubbo的SPI是对JDK自身SPI的扩展实现，增加了IOC和AOP的功能，是Dubbo实现的核心，Dubbo SPI需要的配置文件放在<code>/meta-inf/dubbo</code>目录下，通过键值对的方式配置，如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">adaptive=org.apache.dubbo.common.extension.factory.AdaptiveExtensionFactory</span><br><span class="line">spi=org.apache.dubbo.common.extension.factory.SpiExtensionFactory</span><br></pre></td></tr></table></figure>
+
+<p>​        Dubbo的SPI和JDK自身的SPI对比如下，这也是Dubbo没有选择使用JDK自带SPI的原因。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/源码分析/">源码分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/09/08/Dubbo漏洞分析/"><span>Dubbo漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/08/Dubbo漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-08T05:47:32.000Z">
+          2021-09-08
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        之前审计的过程中，遇到过Dubbo这个组件，虽然知道这个组件存在反序列化漏洞，但是关于漏洞的详情和利用一概不知，所以下面对Dubbo的漏洞进行分析。</p>
+<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>​        Dubbo是一款开源的RPC和微服务治理的框架，最早是阿里开发的后来归到了Apache下面，支持多种协议，比如gRPC、Thrift、JsonRPC、Hessian2、REST、RMI、HTTP。</p>
+<p>​        下面是官网对于Dubbo架构的介绍。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/08/26/shiro权限绕过漏洞分析/"><span>shiro权限绕过漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/08/26/shiro权限绕过漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-08-26T09:39:40.000Z">
+          2021-08-26
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        之前协助渗透做审计的时候遇到了shiro版本不高，当时想到了shiro的权限绕过漏洞，但是在网上试了好几个payload都没成功 ，现在空下来了分析下shiro权限绕过的原理及触发条件。</p>
+<h3 id="为什么会导致权限绕过？"><a href="#为什么会导致权限绕过？" class="headerlink" title="为什么会导致权限绕过？"></a>为什么会导致权限绕过？</h3><p>​        首先观察一下shiro权限绕过的payload为<code>/xx/..;/</code>，并且在官方也强调了是和spring配合使用时出现的问题，不难判断出出现这个问题的原因在于shiro和spring处理url的不一致导致的，而spring在请求处理过程中会去除/./和/;xxxasxdasd/中的内容，通过这种方式变形的url可能和shiro配置的filter不一致，导致了权限绕过。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/08/26/致远Ajax-do权限绕过分析/"><span>致远Ajax.do权限绕过分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/08/26/致远Ajax-do权限绕过分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-08-26T03:02:35.000Z">
+          2021-08-26
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​            之前致远爆了关于ajax.do的权限绕过漏洞，虽然看网上和官方都说是由于shiro的权限认证绕过导致的，但是我并没有在代码中找到致远使用shiro进行权限认证的相关代码，所以想深入分析下致远会产生权限绕过漏洞。还是以解决问题的方式来分析这个漏洞吧。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/08/06/fastjson反序列化漏洞分析/"><span>fastjson反序列化漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/08/06/fastjson反序列化漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-08-06T05:47:24.000Z">
+          2021-08-06
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        最近做项目遇到存在漏洞的fastjson,虽然最终还是打下来了，但是要深入利用如果不了解原理就比较难受，因此专门花时间了解下fastjson反序列化漏洞形成的原理。我不想长篇大论的去写很多关于fastjson的问题，主要是解决我这个没接触过fastjson漏洞的一些疑惑。</p>
+<h3 id="有没有特殊编码可以绕WAF？"><a href="#有没有特殊编码可以绕WAF？" class="headerlink" title="有没有特殊编码可以绕WAF？"></a><strong>有没有特殊编码可以绕WAF？</strong></h3><p>​        之前做渗透，当json数据包中出现<code>&quot;@type&quot;:&quot;com.sun.rowset.JdbcRowSetImpl&quot;</code>数据包就会被拦截，因此分析下有没有替代方案可以绕过WAF。</p>
+<p>​        在<code>com.alibaba.fastjson.parser.DefaultJSONParser#parseObject(java.util.Map, java.lang.Object)</code>中会对JSON进行词法解析。当解析到第一个内容是,时，会忽略后面的,和其他空白字符。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/07/21/从JNDI注入到内存马植入/"><span>从JNDI注入到内存马植入</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/07/21/从JNDI注入到内存马植入/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-07-21T01:08:05.000Z">
+          2021-07-21
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        某次团队的小伙伴给了个系统需要后台getshell，经过分析这个系统不解析jsp，但在后台发现了个反射调用任意类的任意方法的功能点，想到通过JNDI注入利用，下面着重分析如何通过JNDI注入种植内存马。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/06/18/冰蝎客户端改写/"><span>冰蝎客户端改写</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/06/18/冰蝎客户端改写/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-06-18T07:22:24.000Z">
+          2021-06-18
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​             漏洞利用后一般需要拿shell，如果shell不免杀可能容易触发目标的防护，甚至去溯源捕获我们的0day，所以做一个免杀的shell是有必要的，今天刚好看到<code>一种新型Java一句话木马的实现</code>文章，可以通过ScriptEngine来执行我们的代码，由于这种方式执行代码的语法和之前jsp马的实现有些不同，所以可以通过这种方式改写shell来实现免杀。</p>
+<p>​        在要通过ScriptEngine改写shell之前，首先我们要了解冰蝎shell做了什么？</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/06/11/jetty文件下载漏洞分析/"><span>jetty文件下载漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/06/11/jetty文件下载漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-06-11T03:14:17.000Z">
+          2021-06-11
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​        前段时间在分析Jetty漏洞时无意捡了个CVE，下面是当时分析该漏洞并挖掘到CVE的记录。</p>
+<h2 id="CVE-2021-28164"><a href="#CVE-2021-28164" class="headerlink" title="CVE-2021-28164"></a>CVE-2021-28164</h2><p>​        该漏洞影响<code>9.4.37.v20210219</code> ，<code>9.4.38.v20210224</code>版本，攻击者可通过<code>/%2e/WEB-INF/</code>绕过WEB-INF下文件的访问限制，读取WEB-INF下的文件内容。目前该漏洞我仅在<code>9.4.38.v20210224</code>复现成功。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/06/07/Vcenter漏洞分析/"><span>Vcenter漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/06/07/Vcenter漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-06-07T03:41:52.000Z">
+          2021-06-07
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        前阵子vcenter爆出了<code>CVE-2021-21985</code>漏洞，师傅们对这个漏洞提出了多种不同的利用方案，都非常的精彩，因此我搭建好了vcenter的环境，并对师傅们公开的利用方法进行了分析。</p>
+<h3 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h3><p>​        本来打算通过OVA来安装，试了7.0和6.5的版本，由于各种坑试了两天都没搭建成功，最后无奈在windows下进行安装，需要注意的是在SSO设置域名时，如果是在内网搭建的没有域名，改一下本地的hosts文件随便给个域名就可以了，最终选择6.7的版本进行安装。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/05/20/某微RCE回显利用分析/"><span>某微RCE回显利用分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/05/20/某微RCE回显利用分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-05-20T07:03:08.000Z">
+          2021-05-20
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        最近某微爆出RCE漏洞，本想着通过相对路径写入shell，但是不知是什么原因，在实际渗透中并没有成功，内存马这里也考虑了一下，但是由于这里的利用需要将class经过BCEL编码，由于无法将两个类进行BCEL编码，所以只能放弃了种内存马的想法，那目前最稳妥的方法就是获得命令执行的结果，让攻击者根据自己的需求去完成后续的利用。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+
+<nav class="pagination">
+  
+  <a href="/page/2/" class="pagination-prev">Prev</a>
+  
+  
+  <a href="/page/4/" class="pagination-next">Next</a>
+  
+</nav>
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2021 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>
