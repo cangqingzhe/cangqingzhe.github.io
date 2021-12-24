@@ -67,6 +67,60 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/09/24/负载均衡踩坑记/"><span>负载均衡踩坑记</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/24/负载均衡踩坑记/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-24T02:55:46.000Z">
+          2021-09-24
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​    事情是这样的，最近有个渗透的小伙伴找我，它通过shiro反序列化植入内存马获取了一个shell，但这台主机上有负载均衡，所以通过冰蝎、蚁剑等连接工具上传大文件会上传失败，需要我这边提供解决方案。</p>
+<h2 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h2><h3 id="问题一：为什么shell管理工具文件上传需要分包？"><a href="#问题一：为什么shell管理工具文件上传需要分包？" class="headerlink" title="问题一：为什么shell管理工具文件上传需要分包？"></a>问题一：为什么shell管理工具文件上传需要分包？</h3><p>​    我使用蚁剑做了测试，蚁剑配置shell可以在<code>其他设置</code>中设置分片的大小，默认是<code>500kb</code>，那有小伙伴可能要说了，那我将这个值改成一个比较大的值不就可以一次性上传大文件也就相当于解决了负载均衡的问题。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/安全研究/">安全研究</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/09/10/Dubbo源码分析/"><span>Dubbo源码分析</span></a></h3>
     
   
@@ -539,59 +593,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/05/20/某微RCE回显利用分析/"><span>某微RCE回显利用分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/05/20/某微RCE回显利用分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-05-20T07:03:08.000Z">
-          2021-05-20
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        最近某微爆出RCE漏洞，本想着通过相对路径写入shell，但是不知是什么原因，在实际渗透中并没有成功，内存马这里也考虑了一下，但是由于这里的利用需要将class经过BCEL编码，由于无法将两个类进行BCEL编码，所以只能放弃了种内存马的想法，那目前最稳妥的方法就是获得命令执行的结果，让攻击者根据自己的需求去完成后续的利用。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞利用/">漏洞利用</a>
     </span>
     
 

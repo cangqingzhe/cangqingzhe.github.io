@@ -67,6 +67,59 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/10/22/CC1利用链分析/"><span>CC1利用链分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/22/CC1利用链分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-22T03:47:04.000Z">
+          2021-10-22
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">这个利用链小兄弟们都分析过了，所以我大概了解下。主要是解决我看到这个利用链的一些疑惑。这条利用链的POC如下。</span><br></pre></td></tr></table></figure>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/反序列化/">反序列化</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/10/21/JSP文件无依赖加载shellcode分析/"><span>JSP文件无依赖加载shellcode分析</span></a></h3>
     
   
@@ -538,60 +591,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/webshell/">webshell</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/09/24/负载均衡踩坑记/"><span>负载均衡踩坑记</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/09/24/负载均衡踩坑记/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-09-24T02:55:46.000Z">
-          2021-09-24
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​    事情是这样的，最近有个渗透的小伙伴找我，它通过shiro反序列化植入内存马获取了一个shell，但这台主机上有负载均衡，所以通过冰蝎、蚁剑等连接工具上传大文件会上传失败，需要我这边提供解决方案。</p>
-<h2 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h2><h3 id="问题一：为什么shell管理工具文件上传需要分包？"><a href="#问题一：为什么shell管理工具文件上传需要分包？" class="headerlink" title="问题一：为什么shell管理工具文件上传需要分包？"></a>问题一：为什么shell管理工具文件上传需要分包？</h3><p>​    我使用蚁剑做了测试，蚁剑配置shell可以在<code>其他设置</code>中设置分片的大小，默认是<code>500kb</code>，那有小伙伴可能要说了，那我将这个值改成一个比较大的值不就可以一次性上传大文件也就相当于解决了负载均衡的问题。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/安全研究/">安全研究</a>
     </span>
     
 

@@ -67,6 +67,63 @@
 
   
     
+    <h3 class="article-title"><a href="/2020/08/28/关于内网断网主机上线的学习总结/"><span>关于内网断网主机上线的学习总结</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/08/28/关于内网断网主机上线的学习总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-08-28T09:12:06.000Z">
+          2020-08-28
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        在进行内网横向移动的过程中我们可能经常会遇到这样的情况，目标内网中的其他主机不出外网，那么我们使用cs直接生成的reverse shell就没有办法使目标内网中的”断网”主机上线，今天我就和大家一起学习如何上线内网的”断网”主机。</p>
+<h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">OWA2013:192.168.3.144 192.168.5.55   模拟边界机192.168.5.*这个网段使用nat模式，192.168.3.*使用仅主机模式</span><br><span class="line">ser-web:192.168.3.73 模拟内网断网机</span><br></pre></td></tr></table></figure>
+
+<h3 id="Pivot-listener"><a href="#Pivot-listener" class="headerlink" title="Pivot listener"></a>Pivot listener</h3><p><strong>建立Pivot listener</strong></p>
+<p>​        首先让边界主机OWA2013上线,上线后对着边界机右键，选择pivoting-&gt;Listener</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内网渗透/">内网渗透</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2020/08/26/关于内网横向移动套件的利用总结/"><span>关于内网横向移动套件的利用总结</span></a></h3>
     
   
