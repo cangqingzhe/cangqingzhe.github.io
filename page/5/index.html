@@ -67,6 +67,117 @@
 
   
     
+    <h3 class="article-title"><a href="/2020/12/17/JAVA反序列化回显学习/"><span>JAVA反序列化回显学习</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/12/17/JAVA反序列化回显学习/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-12-17T07:59:04.000Z">
+          2020-12-17
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">近年来出现的很多JAVA的漏洞都是无回显的漏洞，因此了解如何能让本身不回显的漏洞回显成为很多大佬研究的内容，本文将带着大家一起学习JAVA反序列化漏洞的回显方案。</span><br></pre></td></tr></table></figure>
+
+<h3 id="defineClass"><a href="#defineClass" class="headerlink" title="defineClass"></a>defineClass</h3><p>​        defineClass可以将byte[]转换为Class类，如下所示defineClass会接收我们传入的name,byte[],长度等参数，最终会返回给我们一个Class类的对象。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/JAVA/">JAVA</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/12/02/JAVA反射机制学习/"><span>JAVA反射机制学习</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/12/02/JAVA反射机制学习/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-12-02T06:04:35.000Z">
+          2020-12-02
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">在我们了解或者分析JAVA的反序列化漏洞时，一定绕过不过一个知识点，那就是JAVA的反射调用，所以这次我们专门写一篇文章和大家学习和了解一下JAVA的反射调用。	</span><br></pre></td></tr></table></figure>
+
+<h2 id="基本介绍"><a href="#基本介绍" class="headerlink" title="基本介绍"></a>基本介绍</h2><h3 id="为什么要引入反射机制？"><a href="#为什么要引入反射机制？" class="headerlink" title="为什么要引入反射机制？"></a>为什么要引入反射机制？</h3><p>​        我们在编写程序时会有两种情况，第一种是我们明确知道编译时要使用的类和需要调用的方法的具体信息，这种情况下我们可以使用<code>new xxx()</code>来创建对象并使用。第二种是我们在编译的过程种不知道类或者对象的具体情况，只能通过程序运行时通过动态加载来判断。 比如类的名称和需要调用的属性放在配置文件中，这种配置方式降低了耦合性，我们在写JAVA WEB的过程中经常会遇到。</p>
+<p>​        对于第二种方式，我们就无法在编译时得知我们要使用的类的类型和调用的方法，所以引入了反射机制。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/JAVA/">JAVA</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2020/11/28/shiro-rce漏洞分析/"><span>shiro rce漏洞分析</span></a></h3>
     
   
@@ -489,123 +600,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/10/30/weblogic漏洞分析系列之调试环境搭建/"><span>weblogic漏洞分析系列之调试环境搭建</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/10/30/weblogic漏洞分析系列之调试环境搭建/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-10-30T12:32:17.000Z">
-          2020-10-30
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        最近一直在做一些项目，因为对一些原理性的知识不懂感觉渗透很难再继续往上走，因此接下来打算将精力放在漏洞的理解和分析，工具的编写和优化上面，而不再执着于更多的技巧。</p>
-<p>​        weblogic是一款比较经常使用的java容器，当然它爆出的漏洞也是层出不穷，为了能让自己更加了解weblogic漏洞的形成原因，我决定和大家一起调试weblogic各个版本的一些漏洞，并最终编写一个简单的weblogic漏洞检测工具，在这片文章中，我们首先一起来学习一下如何搭建weblogic的调试环境。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/09/08/记基于cobaltstrike基础设施架构设计尝试/"><span>记基于cobaltstrike基础设施架构设计尝试</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/09/08/记基于cobaltstrike基础设施架构设计尝试/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-09-08T03:11:22.000Z">
-          2020-09-08
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        通过之前的介绍我们了解了cobaltstrike的一些混淆或者隐藏的策略，这次我们主要对学到的这些策略进行实践，设计一个比较好用的不容易被反查的方案。</p>
-<p>​        设计思路如下：</p>
-<ul>
-<li><p>自定义mallable c2 profile文件，自定义通讯流量</p>
-</li>
-<li><p>前置机通过mod_rewrite对不同流量进行不同的转发</p>
-</li>
-<li><p>给前置机配置CDN保护前置机的真实IP</p>
-</li>
-<li><p>teamserver主机配置防火墙仅允许前置机和teamserver主机的特定端口通信</p>
-<p>因为CDN配置需要等待一段时间才能生效，所以我们先来配置CDN。</p></li></ul>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/cobaltstrike/">cobaltstrike</a>
     </span>
     
 

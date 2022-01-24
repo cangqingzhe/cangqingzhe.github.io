@@ -67,6 +67,116 @@
 
   
     
+    <h3 class="article-title"><a href="/2022/01/19/JNDI漏洞利用探索/"><span>JNDI漏洞利用探索</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2022/01/19/JNDI漏洞利用探索/" rel="bookmark">
+        <time class="entry-date published" datetime="2022-01-19T12:51:11.000Z">
+          2022-01-19
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​    最近学习了<code>浅蓝</code>师傅寻找的一些JNDI漏洞的利用链受益匪浅，自己也尝试关于JNDI漏洞利用做一些挖掘，目前JNDI在利用过程我想到了两个问题。</p>
+<ul>
+<li>测试每一个JNDI Bypass 利用链都需要手动更改URL很不方便，能否我去请求一个地址，让目标将我所有的链跑一遍？</li>
+<li>JNDI利用过程中可以通过反序列化利用，能否自动化探测反序列化利用链？</li>
+</ul>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2022/01/15/JNDI高版本绕过浅析/"><span>JNDI高版本绕过浅析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2022/01/15/JNDI高版本绕过浅析/" rel="bookmark">
+        <time class="entry-date published" datetime="2022-01-15T05:07:44.000Z">
+          2022-01-15
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​    最近<code>Log4j</code>的漏洞引起了很多师傅对JNDI注入漏洞利用的研究，<code>浅蓝</code>师傅的文章<a target="_blank" rel="noopener" href="https://tttang.com/archive/1405/">探索高版本 JDK 下 JNDI 漏洞的利用方法</a>提出了很多关于绕过JNDI高版本限制的方法，本文主要是对文章中的部分方法进行分析并加上一些我个人的思考。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞利用/">漏洞利用</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/12/25/shiro-attack工具分析/"><span>shiro_attack工具分析</span></a></h3>
     
   
@@ -472,116 +582,6 @@
     <div class="entry">
       
         <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    前阵子看有师傅在公众号上发表了<code>Resin解析漏洞分析</code>，我们也知道有个常用的OA用的就是<code>Resin</code>，因此我认为了解它的漏洞是十分必要的。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/10/26/Confluence任意文件读取（CVE-2021-26085）漏洞分析/"><span>Confluence文件读取漏洞分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/26/Confluence任意文件读取（CVE-2021-26085）漏洞分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-26T03:44:50.000Z">
-          2021-10-26
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    前段时间<code>Confluence</code>发布了<code>CVE-2021-26085</code>补丁，刚好之前分析过<code>Confluence</code>的漏洞，免去了搭建漏洞分析环境的麻烦，因此分析下这个漏洞。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/10/23/JDBC-XXE漏洞分析/"><span>JDBC XXE漏洞分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/23/JDBC-XXE漏洞分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-23T03:58:09.000Z">
-          2021-10-23
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近 <code>JDBC</code>爆了一个<code>XXE</code>漏洞，很久没有分析漏洞了，趁着周末没事分析下这个漏洞。</p>
-<h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><blockquote>
-<p>10月21日,”阿里云应急响应”公众号发布Oracle Mysql JDBC存在XXE漏洞,造成漏洞的原因主要是因为<code>getSource</code>方法未对传入的XML格式数据进行检验。导致攻击者可构造恶意的XML数据引入外部实体。造成XXE攻击。</p>
-<p>影响版本: <code>&lt; MySQL JDBC 8.0.27</code></p>
-</blockquote>
         
       
     </div>

@@ -67,6 +67,114 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/06/18/冰蝎客户端改写/"><span>冰蝎客户端改写</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/06/18/冰蝎客户端改写/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-06-18T07:22:24.000Z">
+          2021-06-18
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​             漏洞利用后一般需要拿shell，如果shell不免杀可能容易触发目标的防护，甚至去溯源捕获我们的0day，所以做一个免杀的shell是有必要的，今天刚好看到<code>一种新型Java一句话木马的实现</code>文章，可以通过ScriptEngine来执行我们的代码，由于这种方式执行代码的语法和之前jsp马的实现有些不同，所以可以通过这种方式改写shell来实现免杀。</p>
+<p>​        在要通过ScriptEngine改写shell之前，首先我们要了解冰蝎shell做了什么？</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/06/11/jetty文件下载漏洞分析/"><span>jetty文件下载漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/06/11/jetty文件下载漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-06-11T03:14:17.000Z">
+          2021-06-11
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​        前段时间在分析Jetty漏洞时无意捡了个CVE，下面是当时分析该漏洞并挖掘到CVE的记录。</p>
+<h2 id="CVE-2021-28164"><a href="#CVE-2021-28164" class="headerlink" title="CVE-2021-28164"></a>CVE-2021-28164</h2><p>​        该漏洞影响<code>9.4.37.v20210219</code> ，<code>9.4.38.v20210224</code>版本，攻击者可通过<code>/%2e/WEB-INF/</code>绕过WEB-INF下文件的访问限制，读取WEB-INF下的文件内容。目前该漏洞我仅在<code>9.4.38.v20210224</code>复现成功。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/06/07/Vcenter漏洞分析/"><span>Vcenter漏洞分析</span></a></h3>
     
   
@@ -486,117 +594,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/内存马/">内存马</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/12/17/JAVA反序列化回显学习/"><span>JAVA反序列化回显学习</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/12/17/JAVA反序列化回显学习/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-12-17T07:59:04.000Z">
-          2020-12-17
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">近年来出现的很多JAVA的漏洞都是无回显的漏洞，因此了解如何能让本身不回显的漏洞回显成为很多大佬研究的内容，本文将带着大家一起学习JAVA反序列化漏洞的回显方案。</span><br></pre></td></tr></table></figure>
-
-<h3 id="defineClass"><a href="#defineClass" class="headerlink" title="defineClass"></a>defineClass</h3><p>​        defineClass可以将byte[]转换为Class类，如下所示defineClass会接收我们传入的name,byte[],长度等参数，最终会返回给我们一个Class类的对象。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/JAVA/">JAVA</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/12/02/JAVA反射机制学习/"><span>JAVA反射机制学习</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/12/02/JAVA反射机制学习/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-12-02T06:04:35.000Z">
-          2020-12-02
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">在我们了解或者分析JAVA的反序列化漏洞时，一定绕过不过一个知识点，那就是JAVA的反射调用，所以这次我们专门写一篇文章和大家学习和了解一下JAVA的反射调用。	</span><br></pre></td></tr></table></figure>
-
-<h2 id="基本介绍"><a href="#基本介绍" class="headerlink" title="基本介绍"></a>基本介绍</h2><h3 id="为什么要引入反射机制？"><a href="#为什么要引入反射机制？" class="headerlink" title="为什么要引入反射机制？"></a>为什么要引入反射机制？</h3><p>​        我们在编写程序时会有两种情况，第一种是我们明确知道编译时要使用的类和需要调用的方法的具体信息，这种情况下我们可以使用<code>new xxx()</code>来创建对象并使用。第二种是我们在编译的过程种不知道类或者对象的具体情况，只能通过程序运行时通过动态加载来判断。 比如类的名称和需要调用的属性放在配置文件中，这种配置方式降低了耦合性，我们在写JAVA WEB的过程中经常会遇到。</p>
-<p>​        对于第二种方式，我们就无法在编译时得知我们要使用的类的类型和调用的方法，所以引入了反射机制。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/JAVA/">JAVA</a>
     </span>
     
 

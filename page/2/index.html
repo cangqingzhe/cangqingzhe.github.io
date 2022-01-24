@@ -67,6 +67,116 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/10/26/Confluence任意文件读取（CVE-2021-26085）漏洞分析/"><span>Confluence文件读取漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/26/Confluence任意文件读取（CVE-2021-26085）漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-26T03:44:50.000Z">
+          2021-10-26
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    前段时间<code>Confluence</code>发布了<code>CVE-2021-26085</code>补丁，刚好之前分析过<code>Confluence</code>的漏洞，免去了搭建漏洞分析环境的麻烦，因此分析下这个漏洞。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/23/JDBC-XXE漏洞分析/"><span>JDBC XXE漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/23/JDBC-XXE漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-23T03:58:09.000Z">
+          2021-10-23
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近 <code>JDBC</code>爆了一个<code>XXE</code>漏洞，很久没有分析漏洞了，趁着周末没事分析下这个漏洞。</p>
+<h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><blockquote>
+<p>10月21日,”阿里云应急响应”公众号发布Oracle Mysql JDBC存在XXE漏洞,造成漏洞的原因主要是因为<code>getSource</code>方法未对传入的XML格式数据进行检验。导致攻击者可构造恶意的XML数据引入外部实体。造成XXE攻击。</p>
+<p>影响版本: <code>&lt; MySQL JDBC 8.0.27</code></p>
+</blockquote>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/10/23/用友NC6-5文件上传漏洞分析/"><span>用友NC6.5文件上传漏洞分析</span></a></h3>
     
   
@@ -478,119 +588,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/漏洞分析/">漏洞分析</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/10/09/webshell免杀过阿里云asp/"><span>webshell免杀过阿里云asp</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/09/webshell免杀过阿里云asp/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-09T04:12:38.000Z">
-          2021-10-09
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="注释填充"><a href="#注释填充" class="headerlink" title="注释填充"></a>注释填充</h2><p>​    参考<code>Webshell-Detect-Bypass</code>项目<code>glorysday.asp</code>可以绕过阿里云的检测。这部分作者主要用了下面几个技巧。</p>
-<blockquote>
-<p>  利用<code>&#39;%&gt;</code>和<code>&#39;&lt;%</code>分别闭合前后标签填充大量垃圾<code>&lt;%%&gt;</code>标签，且最后文件体积大小要合适(测试发现文件大小约&gt;0.97 MB)</p>
-<p>在<strong>一定位置</strong>插入至少一个<code>&lt;??&gt;</code>字符串</p>
-</blockquote>
-<p>​    之前我在绕云WAF时，发现增加垃圾字符可以绕过云WAF的检测，所以我怀疑能绕过是因为大量垃圾字符的。于是我去除了<code>&#39;%&gt;</code>这部分，只使用大量的<code>&lt;%%&gt;</code>填充，也确实绕过了云查杀。但是如果使用其他字符填充无法绕过，所以我推测能绕过的原因是匹配<code>&lt;%%&gt;</code>的次数过多而导致的溢出。</p>
-<p>​    虽然大量填充可以绕过阿里云的查杀，但是这种方式在实战中并不可取，由于上传文件内容过大，导致在访问文件的过程中会有一些卡顿，一定程度上影响了客户端和webshell的交互。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/webshell/">webshell</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/10/08/webshell免杀过阿里云PHP/"><span>webshell免杀过阿里云PHP</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/08/webshell免杀过阿里云PHP/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-08T06:27:41.000Z">
-          2021-10-08
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    基于之前成功绕过JSP的免杀经验，主要对抗的重点还是放在分离免杀，在<a target="_blank" rel="noopener" href="https://github.com/LandGrey/webshell-detect-bypass/blob/master/docs/php-webshell-detect-bypass/php-webshell-detect-bypass.md">这个</a>项目中也有一些关于RASP和沙箱对抗的经验，可以直接复用。</p>
-<h3 id="从文件名获取内容"><a href="#从文件名获取内容" class="headerlink" title="从文件名获取内容"></a>从文件名获取内容</h3><p>​    云查杀会将我们传入的文件重命名，因此我们可以利用真实的webshell和沙箱中的文件名不一致来绕过。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/webshell/">webshell</a>
     </span>
     
 

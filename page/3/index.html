@@ -67,6 +67,119 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/10/09/webshell免杀过阿里云asp/"><span>webshell免杀过阿里云asp</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/09/webshell免杀过阿里云asp/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-09T04:12:38.000Z">
+          2021-10-09
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="注释填充"><a href="#注释填充" class="headerlink" title="注释填充"></a>注释填充</h2><p>​    参考<code>Webshell-Detect-Bypass</code>项目<code>glorysday.asp</code>可以绕过阿里云的检测。这部分作者主要用了下面几个技巧。</p>
+<blockquote>
+<p>  利用<code>&#39;%&gt;</code>和<code>&#39;&lt;%</code>分别闭合前后标签填充大量垃圾<code>&lt;%%&gt;</code>标签，且最后文件体积大小要合适(测试发现文件大小约&gt;0.97 MB)</p>
+<p>在<strong>一定位置</strong>插入至少一个<code>&lt;??&gt;</code>字符串</p>
+</blockquote>
+<p>​    之前我在绕云WAF时，发现增加垃圾字符可以绕过云WAF的检测，所以我怀疑能绕过是因为大量垃圾字符的。于是我去除了<code>&#39;%&gt;</code>这部分，只使用大量的<code>&lt;%%&gt;</code>填充，也确实绕过了云查杀。但是如果使用其他字符填充无法绕过，所以我推测能绕过的原因是匹配<code>&lt;%%&gt;</code>的次数过多而导致的溢出。</p>
+<p>​    虽然大量填充可以绕过阿里云的查杀，但是这种方式在实战中并不可取，由于上传文件内容过大，导致在访问文件的过程中会有一些卡顿，一定程度上影响了客户端和webshell的交互。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/10/08/webshell免杀过阿里云PHP/"><span>webshell免杀过阿里云PHP</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/10/08/webshell免杀过阿里云PHP/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-10-08T06:27:41.000Z">
+          2021-10-08
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    基于之前成功绕过JSP的免杀经验，主要对抗的重点还是放在分离免杀，在<a target="_blank" rel="noopener" href="https://github.com/LandGrey/webshell-detect-bypass/blob/master/docs/php-webshell-detect-bypass/php-webshell-detect-bypass.md">这个</a>项目中也有一些关于RASP和沙箱对抗的经验，可以直接复用。</p>
+<h3 id="从文件名获取内容"><a href="#从文件名获取内容" class="headerlink" title="从文件名获取内容"></a>从文件名获取内容</h3><p>​    云查杀会将我们传入的文件重命名，因此我们可以利用真实的webshell和沙箱中的文件名不一致来绕过。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/09/29/webshell免杀笔记/"><span>webshell免杀笔记</span></a></h3>
     
   
@@ -484,114 +597,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/漏洞利用/">漏洞利用</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/06/18/冰蝎客户端改写/"><span>冰蝎客户端改写</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/06/18/冰蝎客户端改写/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-06-18T07:22:24.000Z">
-          2021-06-18
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​             漏洞利用后一般需要拿shell，如果shell不免杀可能容易触发目标的防护，甚至去溯源捕获我们的0day，所以做一个免杀的shell是有必要的，今天刚好看到<code>一种新型Java一句话木马的实现</code>文章，可以通过ScriptEngine来执行我们的代码，由于这种方式执行代码的语法和之前jsp马的实现有些不同，所以可以通过这种方式改写shell来实现免杀。</p>
-<p>​        在要通过ScriptEngine改写shell之前，首先我们要了解冰蝎shell做了什么？</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/webshell/">webshell</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/06/11/jetty文件下载漏洞分析/"><span>jetty文件下载漏洞分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/06/11/jetty文件下载漏洞分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-06-11T03:14:17.000Z">
-          2021-06-11
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​        前段时间在分析Jetty漏洞时无意捡了个CVE，下面是当时分析该漏洞并挖掘到CVE的记录。</p>
-<h2 id="CVE-2021-28164"><a href="#CVE-2021-28164" class="headerlink" title="CVE-2021-28164"></a>CVE-2021-28164</h2><p>​        该漏洞影响<code>9.4.37.v20210219</code> ，<code>9.4.38.v20210224</code>版本，攻击者可通过<code>/%2e/WEB-INF/</code>绕过WEB-INF下文件的访问限制，读取WEB-INF下的文件内容。目前该漏洞我仅在<code>9.4.38.v20210224</code>复现成功。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞分析/">漏洞分析</a>
     </span>
     
 
