@@ -1,0 +1,211 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>反序列化利用链挖掘思路浅析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="反序列化利用链挖掘思路浅析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>反序列化利用链挖掘思路浅析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2022/05/06/反序列化利用链挖掘思路浅析/" rel="bookmark">
+        <time class="entry-date published" datetime="2022-05-06T05:47:24.000Z">
+          2022-05-06
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">最近审计遇到了一个环境存在反序列化漏洞但是没有利用链，于是尝试挖了下利用链，虽然最后没挖到，但是也对利用链挖掘的思路有了一些了解，在我挖掘的过程中也找了下文章，这方面的文章确实比较少，因此打算写篇文章介绍如何挖掘反序列化利用链，希望能对后来者提供一些帮助。</span><br></pre></td></tr></table></figure>
+
+<h2 id="确定sink"><a href="#确定sink" class="headerlink" title="确定sink"></a>确定sink</h2><p>​    因为我也是第一次接触利用链的挖掘，刚上手也是感觉到无所适从，最好的方法当然是分析已有的利用链,下面是我总结了常见利用链的sink。</p>
+<span id="more"></span>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">AspectJWeaver:FileOutputStream#write</span><br><span class="line">BeanShell1:java.lang.reflect.Method#invoke</span><br><span class="line">C3P0:com.sun.jndi.rmi.registry.RegistryContext#lookup</span><br><span class="line">Click1:java.lang.reflect.Method#invoke</span><br><span class="line">beanutils:java.lang.reflect.Method#invoke</span><br><span class="line">CC1:java.lang.reflect.Method#invoke</span><br><span class="line">CC3:java.lang.reflect.Constructor#newInstance</span><br><span class="line">FileUpload1:FileOutputStream#write</span><br><span class="line">Groovy1:java.lang.reflect.Method#invoke</span><br><span class="line">Hibernate:java.lang.reflect.Method#invoke</span><br><span class="line">JavassistWeld1:java.lang.reflect.Method#invoke</span><br><span class="line">JSON1:java.lang.reflect.Method#invoke</span><br></pre></td></tr></table></figure>
+
+<p>​    下面我们对<code>sink</code>进行归类</p>
+<ul>
+<li>触发FileOuputStream#write写文件操作：实际上比较少，一般也不知道网站路径，所以相对来说也比较鸡肋。</li>
+<li>触发JNDI请求：主要是触发<code>javax.naming.Context#lookup</code>实现类的<code>lookup</code>方法，一般在程序中使用JNDI相对来说也比较少，因此只有少数的框架有这种利用链。</li>
+<li>触发Method#invoke调用：一般挖掘反序列化利用链都是基础库，多多少少都会使用反射，但是并不是所有的反射都可以利用的。一般来说要么我们可以通过<code>控制参数</code>或者<code>属性</code>才能完成调用。这里要注意，如果是通过控制参数来完成反射调用，那么这个实现类是不需要实现<code>Serializable</code>接口的。但是如果我们要通过控制属性来完成任意方法的调用，则实现类必须要实现<code>Serializable</code>接口，除非属性的填充是在反序列化的过程中完成的，比如可以通过构造方法填充属性，在反序列化的过程中会调用构造方法帮我们完成赋值。</li>
+</ul>
+<p>​    通过上面的总结不难看出大部分的利用链都是以<code>Method#invoke</code>为终点的，同样以<code>Method#invoke</code>作为sink，我觉得其实还可以再进行一些细化。</p>
+<ul>
+<li>通过控制属性或者方法传参调用<code>invoke</code>任意方法:CC1</li>
+<li>通过控制属性或方法传参<code>invoke</code>调用任意类的的<code>Getter</code>方法：beanutils、Hibernate</li>
+<li>还有一种就比较复杂，虽然本质上也是调用了<code>invoke</code>，但是这些框架本身提供了一些代码执行的能力，还要对框架的代码执行的原理比较清楚才能挖到调用链：<code>BeanShell1</code>、<code>Groovy1</code>、<code>Click1</code>、<code>Jpython</code></li>
+<li>在<code>InvocationHandler</code>的实现类中的<code>Invoke</code>:这里的<code>invoke</code>操作的<code>method</code>需要是我们可以从属性中获取的，而不是直接传入的方法名称。具体可以参考<code>JDK7</code>那条利用链。</li>
+</ul>
+<h2 id="失败的实践"><a href="#失败的实践" class="headerlink" title="失败的实践"></a>失败的实践</h2><h3 id="InvocationHandler"><a href="#InvocationHandler" class="headerlink" title="InvocationHandler"></a>InvocationHandler</h3><p>​    <code>InvocationHandler</code>实现类要作为反序列化链中的sink的条件是需要实现<code>Serializable</code>，原因是我们这里想要通过控制属性来获取<code>Method</code>。</p>
+<p>​    举个栗子，在jdk中有个<code>java.beans.EventHandler</code>，它的Method的获取是通过<code>target</code>和<code>action</code>属性控制的，所以我们只要通过控制这两个属性就可以实现利用。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525201746027.png" alt="image-20220525201746027"></p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525201924121.png" alt="image-20220525201924121"></p>
+<p>​    但是由于<code>EventHandler</code>没有实现<code>Serializable</code>接口，因此非常遗憾的不能作为我们的利用链。</p>
+<p>​    下面是tabby的挖掘语法,排查了下大部分都没有实现<code>Serializable</code>接口</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">match (m1:Method)&lt;-[:HAS]-(cls:Class)-[:INTERFACE|EXTENDS*]</span><br><span class="line">                    -&gt;(cls1:Class &#123;NAME:&quot;java.lang.reflect.InvocationHandler&quot;&#125;)</span><br><span class="line">    match (m1:Method)-[r:CALL]-&gt;(m2:Method&#123;NAME:&quot;invoke&quot;&#125;)</span><br><span class="line">    return m1.CLASSNAME,m1.NAME,m1.PARAMETERS</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525202420043.png" alt="image-20220525202420043"></p>
+<h3 id="JNDI"><a href="#JNDI" class="headerlink" title="JNDI"></a>JNDI</h3><p>​        下面我们寻找JNDI的sink</p>
+<ul>
+<li>javax.naming.Context#lookup</li>
+<li>java.naming.InitialContext#lookup</li>
+<li>javax.naming.Context#bind</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">match (m2:Method)&lt;-[:HAS]-(cls:Class)-[:INTERFACE|EXTENDS*]</span><br><span class="line">                    -&gt;(cls1:Class &#123;NAME:&quot;javax.naming.Context&quot;&#125;)</span><br><span class="line">match (m1:Method)-[r:CALL]-&gt;(m2:Method&#123;NAME:&quot;lookup&quot;&#125;)</span><br><span class="line">return m1.CLASSNAME,m1.NAME,m1.PARAMETERS</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220520141521808.png" alt="image-20220520141521808"></p>
+<p>​    调用JNDI操作的本来就比较少，基本上都不可控或者找不到调用，因此JNDI的利用也只能放弃。</p>
+<h3 id="Invoke"><a href="#Invoke" class="headerlink" title="Invoke"></a>Invoke</h3><p>​    Invoke的调用比较多，可以直接通过下面的语法挖调用链,然后一步步排除加黑名单排除。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"> match (source:Method) where source.NAME in [&quot;compare&quot;,&quot;compareTo&quot;,&quot;hashCode&quot;]</span><br><span class="line">match (m1:Method)&lt;-[:HAS]-(cls:Class)-[:INTERFACE|EXTENDS*]-&gt;(cls1:Class &#123;NAME:&quot;java.io.Serializable&quot;&#125;)  where m1.NAME=&quot;invoke&quot;</span><br><span class="line">call apoc.algo.allSimplePaths(m1, source, &quot;&lt;CALL|ALIAS&quot;,10) yield path</span><br><span class="line">where none(p in nodes(path) where p.CLASSNAME in [&quot;cn.hutool.core.util.ReflectUtil&quot;])</span><br><span class="line">return * limit 10</span><br></pre></td></tr></table></figure>
+
+<p>​    也可以先通过下面的语法找到合适的sink再去看调用。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">match (m1:Method)&lt;-[:HAS]-(cls:Class)-[:INTERFACE|EXTENDS*]</span><br><span class="line">                    -&gt;(cls1:Class &#123;NAME:&quot;java.io.Serializable&quot;&#125;)</span><br><span class="line">    match (m1:Method)-[r:CALL]-&gt;(m2:Method&#123;NAME:&quot;invoke&quot;&#125;)</span><br><span class="line">    return m1.CLASSNAME,m1.NAME,m1.PARAMETERS</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525203402659.png" alt="image-20220525203402659"></p>
+<p>​    下面是几个失败的调用链挖掘。</p>
+<h4 id="JFinalJson-beanToJson"><a href="#JFinalJson-beanToJson" class="headerlink" title="JFinalJson#beanToJson"></a>JFinalJson#beanToJson</h4><p>​    直接控制model为TemplatesImpl对象就可以完成调用。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525112010908.png" alt="image-20220525112010908"></p>
+<p>​    下面我们找<code>beanToJson</code>的调用</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525112423398.png" alt="image-20220525112423398"></p>
+<p>​    最终定位到<code>com.jfinal.json.JFinalJson#toJson</code>，但是<code>JFinalJson</code>不可序列化，所以要么找到可以在反序列化过程中实例化<code>JfinalJson</code>的点，要么就不可以利用了。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525113442054.png" alt="image-20220525113442054"></p>
+<h4 id="GetterMethodFieldGetter-get"><a href="#GetterMethodFieldGetter-get" class="headerlink" title="GetterMethodFieldGetter#get"></a>GetterMethodFieldGetter#get</h4><p>​    <code>target</code>可以通过参数直接控制但是<code>method</code>需要通过属性控制，所以需要找调用链中会不会初始化<code>GetterMethodFiledGetter</code></p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525122552266.png" alt="image-20220525122552266"></p>
+<p>​        继续看上层调用，只有在<code>com.jfinal.template.expr.ast.Field#eval</code>中调用了。而target也是由eval的返回结果决定的。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525122947803.png" alt="image-20220525122947803"></p>
+<p>​    再通过tabby找调用，分析了一大圈，感觉好像不可控。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525125400871.png" alt="image-20220525125400871"></p>
+<h4 id="ReflectUtil-invoke"><a href="#ReflectUtil-invoke" class="headerlink" title="ReflectUtil#invoke"></a>ReflectUtil#invoke</h4><p>​    可以直接通过控制传参调用任意方法，所以不需要实现<code>Serializable</code></p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525204758842.png" alt="image-20220525204758842"></p>
+<p>​    只有execute和clone两个点，但是clone不能控制函数名称。execute似乎是计划任务，也不太好调用</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">match (source:Method) where source.NAME in [<span class="string">&quot;compare&quot;</span>,<span class="string">&quot;compareTo&quot;</span>,<span class="string">&quot;hashCode&quot;</span>]</span><br><span class="line">match (m1:Method) where m1.NAME=<span class="string">&quot;invoke&quot;</span> and m1.CLASSNAME=<span class="string">&quot;cn.hutool.core.util.ReflectUtil&quot;</span></span><br><span class="line">call apoc.algo.allSimplePaths(m1, source, <span class="string">&quot;&lt;CALL|ALIAS&quot;</span>,<span class="number">10</span>) yield path</span><br><span class="line"><span class="keyword">return</span> * limit <span class="number">10</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525170520529.png" alt="image-20220525170520529"></p>
+<h4 id="cn-hutool-core-bean-DynaBean"><a href="#cn-hutool-core-bean-DynaBean" class="headerlink" title="cn.hutool.core.bean.DynaBean"></a>cn.hutool.core.bean.DynaBean</h4><p>​    实现了<code>Serializable</code>接口，并且可以反射调用<code>Getter</code>方法。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220520160708338.png" alt="image-20220520160708338"></p>
+<p>​        我们构造一个<code>TemplatesImpl</code>进行测试发现获取不到<code>outputProperties</code>的getter方法。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220520160755090.png" alt="image-20220520160755090"></p>
+<p>​        经过调试发现获取getter方法时没有去掉_所以匹配不到，这个点真是最可惜的点了。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220520170249207.png" alt="image-20220520170249207"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>​    找source的过程就不讲了，因为我连合适的sink都没找到。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2022 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

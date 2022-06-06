@@ -67,15 +67,15 @@
 
   
     
-    <h3 class="article-title"><a href="/2022/06/06/利用链挖掘/"><span></span></a></h3>
+    <h3 class="article-title"><a href="/2022/05/06/反序列化利用链挖掘思路浅析/"><span>反序列化利用链挖掘思路浅析</span></a></h3>
     
   
 
   <div class="article-top-meta">
     <span class="posted-on">
-      <a href="/2022/06/06/利用链挖掘/" rel="bookmark">
-        <time class="entry-date published" datetime="2022-06-06T03:04:31.205Z">
-          2022-06-06
+      <a href="/2022/05/06/反序列化利用链挖掘思路浅析/" rel="bookmark">
+        <time class="entry-date published" datetime="2022-05-06T05:47:24.000Z">
+          2022-05-06
         </time>
       </a>
     </span>
@@ -87,90 +87,10 @@
   <div class="article-content">
     <div class="entry">
       
-        <h2 id="思路整理"><a href="#思路整理" class="headerlink" title="思路整理"></a>思路整理</h2><p>​    首先确定sink，根据我们对已有利用链的了解，最常见的sink就是invoke反射调用，我们可以通过控制class的属性进而控制invoke的对象和参数。然后通过调用<code>getOutputProperties</code>触发类加载进行利用或者直接调用JNDI请求外部LDAP服务器进行利用。</p>
-<p>​    而且在利用的过程中我们肯定优先考虑的是获取代码执行的权限而不是命令执行。除了像CC链中可以通过多次循环Invoke来直接触发calc之外，其他的利用链基本是无法直接调用到Runtime.exec执行命令的，再退一步来讲，即使直接能调用到命令执行，对我们的意义也不是很大。目前来看命令执行的局限性还是比较高，如果目标不出网且无法获取到回显结果，反而难以利用。所以这个时候代码执行的权限反而更加重要，对于利用者来说也可以通过代码执行进行回显或者打内存马进行后利用。所以针对一个漏洞利用的终点应该是代码执行的权限而不是命令执行的权限。</p>
-<p>​    下面我们再讨论下在JAVA中如何获取系统的代码执行权限。</p>
-<ul>
-<li>文件上传：JSP文件本身就会被容器转换成JAVA编译成Class并执行其中的代码</li>
-<li>JNDI：通过LDAP或者RMI加载远程的Class文件并在本地执行</li>
-<li>表达式：通过EL/OGNL/SPEL等表达式执行代码</li>
-<li>反序列化：反序列化漏洞可以让我们控制程序的执行走向，不过非常受限不能直接控制执行代码。要通过控制程序流到类加载/表达式执行/JNDI/文件上传。</li>
-<li>类加载：除了直接上传文件外，其他的利用方式都依赖于类加载来实现。常见的触发类加载方式有通过BCEL类加载器加载、URLClassLoader从远程地址加载、defineClass直接加载字节码。</li>
-</ul>
-<h2 id="类加载"><a href="#类加载" class="headerlink" title="类加载"></a>类加载</h2><p>​        我们先考虑类加载的地方，看看有没有调用defineClass或者BCEL类加载器的代码。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">match path=(m1:Method)-[r:CALL]-&gt;(m2:Method&#123;NAME:&quot;defineClass&quot;,CLASSNAME:&quot;java.lang.ClassLoader&quot;&#125;) return m1.CLASSNAME,m1.NAME,m1.PARAMETERS</span><br></pre></td></tr></table></figure>
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">最近审计遇到了一个环境存在反序列化漏洞但是没有利用链，于是尝试挖了下利用链，虽然最后没挖到，但是也对利用链挖掘的思路有了一些了解，在我挖掘的过程中也找了下文章，这方面的文章确实比较少，因此打算写篇文章介绍如何挖掘反序列化利用链，希望能对后来者提供一些帮助。</span><br></pre></td></tr></table></figure>
 
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220524112837886.png" alt="image-20220524112837886"></p>
-<p>​    下面我们找调用BCELClassLoader的操作，有两种方式可以找到，一种是直接调用<code>com.sun.org.apache.bcel.internal.util.ClassLoader#loadClass</code>另一种是我们可以控制要调用的ClassLoader的类型。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">match (m1:Method)-[r:CALL]-(m2:Method&#123;NAME:&quot;loadClass&quot;&#125;)&lt;-[:HAS]-(cls:Class)-[:INTERFACE|EXTENDS*]-&gt;(cls1:Class &#123;NAME:&quot;java.io.Serializable&quot;&#125;)</span><br><span class="line">return m1.CLASSNAME,m1.NAME,m1.PARAMETERS</span><br></pre></td></tr></table></figure>
-
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220520140239643.png" alt="image-20220520140239643"></p>
-<p>​    经过排查也没有可控ClassLoader的点，因此在当前代码场景下无法利用BCEL或者defineClass实现类加载获取代码执行权限。</p>
-<h2 id="JNDI"><a href="#JNDI" class="headerlink" title="JNDI"></a>JNDI</h2><p>​        下面我们寻找JNDI的sink</p>
-<ul>
-<li>javax.naming.Context#lookup</li>
-<li>java.naming.InitialContext#lookup</li>
-<li>javax.naming.Context#bind</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">match (m2:Method)&lt;-[:HAS]-(cls:Class)-[:INTERFACE|EXTENDS*]</span><br><span class="line">                    -&gt;(cls1:Class &#123;NAME:&quot;javax.naming.Context&quot;&#125;)</span><br><span class="line">match (m1:Method)-[r:CALL]-&gt;(m2:Method&#123;NAME:&quot;lookup&quot;&#125;)</span><br><span class="line">return m1.CLASSNAME,m1.NAME,m1.PARAMETERS</span><br></pre></td></tr></table></figure>
-
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220520141521808.png" alt="image-20220520141521808"></p>
-<p>​    首先找build方法调用，没有找到调用</p>
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220524110552067.png" alt="image-20220524110552067"></p>
-<p>​    同理找getjnds的调用，可以找到调用<code>getJndiDsWithLog</code>和<code>createDataSource</code>，虽然DButils这调用了getter方法，我们自然的想把它和<code>DynaBean</code>联系到一起。但是比较可惜并没有这个属性。而<code>createDataSource</code>也没找到调用，因此也无法利用。</p>
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220524110726694.png" alt="image-20220524110726694"></p>
-<p>​    </p>
-<h2 id="已有Sink"><a href="#已有Sink" class="headerlink" title="已有Sink"></a>已有Sink</h2><p>​        下面我们尝试从已有的Sink中找利用链，目前用的最多的Sink就是getOutputProperties触发类加载完成利用的。我们梳理一下以<code>getOutputProperties</code>为利用终点的利用链，看看能否重中寻找到规律。</p>
-<ul>
-<li>CommonsBeanutils1:在BeanComparator中触发Properties#getProperties。</li>
-<li>CommonsCollections2:反射调用newTransformer方法</li>
-<li>CommonsCollections3: 实例化TrAXFilter间接调用newTransformer</li>
-<li>Hibernate:BasicGetter#get方法通过反射调用<code>getOutputProperties</code>方法</li>
-</ul>
-<p>​    通过上面列出的利用链我们要找到一个反射点通过控制属性调用<code>newTransformer</code>或者<code>getOutputProperties</code>获取代码执行权限。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">match (m1:Method)&lt;-[:HAS]-(cls:Class)-[:INTERFACE|EXTENDS*]</span><br><span class="line">                    -&gt;(cls1:Class &#123;NAME:&quot;java.io.Serializable&quot;&#125;)</span><br><span class="line">match (m1:Method)-[r:CALL]-(m2:Method&#123;NAME:&quot;invoke&quot;,CLASSNAME:&quot;java.lang.reflect.Method&quot;&#125;)</span><br><span class="line">return m1.CLASSNAME,m1.NAME,m1.PARAMETERS</span><br></pre></td></tr></table></figure>
-
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220520181446774.png" alt="image-20220520181446774"></p>
-<p><strong>cn.hutool.core.bean.DynaBean</strong></p>
-<p>​    实现了<code>Serializable</code>接口，并且可以反射调用<code>Getter</code>方法。</p>
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220520160708338.png" alt="image-20220520160708338"></p>
-<p>​        我们构造一个<code>TemplatesImpl</code>进行测试发现获取不到<code>outputProperties</code>的getter方法。</p>
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220520160755090.png" alt="image-20220520160755090"></p>
-<p>​        经过调试发现获取getter方法时没有去掉_所以匹配不到。</p>
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220520170249207.png" alt="image-20220520170249207"></p>
-<h2 id="InvocationHandler"><a href="#InvocationHandler" class="headerlink" title="InvocationHandler"></a>InvocationHandler</h2><p>​    JDK7的利用链是在InvocationHandler中的其他方法调用了invoke方法，并且method是可以通过属性来控制导致的，所以我们可以按着这个思路去找对应的InvocationHandler。</p>
-<h3 id="ConnectionErrorFiringInvocationHandler"><a href="#ConnectionErrorFiringInvocationHandler" class="headerlink" title="ConnectionErrorFiringInvocationHandler"></a>ConnectionErrorFiringInvocationHandler</h3><ul>
-<li>可以通过控制初始化属性控制对象</li>
-<li>需要让method为newtransformer方法</li>
-<li>但是这里无法通过控制属性来控制调用的method所以不能直接利用</li>
-</ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ConnectionErrorFiringInvocationHandler</span><span class="params">(Object toInvokeOn)</span> </span>&#123;</span><br><span class="line">           <span class="keyword">this</span>.invokeOn = toInvokeOn;</span><br><span class="line">       &#125;</span><br><span class="line"></span><br><span class="line">       <span class="function"><span class="keyword">public</span> Object <span class="title">invoke</span><span class="params">(Object proxy, Method method, Object[] args)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">           <span class="keyword">if</span> (<span class="string">&quot;equals&quot;</span>.equals(method.getName())) &#123;</span><br><span class="line">               <span class="keyword">return</span> args[<span class="number">0</span>].equals(<span class="keyword">this</span>);</span><br><span class="line">           &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">               Object result = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">               <span class="keyword">try</span> &#123;</span><br><span class="line">                   result = method.invoke(<span class="keyword">this</span>.invokeOn, args);</span><br><span class="line">                   <span class="keyword">if</span> (result != <span class="keyword">null</span>) &#123;</span><br><span class="line">                       result = <span class="keyword">this</span>.proxyIfInterfaceIsJdbc(result, result.getClass());</span><br><span class="line">                   &#125;</span><br><span class="line">               &#125; <span class="keyword">catch</span> (InvocationTargetException var6) &#123;</span><br><span class="line">                   <span class="keyword">if</span> (!(var6.getTargetException() <span class="keyword">instanceof</span> SQLException)) &#123;</span><br><span class="line">                       <span class="keyword">throw</span> var6;</span><br><span class="line">                   &#125;</span><br><span class="line"></span><br><span class="line">                   WrapperBase.<span class="keyword">this</span>.checkAndFireConnectionError((SQLException)var6.getTargetException());</span><br><span class="line">               &#125;</span><br><span class="line"></span><br><span class="line">               <span class="keyword">return</span> result;</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="AnnotationImpl"><a href="#AnnotationImpl" class="headerlink" title="AnnotationImpl"></a>AnnotationImpl</h3><p>​    <code>javassist.bytecode.annotation.AnnotationImpl#checkEquals</code>中调用了invoke,method是由annocationtype决定的。</p>
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525110121753.png" alt="image-20220525110121753"></p>
-<p>​    但是这里annocationtype是不可序列化的，并且想要给它赋值需要控制<code>annotation</code>属性，并且目标也对<code>annotation</code>的类型做了限制，应该是不行了。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> Class annotationType;</span><br><span class="line">    <span class="keyword">private</span> Annotation annotation;</span><br><span class="line"></span><br><span class="line">   <span class="function"><span class="keyword">private</span> Class <span class="title">getAnnotationType</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (annotationType == <span class="keyword">null</span>) &#123;</span><br><span class="line">            String typeName = annotation.getTypeName();</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                annotationType = classLoader.loadClass(typeName);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">catch</span> (ClassNotFoundException e) &#123;</span><br><span class="line">                NoClassDefFoundError error = <span class="keyword">new</span> NoClassDefFoundError(<span class="string">&quot;Error loading annotation class: &quot;</span> + typeName);</span><br><span class="line">                error.setStackTrace(e.getStackTrace());</span><br><span class="line">                <span class="keyword">throw</span> error;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> annotationType;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="Invoke"><a href="#Invoke" class="headerlink" title="Invoke"></a>Invoke</h2><h3 id="JFinalJson-beanToJson"><a href="#JFinalJson-beanToJson" class="headerlink" title="JFinalJson#beanToJson"></a>JFinalJson#beanToJson</h3><p>​    直接控制model为TemplatesImpl对象就可以完成调用。</p>
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525112010908.png" alt="image-20220525112010908"></p>
-<p>​    下面我们找<code>beanToJson</code>的调用</p>
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525112423398.png" alt="image-20220525112423398"></p>
-<p>​    最终定位到<code>com.jfinal.json.JFinalJson#toJson</code>，可以先复现一下，但是<code>JFinalJson</code>对象是不可序列化的，而我们在构造对象时一定是需要构造一个<code>JFinalJson</code>对象的。</p>
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525113442054.png" alt="image-20220525113442054"></p>
-<h3 id="GetterMethodFieldGetter-get"><a href="#GetterMethodFieldGetter-get" class="headerlink" title="GetterMethodFieldGetter#get"></a>GetterMethodFieldGetter#get</h3><p>​    <code>target</code>可以通过参数直接控制但是<code>method</code>需要通过属性控制，所以需要找调用链中会不会初始化<code>GetterMethodFiledGetter</code></p>
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525122552266.png" alt="image-20220525122552266"></p>
-<p>​        继续看上层调用，只有在<code>com.jfinal.template.expr.ast.Field#eval</code>中调用了。而target也是由eval的返回结果决定的。</p>
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525122947803.png" alt="image-20220525122947803"></p>
-<p>​    再通过tabby找调用，分析了一大圈，感觉好像不可控。</p>
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525125400871.png" alt="image-20220525125400871"></p>
-<h3 id="ReflectUtil-invoke"><a href="#ReflectUtil-invoke" class="headerlink" title="ReflectUtil#invoke"></a>ReflectUtil#invoke</h3><p>​    只有execute和clone两个点，但是clone不能控制函数名称。execute似乎是计划任务，也不太好调用</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">match (source:Method) where source.NAME in [<span class="string">&quot;compare&quot;</span>,<span class="string">&quot;compareTo&quot;</span>,<span class="string">&quot;hashCode&quot;</span>]</span><br><span class="line">match (m1:Method) where m1.NAME=<span class="string">&quot;invoke&quot;</span> and m1.CLASSNAME=<span class="string">&quot;cn.hutool.core.util.ReflectUtil&quot;</span></span><br><span class="line">call apoc.algo.allSimplePaths(m1, source, <span class="string">&quot;&lt;CALL|ALIAS&quot;</span>,<span class="number">10</span>) yield path</span><br><span class="line"><span class="keyword">return</span> * limit <span class="number">10</span></span><br></pre></td></tr></table></figure>
-
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220525170520529.png" alt="image-20220525170520529"></p>
-<h3 id="cn-hutool-json-JSONObject-populateMap"><a href="#cn-hutool-json-JSONObject-populateMap" class="headerlink" title="cn.hutool.json.JSONObject#populateMap"></a>cn.hutool.json.JSONObject#populateMap</h3><h2 id="命令执行调用"><a href="#命令执行调用" class="headerlink" title="命令执行调用"></a>命令执行调用</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">match (m1:Method)-[r:CALL]-&gt;(m2:Method&#123;NAME:&quot;exec&quot;,CLASSNAME:&quot;java.lang.Runtime&quot;&#125;)</span><br><span class="line">return m1.CLASSNAME,m1.NAME,m1.PARAMETERS</span><br></pre></td></tr></table></figure>
-
-<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220524141451317.png" alt="image-20220524141451317"></p>
-
+<h2 id="确定sink"><a href="#确定sink" class="headerlink" title="确定sink"></a>确定sink</h2><p>​    因为我也是第一次接触利用链的挖掘，刚上手也是感觉到无所适从，最好的方法当然是分析已有的利用链,下面是我总结了常见利用链的sink。</p>
+        
       
     </div>
 
@@ -179,6 +99,13 @@
   <div class="article-footer">
     <div class="article-meta pull-left">
 
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
     
 
     
