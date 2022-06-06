@@ -165,6 +165,11 @@
 <p>​    <code>modificationTestInterval</code>也保存在<code>options</code>属性中，所以修改的方法和方法一类似，就不罗列代码了。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">EmbeddedServletOptions</span> <span class="keyword">implements</span> <span class="title">Options</span> </span>&#123;</span><br><span class="line">...</span><br><span class="line">   <span class="keyword">private</span> <span class="keyword">int</span> modificationTestInterval = <span class="number">4</span>;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+<p>​    下面给出代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
 <h2 id="查杀情况分析"><a href="#查杀情况分析" class="headerlink" title="查杀情况分析"></a>查杀情况分析</h2><h3 id="tomcat-memshell-scanner"><a href="#tomcat-memshell-scanner" class="headerlink" title="tomcat-memshell-scanner"></a>tomcat-memshell-scanner</h3><p>​    这款工具会Dump出所有保存在<code>servletMappings</code>中的<code>Servlet</code>的信息，不过我们的JSPServlet并没有保存在<code>servletMappings</code>中，而是在<code>JspRuntimeContext#jsps</code>字段中，因此根本查不到。</p>
 <p><img src="/2021/10/14/JSP%E5%86%85%E5%AD%98%E9%A9%AC%E7%A0%94%E7%A9%B6/image-20211014182211891.png" alt="image-20211014182211891"></p>
 <p><img src="/2021/10/14/JSP%E5%86%85%E5%AD%98%E9%A9%AC%E7%A0%94%E7%A9%B6/image-20211014182226154.png" alt="image-20211014182226154"></p>

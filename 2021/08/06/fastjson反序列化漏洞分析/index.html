@@ -116,7 +116,7 @@
 <h3 id="反序列化过程中会调用什么方法？有何限制？"><a href="#反序列化过程中会调用什么方法？有何限制？" class="headerlink" title="反序列化过程中会调用什么方法？有何限制？"></a><strong>反序列化过程中会调用什么方法？有何限制？</strong></h3><p>​        通过ClassLoader加载到@type指定的类后，接下来会根据类名获取对应的反序列化器，当没有匹配到合适的反序列化器时，会通过<code>createJavaBeanDeserializer</code>创建JavaBeanDeserializer反序列化器。createJavaBeanDeserializer反序列化器中，调用<code>JavaBeanInfo.build</code>方法中动态创建一个JavaBeanInfo对象，最后根据得到的JavaBeanInfo对象,通过<code>asmFactory.createJavaBeanDeserializer</code>动态构建一个JavaBeanDeserializer类。</p>
 <p>​        首先通过<code>getDefaultConstructor</code>获取构造器</p>
 <p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810115316825.png" alt="image-20210810115316825"></p>
-<p>​        在<code>getDefaultConstructor</code>默认会获取无参构造器，如果不存在无参构造器，如果不存在无参构造器，则获取参数为当前Class类型的1个参数构造器。</p>
+<p>​        在<code>getDefaultConstructor</code>默认会获取无参构造器，如果不存在无参构造器，则获取参数为当前Class类型的1个参数构造器。</p>
 <p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810115008162.png" alt="image-20210810115008162"></p>
 <p>​        如果没有无参构造方法或者参数为当前class类型的有参构造方法，则通过注解获取构造方法，对于挖洞或者利用漏洞来讲，我们一般找的会是一个通用的类，一般不会有fastjson的注解信息，所以这段不分析了。</p>
 <p><img src="/2021/08/06/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20210810115703210.png" alt="image-20210810115703210"></p>
