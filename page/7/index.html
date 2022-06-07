@@ -67,6 +67,169 @@
 
   
     
+    <h3 class="article-title"><a href="/2020/09/02/关于蚁剑免杀的学习/"><span>关于蚁剑免杀学习</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/02/关于蚁剑免杀的学习/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-02T12:15:47.000Z">
+          2020-09-02
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">当我们直接使用蚁剑这种比较出名的shell管理工具，在一些防护比较严的情况下，可能过一会会就被发现甚至关站，因此去除蚁剑的特征或者对shell免杀都是特别重要的，我之前并未接触过这方面的知识，写这篇文章的目的就是记录自己学习的一个过程，所以开始吧。</span><br></pre></td></tr></table></figure>
+
+<p>我认为特征处理有几个部分吧，一个是静态代码特征，比如我们直接使用蚁剑的马，这种马如果我们没有进行过任何处理直接上传就非常有可能在上传的时候被干掉，也就是说如果在上传的时候就被干掉了，或者上传之后被干掉了，问题都出在传的马被杀了。还有一种情况就是我们的马传上去了，而且也能访问到，然后使用蚁剑连接的时候发现连接被阻断同时马被杀了，这个就是流量方面的特征的问题了。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/02/关于渗透经典案例的思考/"><span>关于渗透经典案例的思考</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/02/关于渗透经典案例的思考/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-02T11:53:35.000Z">
+          2020-09-02
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">最近刚好要做一次分享，要用到自己以往的项目经历，但是我经过了仔细呢思索，翻了翻之前的项目笔记，</span><br><span class="line">发现竟然没有非常经典的渗透案例，也是非常的失望，工作这么久竟然连一点拿的出手的项目经历都没有。</span><br></pre></td></tr></table></figure>
+
+<p>​       既然要谈谈经典的渗透案例，那先得说说什么样的渗透是经典的。第一点，不常规的思路。如果是通过非常常规的思路，比如注入，后台，上传，这个过程中如果非常的顺利，那这个项目就不是一个经典的案例，因为这个全是新手都知道的东西。第二点，稍微有些复杂的攻击链。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/随笔/">随笔</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/09/02/关于Malleable-C2的学习总结/"><span>关于Malleable C2的学习总结</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/09/02/关于Malleable-C2的学习总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-09-02T02:27:15.000Z">
+          2020-09-02
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        通过之前我们对于CobaltStrike的Beacon通信流程分析，我们可以看到CobaltStrike在使用心跳包发送active和match，执行命令的返回结果通过请求submit.php来进行传输，而且我们通过这两个包发送和接收的也是一些加密的内容，因此可能有些杀软可能会对这样的请求进行拦截，如果这样，那么无论我们之前对shellcode怎么免杀，只要和服务端产生一些通信，那么都有可能被拦截，因此我们需要修改掉这些流量特征，好在CobaltStrike已经给我们提供了这样的功能，那就是malleable C2。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/cobaltstrike/">cobaltstrike</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2020/09/01/关于CS上线微信通知的学习/"><span>关于cobaltstrike微信上线通知的学习</span></a></h3>
     
   
@@ -434,171 +597,6 @@
   <div class="article-footer">
     <div class="article-meta pull-left">
 
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/08/21/关于内网横向移动的学习总结/"><span>关于内网横向移动的学习总结</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/08/21/关于内网横向移动的学习总结/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-08-21T09:53:05.000Z">
-          2020-08-21
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        当我们进入内网后，并且对当前主机的各种信息已经搜集完毕，接下来就到了最有意思的环节，横向移动。在这个环节，我们可以通过我们的操作获取多台主机的权限，本文将总结内网横向渗透中常用的姿势。</p>
-<h3 id="WMI"><a href="#WMI" class="headerlink" title="WMI"></a>WMI</h3><p><strong>什么是WMI?</strong></p>
-<p>​        WMI 的全称是 Windows Management Instrumentation，它出现在所有的 Windows 操作系统中，由一组强大的工具集合组成，用于管理本地或<strong>远程</strong>的 Windows 系统。</p>
-<p><strong>为什么要使用WMI？</strong></p>
-<p>​        使用WMI进行横向移动，默认不会留下系统日志，并且脚本无需写入磁盘，具有隐蔽性。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/内网渗透/">内网渗透</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/08/21/关于hw打点的思考/"><span>关于hw打点的思考</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/08/21/关于hw打点的思考/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-08-21T01:26:01.000Z">
-          2020-08-21
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​            一年一度的hw活动又开始了，关于hw的比拼，各个公司都十分看重，都希望能在这次比赛中拿到一个比较好的成绩，针对于hw这种形式，还是比较考验一个人或者一个团队的梭哈能力，有些红队人员虽然内网非常强，姿势也非常骚，可是打点可能不是很快，对于这种比赛来讲，就是手慢则无。反而一把梭哈，速度快还能拿到比较不错的成绩。下面我根据我的不成熟的经验来分析一下，如何提升速度。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/随笔/">随笔</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/08/12/windows文件下载方式总结/"><span>windows文件下载方式总结</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/08/12/windows文件下载方式总结/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-08-12T09:21:36.000Z">
-          2020-08-12
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">好好学习，天天向上</span><br></pre></td></tr></table></figure>
-
-<p>​        我认为按照我们平时对于远程加载文件的需求，可以按照能否加载任意格式的文件来进行区分，有些下载方式，可以去远程下载任意格式的文件，比如exe,txt等等，但是有些则是有限制的，只能下载指定格式的文件，比如js，xls，msi等等。还有些方式也可以下载或者加载远程的文件，但是不是windows自带的方式，所以也可以把这种方式当作一种类型进行总结。最后还有一些方式不能通过http协议进行下载，但是可以通过smb协议进行下载文件，这也可以列为一种方式。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/内网渗透/">内网渗透</a>
-    </span>
     
 
     

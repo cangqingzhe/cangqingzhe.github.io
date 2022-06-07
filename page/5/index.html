@@ -67,6 +67,168 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/01/05/jsp文件加载shellcode上线cobaltstrike实现/"><span>jsp文件加载shellcode上线cobaltstrike实现</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/01/05/jsp文件加载shellcode上线cobaltstrike实现/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-01-05T05:50:51.000Z">
+          2021-01-05
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        之前浏览github时候发现<code>https://github.com/Ramos-dev/R9000/blob/master/README.md</code>项目，作者实现了通过JAVA加载shellcode上线cobaltstrike的功能，因为关于JAVA加载shellcode上线cobaltstrike的文章和方法不是很多，其免杀的情况也不清楚，因此打算写一篇文章复现和分析如何通过<code>JAVA加载shellcode上线cobaltstrike</code>。</p>
+<p>​        通过查阅资料，目前已有的方法是用过JNI和JNA来实现注入shellcode的，所以先了解下JNI。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/webshell/">webshell</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/01/04/注入冰蝎内存马实现/"><span>注入冰蝎内存马实现</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/01/04/注入冰蝎内存马实现/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-01-04T08:39:53.000Z">
+          2021-01-04
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        通过之前的文章，我们了解了servlet和filter类型的内存马的实现，但是实现的是cmd马，在实战的过程中会有两个问题。1.不方便操作使用.2.比较难过WAF的查杀。本片文章我先解决一下第一个问题，将冰蝎马注入到内存。</p>
+<h2 id="冰蝎马实现"><a href="#冰蝎马实现" class="headerlink" title="冰蝎马实现"></a>冰蝎马实现</h2><h3 id="客户端实现"><a href="#客户端实现" class="headerlink" title="客户端实现"></a>客户端实现</h3><p>​         由于静态分析比较麻烦，所以我选择直接debug调试，这里感谢<code>https://github.com/Freakboy/Behinder</code>给出了可以直接运行的冰蝎3.0源码，有了源码可以方便调试并且根据需求对冰蝎进行二次开发。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内存马/">内存马</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2020/12/31/Tomcat内存马实现原理解析-servlet内存马/"><span>Tomcat内存马实现原理解析-servlet内存马</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2020/12/31/Tomcat内存马实现原理解析-servlet内存马/" rel="bookmark">
+        <time class="entry-date published" datetime="2020-12-31T02:25:16.000Z">
+          2020-12-31
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>​        除了通过Filter实现的内存马，也可以使用servlet，listener等实现内存马，不同的实现方式需要不同的查杀方式，有可能使用不同类型的内存马就可以绕过查杀，本片文章将带着大家了解servlet的入门、tomcat下servlet的实现、servlet内存马的实现。</p>
+<h2 id="servlet基础入门"><a href="#servlet基础入门" class="headerlink" title="servlet基础入门"></a>servlet基础入门</h2><h3 id="什么是servlet"><a href="#什么是servlet" class="headerlink" title="什么是servlet?"></a>什么是servlet?</h3><h4 id="servlet基本介绍"><a href="#servlet基本介绍" class="headerlink" title="servlet基本介绍"></a>servlet基本介绍</h4><p>​        servlet是一个Java应用程序，运行在服务器端，用来处理客户端请求并作出响应的程序。servlet没有main方法不能独立运行，需要使用servlet容器比如tomcat来创建。当我们通过URL来访问servlet，首先会在servlet容器中判断该URL是由哪个servlet处理的，当前容器中是否有这个servlet实例，如果没有则创建servlet实例，并交由对应servlet的service方法来处理请求，处理结束后再返回web服务器。</p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/内存马/">内存马</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2020/12/24/Tomcat内存马实现原理解析/"><span>Tomcat内存马实现原理解析</span></a></h3>
     
   
@@ -440,172 +602,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/内网渗透/">内网渗透</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/11/13/我的渗透之路/"><span>我的渗透之路</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/11/13/我的渗透之路/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
-          2020-11-13
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近可能是因为技术处于一个瓶颈期，又或者说对未来技术发展方向有些迷茫，所以写下这篇文章梳理一下当前自身的技能树以及未来的发展方向。</p>
-<h2 id="我的渗透观"><a href="#我的渗透观" class="headerlink" title="我的渗透观"></a>我的渗透观</h2><p>​    根据我自己对于渗透的理解，把渗透分为如下几个步骤：</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/随笔/">随笔</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/11/13/记MSSQL绕过阿里云/"><span>记MSSQl绕过阿里云</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/11/13/记MSSQL绕过阿里云/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-11-13T08:50:19.000Z">
-          2020-11-13
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">最近一直在学习关于WAF绕过的知识，本次选择阿里云这款云WAF来测试关于MSSQL注入的绕过。因为阿里云主站可能不</span><br><span class="line">是ASP+IIS的环境，所以我不清楚如果真的是ASP+IIS的环境，阿里云的拦截规则是否会有相应的变化。</span><br></pre></td></tr></table></figure>
-
-<h2 id="绕过过程"><a href="#绕过过程" class="headerlink" title="绕过过程"></a>绕过过程</h2><h3 id="逻辑判断语句绕过"><a href="#逻辑判断语句绕过" class="headerlink" title="逻辑判断语句绕过"></a>逻辑判断语句绕过</h3><p>我们知道在检测一个注入点的时候，首先会加上and 1=1之类的判断语句，如果页面返回的逻辑符合我们设想的逻辑，那么就有可能有注入。</p>
-<p><strong>利用%特性绕过</strong></p>
-<p>在iis+asp的环境中，在关键字中间加%不会影响程序的正常执行，因此可以在关键字and中添加%来绕过阿里云的检测。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/漏洞利用/">漏洞利用</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2020/11/09/关于免杀的技术总结（-）/"><span>关于免杀的技术总结（-）</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2020/11/09/关于免杀的技术总结（-）/" rel="bookmark">
-        <time class="entry-date published" datetime="2020-11-09T12:26:00.000Z">
-          2020-11-09
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​    在钓鱼或者渗透的过程中，如果我们不会免杀，使用Cobaltstrike生成的exe可能直接就被干掉了，还会触发目标的告警，导致之前的工作前功尽弃，因此在往更高阶的攻防对抗中，免杀能力是必不可少的能力，不是说每个人都必须掌握这种能力，但是如果一个团队中，一个会免杀的人都没有，那就很僵了。</p>
-<p>​    回到正题，本片文章并不会讲到免杀方法可能很多已经都不可用了，之所以写这篇总结文章，是希望大家能对免杀的方法能有一个系统的认知。</p>
-<h2 id="远程线程调用"><a href="#远程线程调用" class="headerlink" title="远程线程调用"></a>远程线程调用</h2><p>​    要讲远程线程调用，我们首先看一下本地的调用，代码如下：</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/免杀/">免杀</a>
     </span>
     
 

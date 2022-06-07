@@ -1,0 +1,247 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Tabby反序列化利用链分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="Tabby反序列化利用链分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>Tabby反序列化利用链分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2022/05/03/Tabby挖掘利用链/" rel="bookmark">
+        <time class="entry-date published" datetime="2022-05-03T05:47:24.000Z">
+          2022-05-03
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">最近审计一个项目遇到了存在反序列化点但是没有利用链的情况，想尝试挖掘下利用链。目前挖掘利用链的工具主要是GadgetInspector和Tabby，原生的GadgetInspector跑了下效果并不理想而tabby可以根据自己的需要定制查询语法相对来说也比较灵活。本文主要是利用Tabby来分析下已知的利用链，一方面是熟悉tabby的使用和测试效果，另一方面是熟悉前辈们挖掘反序列化链的思路。</span><br></pre></td></tr></table></figure>
+
+<h2 id="URLDNS"><a href="#URLDNS" class="headerlink" title="URLDNS"></a>URLDNS</h2><p>​    在<code>java.net.url</code>类的equals方法中，判断url是否相等的条件有两个。</p>
+<ul>
+<li>引用相同</li>
+<li>请求的URL的协议、端口、文件名、IP相同</li>
+</ul>
+<span id="more"></span>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">equals</span><span class="params">(URL u1, URL u2)</span> </span>&#123;</span><br><span class="line">       String ref1 = u1.getRef();</span><br><span class="line">       String ref2 = u2.getRef();</span><br><span class="line">       <span class="keyword">return</span> (ref1 == ref2 || (ref1 != <span class="keyword">null</span> &amp;&amp; ref1.equals(ref2))) &amp;&amp;</span><br><span class="line">              sameFile(u1, u2);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">sameFile</span><span class="params">(URL u1, URL u2)</span> </span>&#123;</span><br><span class="line">       <span class="comment">// Compare the protocols.</span></span><br><span class="line">       <span class="keyword">if</span> (!((u1.getProtocol() == u2.getProtocol()) ||</span><br><span class="line">             (u1.getProtocol() != <span class="keyword">null</span> &amp;&amp;</span><br><span class="line">              u1.getProtocol().equalsIgnoreCase(u2.getProtocol()))))</span><br><span class="line">           <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">       <span class="comment">// Compare the files.</span></span><br><span class="line">       <span class="keyword">if</span> (!(u1.getFile() == u2.getFile() ||</span><br><span class="line">             (u1.getFile() != <span class="keyword">null</span> &amp;&amp; u1.getFile().equals(u2.getFile()))))</span><br><span class="line">           <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">       <span class="comment">// Compare the ports.</span></span><br><span class="line">       <span class="keyword">int</span> port1, port2;</span><br><span class="line">       port1 = (u1.getPort() != -<span class="number">1</span>) ? u1.getPort() : u1.handler.getDefaultPort();</span><br><span class="line">       port2 = (u2.getPort() != -<span class="number">1</span>) ? u2.getPort() : u2.handler.getDefaultPort();</span><br><span class="line">       <span class="keyword">if</span> (port1 != port2)</span><br><span class="line">           <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">       <span class="comment">// Compare the hosts.</span></span><br><span class="line">       <span class="keyword">if</span> (!hostsEqual(u1, u2))</span><br><span class="line">           <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">       <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        既然有判断主机是否相同的情况，如果我们传入的是一个域名肯定要将我们传入的域名解析到IP，这就涉及到了DNS解析是由<code>getHostAddress</code>来完成的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">hostsEqual</span><span class="params">(URL u1, URL u2)</span> </span>&#123;</span><br><span class="line">    InetAddress a1 = getHostAddress(u1);</span><br><span class="line">    InetAddress a2 = getHostAddress(u2);</span><br><span class="line">    <span class="comment">// if we have internet address for both, compare them</span></span><br><span class="line">    <span class="keyword">if</span> (a1 != <span class="keyword">null</span> &amp;&amp; a2 != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> a1.equals(a2);</span><br><span class="line">    <span class="comment">// else, if both have host names, compare them</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (u1.getHost() != <span class="keyword">null</span> &amp;&amp; u2.getHost() != <span class="keyword">null</span>)</span><br><span class="line">        <span class="keyword">return</span> u1.getHost().equalsIgnoreCase(u2.getHost());</span><br><span class="line">     <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">return</span> u1.getHost() == <span class="keyword">null</span> &amp;&amp; u2.getHost() == <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    另外在<code>java.lang.net</code>计算hashcode时会分别获取请求协议、端口、文件、引用、主机等分别计算hash后进行拼接。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">int</span> <span class="title">hashCode</span><span class="params">(URL u)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> h = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Generate the protocol part.</span></span><br><span class="line">        String protocol = u.getProtocol();</span><br><span class="line">        <span class="keyword">if</span> (protocol != <span class="keyword">null</span>)</span><br><span class="line">            h += protocol.hashCode();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Generate the host part.</span></span><br><span class="line">        InetAddress addr = getHostAddress(u);</span><br><span class="line">        <span class="keyword">if</span> (addr != <span class="keyword">null</span>) &#123;</span><br><span class="line">            h += addr.hashCode();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            String host = u.getHost();</span><br><span class="line">            <span class="keyword">if</span> (host != <span class="keyword">null</span>)</span><br><span class="line">                h += host.toLowerCase().hashCode();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Generate the file part.</span></span><br><span class="line">        String file = u.getFile();</span><br><span class="line">        <span class="keyword">if</span> (file != <span class="keyword">null</span>)</span><br><span class="line">            h += file.hashCode();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Generate the port part.</span></span><br><span class="line">        <span class="keyword">if</span> (u.getPort() == -<span class="number">1</span>)</span><br><span class="line">            h += getDefaultPort();</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            h += u.getPort();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Generate the ref part.</span></span><br><span class="line">        String ref = u.getRef();</span><br><span class="line">        <span class="keyword">if</span> (ref != <span class="keyword">null</span>)</span><br><span class="line">            h += ref.hashCode();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> h;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    所以针对URLDNS这条链我们可以把sink定为<code>java.net.URL#hashCode</code>或<code>java.net.URL#equals</code>也可以直接将sink定为<code>java.net.URLStreamHandler#getHostAddress</code>,source自然是任意类的readObject了。</p>
+<p>​    下面我们尝试用tabby挖掘下调用链，具体的环境搭建不讲了在作者的<a target="_blank" rel="noopener" href="https://github.com/wh1t3p1g/tabby/wiki/Tabby%E9%A3%9F%E7%94%A8%E6%8C%87%E5%8C%97">github</a>上有详细的教程,有两个小问题要注意一下。</p>
+<ul>
+<li>之前通过命令行直接运行jar总提示我target不存在，在配置文件<code>setting.properties</code>中将<code>tabby.build.target </code>改成自己要分析的jar就可以了。</li>
+<li>在分析过一次后，再运行tabby会一直卡在build class不动，这个是因为之前生成了缓存的数据库文件，删掉cache目录下的缓存文件即可。</li>
+</ul>
+<p>​    当选择调用链长度为4时，可以拿到从<code>ConcurrentHashMap</code>到<code>getHostAddress</code>的调用链。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">match (source:Method) where source.NAME=&quot;readObject&quot; </span><br><span class="line">match (m1:Method) where  m1.NAME=&quot;getHostAddress&quot; and m1.CLASSNAME=&quot;java.net.URLStreamHandler&quot;</span><br><span class="line">call apoc.algo.allSimplePaths(m1, source, &quot;&lt;CALL|ALIAS&quot;, 4) yield path </span><br><span class="line">return * limit 50</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220430235948091.png" alt="image-20220430235948091"></p>
+<p>​    如果我们想找以<code>java.net.URL#equals</code>为sink的利用链，可以再对path做限制。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">match (source:Method) where source.NAME=&quot;readObject&quot; </span><br><span class="line">match (m1:Method) where  m1.NAME=&quot;getHostAddress&quot; and m1.CLASSNAME=&quot;java.net.URLStreamHandler&quot;</span><br><span class="line">call apoc.algo.allSimplePaths(m1, source, &quot;&lt;CALL|ALIAS&quot;, 6) yield path</span><br><span class="line">where any(n in nodes(path) where n.NAME=&quot;equals&quot; and n.CLASSNAME=&quot;java.net.URL&quot;)</span><br><span class="line">return * limit 50</span><br></pre></td></tr></table></figure>
+
+<p>​    当选择调用链长度为6时，可以拿到以<code>java.net.URL#equals</code>为sink的调用链。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220501113414158.png" alt="image-20220501113414158"></p>
+<h2 id="Commons-Collections"><a href="#Commons-Collections" class="headerlink" title="Commons-Collections"></a>Commons-Collections</h2><h3 id="CC1"><a href="#CC1" class="headerlink" title="CC1"></a>CC1</h3><p>​    CC1算是比较经典的反序列化利用链，一般来说我们通过一次反射是无法调用<code>Runtime.exec</code>方法执行命令的。因为Runtime类是不能序列化且没有public构造方法，而在CC1中通过<code>ChainsTransformer</code>进行多次Invoke实现了命令执行。 CC1的source有<code>TransformedMap</code>和<code>LazyMap</code>两条。</p>
+<ul>
+<li><code>TransformedMap</code>:当map的内容发生改变也就是调用<code>put</code>或者<code>setValue</code>方法时，会调用<code>Transformer#transform</code>方法对map的<code>key</code>或者<code>value</code>进行转换，而在<code>AnnocationHandler#readObject</code>中会获取属性中的map并调用<code>setValue</code>方法。</li>
+<li><code>LazyMap</code>:<code>LazyMap#get</code>调用中<code>key</code>不存在时，会通过<code>Transformer#tranform</code>对key进行转换后，再将转换的结果put到map中，而在``AnnocationHandler#readObject`中也会获取属性中的map并调用get方法。</li>
+</ul>
+<p>​    下面使用tabby获取从<code>readObject</code>到<code>InvokerTransformer</code>的调用链，指定<code>ChainTransformer</code>也可以。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">match (source:Method) where source.NAME=&quot;readObject&quot; </span><br><span class="line">match (m1:Method) where  m1.NAME=&quot;transform&quot; and m1.CLASSNAME=&quot;org.apache.commons.collections.functors.InvokerTransformer&quot;</span><br><span class="line">call apoc.algo.allSimplePaths(m1, source, &quot;&lt;CALL|ALIAS&quot;, 4) yield path </span><br><span class="line">return * limit 50</span><br></pre></td></tr></table></figure>
+
+<p>​    可以拿到<code>LazyMap</code>的调用链，如下所示：</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220503133504280.png" alt="image-20220503133504280"></p>
+<p>​        我们要找从<code>TransformedMap</code>的利用链，尝试在路径中做一些限制。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">match (source:Method) where source.NAME=&quot;readObject&quot; </span><br><span class="line">match (m1:Method) where  m1.NAME=&quot;transform&quot; and m1.CLASSNAME=&quot;org.apache.commons.collections.functors.InvokerTransformer&quot;</span><br><span class="line">call apoc.algo.allSimplePaths(m1, source, &quot;&lt;CALL|ALIAS&quot;,6) yield path</span><br><span class="line">where  any(n in nodes(path) where n.CLASSNAME=&quot;org.apache.commons.collections.map.TransformedMap&quot;)</span><br><span class="line">return * limit 50</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220503134231653.png" alt="image-20220503134231653"></p>
+<p>​        这里并没有拿到<code>TransformedMap#setValue</code>的调用而是拿到了<code>map#put</code>的调用，这是因为在<code>JDK8</code>中调用了<code>map#put</code>但这个map的类型并不可控，所以算是误报吧。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">readObject</span><span class="params">(ObjectInputStream var1)</span> <span class="keyword">throws</span> IOException, ClassNotFoundException </span>&#123;</span><br><span class="line"> ...</span><br><span class="line">     <span class="comment">//map为LinkedHashMap不可控</span></span><br><span class="line">     LinkedHashMap var7 = <span class="keyword">new</span> LinkedHashMap();</span><br><span class="line">     String var10;</span><br><span class="line">     Object var11;</span><br><span class="line">     <span class="keyword">for</span>(Iterator var8 = var4.entrySet().iterator(); var8.hasNext(); var7.put(var10, var11)) &#123;</span><br><span class="line">...</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="CC2"><a href="#CC2" class="headerlink" title="CC2"></a>CC2</h3><p>​    <code>PriorityQueue</code>是一个优先级队列默认情况下使用自然排序，也可以指定不同的Comparator来对元素排序。在进行反序列化时会调用<code>Comparator#compare</code>对元素进行比较后排序。<code>TransformingComparator</code>是<code>Comparator</code>的实现类其compare实现中首先通过<code>Transfromer#transform</code>对元素修饰后再进行比较。由于<code>TransformingComparator</code>在<code>3.1</code>没有实现<code>Serializable</code>接口，因此CC2只能在<code>4.4</code>版本使用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(Object obj1, Object obj2)</span> </span>&#123;</span><br><span class="line">    Object value1 = <span class="keyword">this</span>.transformer.transform(obj1);</span><br><span class="line">    Object value2 = <span class="keyword">this</span>.transformer.transform(obj2);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>.decorated.compare(value1, value2);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    下面通过tabby拿到CC2的利用链</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">match (source:Method) where source.NAME=<span class="string">&quot;readObject&quot;</span> </span><br><span class="line">match (m1:Method) where  m1.NAME=<span class="string">&quot;transform&quot;</span> and m1.CLASSNAME=<span class="string">&quot;org.apache.commons.collections.Transformer&quot;</span></span><br><span class="line">call apoc.algo.allSimplePaths(m1, source, <span class="string">&quot;&lt;CALL|ALIAS&quot;</span>,<span class="number">6</span>) <span class="function">yield path </span></span><br><span class="line"><span class="function">where <span class="title">any</span><span class="params">(n in nodes(path)</span> where n.CLASSNAME</span>=<span class="string">&quot;java.util.PriorityQueue&quot;</span>)</span><br><span class="line"><span class="keyword">return</span> path limit <span class="number">10</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220503151816167.png" alt="image-20220503151816167"></p>
+<h3 id="CC3"><a href="#CC3" class="headerlink" title="CC3"></a>CC3</h3><p>​    CC3应该是<code>Commons-collection</code>里比较特殊的利用链了， 因为并没有使用<code>InvokeTransformer</code>作为sink。在CC2中我们了解到可以通过构造一个恶意的<code>TemplatesImpl </code>对象，当目标调用<code>newTransformer </code>加载提供的字节码并实例化导致静态代码块和构造方法的执行。在 CC2中是使用了<code>InvokeTransformer</code>通过反射调用了<code>newTransformer</code>，那么有没有可能直接通过某个方法调用<code>newTransformer</code>呢？</p>
+<p>​    在CC3中提出了通过<code>com.sun.org.apache.xalan.internal.xsltc.trax.TrAXFilter</code>构造方法调用<code>newTransformer</code>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">TrAXFilter</span><span class="params">(Templates templates)</span>  <span class="keyword">throws</span></span></span><br><span class="line"><span class="function">      TransformerConfigurationException</span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">      _templates = templates;</span><br><span class="line">      _transformer = (TransformerImpl) templates.newTransformer();</span><br><span class="line">      _transformerHandler = <span class="keyword">new</span> TransformerHandlerImpl(_transformer);</span><br><span class="line">      _overrideDefaultParser = _transformer.overrideDefaultParser();</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    所以我们只要找到从<code>readObject</code>到<code>TrAXFilter</code>的利用链即可，而触发点是在<code>TrAXFilter</code>的构造方法触发的，只要找到一个方法可以调用构造方法并传入参数即可。</p>
+<p>​    直接通过tabby拿到的利用链比较多，我这里直接通过条件限制<code>transform</code>方法，可以直接拿到利用链。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">match (source:Method) where source.NAME=&quot;readObject&quot; </span><br><span class="line">match (m1:Method) where  m1.NAME=&quot;newInstance&quot; and m1.CLASSNAME=&quot;java.lang.reflect.Constructor&quot;</span><br><span class="line">call apoc.algo.allSimplePaths(m1, source, &quot;&lt;CALL|ALIAS&quot;, 5) yield path</span><br><span class="line">where any(n in nodes(path) where n.NAME=&quot;transform&quot;)</span><br><span class="line">return * limit 100</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220504064152607.png" alt="image-20220504064152607"></p>
+<h3 id="CC4"><a href="#CC4" class="headerlink" title="CC4"></a>CC4</h3><p>​        CC4比较简单相当于CC2和CC3的组合没什么可说的，在参考<a target="_blank" rel="noopener" href="https://su18.org/post/ysoserial-su18-2/#%E6%94%BB%E5%87%BB%E6%9E%84%E9%80%A0-3">这篇文章</a>发现作者找到了其他的source来进行触发。作者的思路是寻找其他类替代<code>PriorityQueue</code>,这个类的可以通过<code>readObject</code>调用到<code>compare</code>方法，最终找到了<code>TreeBag</code>。</p>
+<blockquote>
+<p>Bag 接口继承自 Collection 接口，定义了一个集合，该集合会记录对象在集合中出现的次数。它有一个子接口 SortedBag，定义了一种可以对其唯一不重复成员排序的 Bag 类型。</p>
+<p>TreeBag 是对 SortedBag 的一个标准实现。TreeBag 使用 TreeMap 来储存数据，并使用指定 Comparator 来进行排序。</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">match (source:Method) where source.NAME=&quot;readObject&quot; </span><br><span class="line">match (m1:Method) where  m1.NAME=&quot;compare&quot; and m1.CLASSNAME=&quot;java.util.Comparator&quot;</span><br><span class="line">call apoc.algo.allSimplePaths(m1, source, &quot;&lt;CALL|ALIAS&quot;, 4) yield path</span><br><span class="line">where none(n in nodes(path) where n.CLASSNAME in [&quot;java.util.jar.Attributes$Name&quot;,&quot;java.io.FilePermissionCollection&quot;] or n.NAME in[&quot;next&quot;] or n.CLASSNAME=~&#x27;java.security.*&#x27;)</span><br><span class="line">return * limit 10</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220504113003043.png"></p>
+<p>​        除了<code>TreeBag</code>还有<code>HashBag</code>也可以作为source。</p>
+<h3 id="CC5"><a href="#CC5" class="headerlink" title="CC5"></a>CC5</h3><p>​    在分析CC1时我们知道<code>LazyMap#get</code>可以触发漏洞，但是由于<code>AnnocationHandler</code>在JDK8中做了修复，无法调用自定义map的get方法也就导致CC1无法在高版本JDK中使用。如果要适配高版本，我们需要找到一条从<code>readObject</code>到<code>map#get</code>的路径。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">match (source:Method) where source.NAME=&quot;readObject&quot; </span><br><span class="line">match (m1:Method) where  m1.NAME=&quot;get&quot; and m1.CLASSNAME=&quot;java.util.Map&quot;</span><br><span class="line">call apoc.algo.allSimplePaths(m1, source, &quot;&lt;CALL|ALIAS&quot;, 4) yield path</span><br><span class="line">where none(n in nodes(path) where n.CLASSNAME in [&quot;sun.security.x509.CRLExtensions&quot;] or n.NAME in[&quot;next&quot;])</span><br><span class="line">return * limit 1</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220504153119520.png"></p>
+<p>​    通过上面的语法拿到了从<code>Flat3Map</code>到<code>map#get</code>的利用链，看上去也没什么问题，但是实际利用中存在下面的代码，只有存入第一个map的key <code>hash1</code>等于第二次传入的key <code>hashCode</code>时才会调用equals方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">this</span>.size &gt; <span class="number">0</span>) &#123;</span><br><span class="line">             ...</span><br><span class="line">                <span class="keyword">case</span> <span class="number">1</span>:</span><br><span class="line">                    <span class="keyword">if</span> (<span class="keyword">this</span>.hash1 == hashCode &amp;&amp; key.equals(<span class="keyword">this</span>.key1)) &#123;</span><br><span class="line">                        old = <span class="keyword">this</span>.value1;</span><br><span class="line">                        <span class="keyword">this</span>.value1 = value;</span><br><span class="line">                        <span class="keyword">return</span> old;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    但是我们需要的利用链中key应该为<code>HashTable</code> key1为<code>lazymap</code>才能触发漏洞。而且<code>hash1</code>使用transient修饰，我们也无法在序列化前通过反射修改<code>hash1</code>内容。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">HashTable#<span class="function">equals </span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">boolean</span> <span class="title">equals</span><span class="params">(Object o)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (o == <span class="keyword">this</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!(o <span class="keyword">instanceof</span> Map))</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        Map&lt;?,?&gt; t = (Map&lt;?,?&gt;) o;</span><br><span class="line">        <span class="keyword">if</span> (t.size() != size())</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            Iterator&lt;Map.Entry&lt;K,V&gt;&gt; i = entrySet().iterator();</span><br><span class="line">            <span class="keyword">while</span> (i.hasNext()) &#123;</span><br><span class="line">                Map.Entry&lt;K,V&gt; e = i.next();</span><br><span class="line">                K key = e.getKey();</span><br><span class="line">                V value = e.getValue();</span><br><span class="line">                <span class="keyword">if</span> (value == <span class="keyword">null</span>) &#123;</span><br><span class="line">                    <span class="comment">//调用lazymap#get触发漏洞</span></span><br><span class="line">                    <span class="keyword">if</span> (!(t.get(key)==<span class="keyword">null</span> &amp;&amp; t.containsKey(key)))</span><br><span class="line">                        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="keyword">if</span> (!value.equals(t.get(key)))</span><br><span class="line">                        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">                &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    直接使用<code>map#get</code>作为sink得到的调用链过多可以先找上层调用。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">match path=(m1:Method)-[r:CALL]-(m2:Method&#123;NAME:&quot;get&quot;,CLASSNAME:&quot;java.util.Map&quot;&#125;) where m1.CLASSNAME=~&#x27;.*org.apache.commons.*&#x27; return m1.CLASSNAME,m1.NAME,m1.PARAMETERS</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220504180052755.png" alt="image-20220504180052755"></p>
+<p>​    其中下面的类不能作为sink</p>
+<ul>
+<li>org.apache.commons.collections4.MapUtils 不支持序列化</li>
+<li>org.apache.commons.collections.bidimap.AbstractDualBidiMap  不支持序列化</li>
+<li>org.apache.commons.collections.bag.AbstractMapBag map属性不可序列化</li>
+<li>org.apache.commons.collections4.trie.UnmodifiableTrie 属性是Trie类型</li>
+<li>org.apache.commons.collections.functors.MapTransformer 已经能调用到transformer就不需要再找sink了</li>
+<li>org.apache.commons.collections.CollectionUtils 不支持序列化</li>
+</ul>
+<p>​    <code>org.apache.commons.collections4.keyvalue.TiedMapEntry</code>可以作为source，因为map属性是可控的并且这个类支持序列化。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220504180959503.png"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">match (source:Method) where source.NAME=&quot;readObject&quot; </span><br><span class="line">match (m1:Method) where  m1.NAME=&quot;getValue&quot; and m1.CLASSNAME=&quot;org.apache.commons.collections4.keyvalue.TiedMapEntry&quot;</span><br><span class="line">call apoc.algo.allSimplePaths(m1, source, &quot;&lt;CALL|ALIAS&quot;,3) yield path</span><br><span class="line">return * limit 10</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220504182249209.png" alt="image-20220504182249209"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>​    首先从利用链的挖掘来讲，多数的利用链都是在已有利用链的基础上变换组合产生的，因此多了解已有的利用链是非常必要的。针对CC链，在<code>4.4.1</code>中<code>InvokerTransformer</code>、<code>InstanseTransformer</code>不再支持序列化。而除了<code>CC3</code>以外其他的利用链都会用到<code>InvokerTransformer</code>，所以已经不太可能从CC中找到sink了，不过抛开CC组件来看，如果能找到一个替代<code>InstanseTransformer</code>的类可以实例化<code>TrAXFilter</code>也有可能产生新的利用链。</p>
+<p>​    从tabby的使用上来讲，由于<code>路径过深</code>或<code>查询条数过多</code>都会在一定程度上影响分析也比较吃电脑性能，所以想直接去分析<code>readObject</code>到<code>invoke</code>调用可能不太容易直接拿到结果，还是建议从已有的source常见的点出发或者确定了对应的sink的基础上再去分析，如果到某一层感觉不太好分析，可以找上层的调用作为sink缩小查询范围。查询语句比较灵活可以根据自己的需求和想法组合语句算是tabby的优势吧。</p>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://blog.0kami.cn/2021/03/14/java-how-to-find-gadget-chains/">https://blog.0kami.cn/2021/03/14/java-how-to-find-gadget-chains/</a></li>
+<li><a target="_blank" rel="noopener" href="https://su18.org/post/ysoserial-su18-2/#%E6%94%BB%E5%87%BB%E6%9E%84%E9%80%A0-3">https://su18.org/post/ysoserial-su18-2/#%E6%94%BB%E5%87%BB%E6%9E%84%E9%80%A0-3</a></li>
+</ul>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2022 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

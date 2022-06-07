@@ -67,6 +67,178 @@
 
   
     
+    <h3 class="article-title"><a href="/2021/11/11/CVE-2021-40539-ManageEngine-ADSelfService-Plus漏洞分析/"><span>CVE-2021-40539 ManageEngine ADSelfService Plus漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/11/11/CVE-2021-40539-ManageEngine-ADSelfService-Plus漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-11-11T10:31:47.000Z">
+          2021-11-11
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>​    该漏洞影响版本在<code>6113</code>版本以前，但是在官网上已经下载不到这个版本了，我在<a target="_blank" rel="noopener" href="https://fs2.download82.com/software/bbd8ff9dba17080c0c121804efbd61d5/manageengine-adselfservice-plus/ManageEngine_ADSelfService_Plus_64bit.exe">其他网站</a>下载了5.8的版本进行分析。</p>
+<p>​    下载好后双击exe安装，但启动过程中会卡在一个地方不动，后来我是通过双击<code>bin/run.bat</code>解决的，需要注意在选择版本的时候选择<code>free</code>版本。启动后的界面如下：</p>
+<p><img src="/2021/11/11/CVE-2021-40539-ManageEngine-ADSelfService-Plus%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/image-20211112113129673.png" alt="image-20211112113129673"></p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/11/11/代码审计阶段性总结/"><span>代码审计阶段性总结</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/11/11/代码审计阶段性总结/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-11-11T09:35:32.000Z">
+          2021-11-11
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    转岗做代码审计已经快一年了，时间过的相当快。虽然自己感觉做过的事情很多，但是回头想想好像也没挖到过几个拿得出手的漏洞。因此写下篇随笔理下思路，也确定下后来发展的一个方向。</p>
+<h2 id="挖洞VS分析"><a href="#挖洞VS分析" class="headerlink" title="挖洞VS分析"></a>挖洞VS分析</h2><p>​    回顾一年的时间，发现自己写的文章主要是漏洞分析，真正用在挖洞上的时间其实并不多，这个主要还是我个人的问题，在刚开始接触审计的时候，大概是一个摸索的过程，觉得每了解一些地方或者挖到一个漏洞都比较开心，审计做的多了，慢慢形成了一种类似套路的东西，无非是找敏感函数之类的，慢慢的挖到漏洞对我来说的成就感越来越低，而且感觉用到的技术大部分是用已有知识解决的，也就觉得没什么意思了。这里可能主要是因为我挖的都是一些web应用系统的漏洞，并不是一些框架的漏洞有关。</p>
+<p>​    所以我偏向把大量的时间用在漏洞分析上，相比于挖洞，分析的每个漏洞都让我觉得非常有趣，知识也得到了增强，当然主要也是因为那些漏洞大多都有些绕，不是我靠一些套路化的找敏感函数再去回溯方法能挖出来的， 而且很多漏洞都需要对框架的底层处理比较熟悉或者是找到一个不易想到的Trike，所以每分析一个漏洞，都会给我一种正向的反馈，让我想去分析更多的漏洞。虽然分析漏洞可能没有短期来看没有什么价值产出，但我觉得如果对每个漏洞的成因都了如指掌，挖洞应该也是水到渠成的事情，所以未来的时间可能<strong>我还是会将大量的时间放在漏洞分析上</strong>。</p>
+<h2 id="危害VS有趣"><a href="#危害VS有趣" class="headerlink" title="危害VS有趣"></a>危害VS有趣</h2><p>​    虽然大多数情况下挖到危害广的漏洞一般都比较有趣，因为如果是一些很简单的漏洞，那别人应该已经挖过了，但我还是想再分析下对于审计人员来说，危害和有趣哪个重要？</p>
+<p>​    我个人认为是有趣重要，尽管挖掘到一个影响严重的漏洞从应用上对团队比较重要，但我个人觉得挖到一个有趣的漏洞对个人比较重要。如果挖到一个影响广的很简单的任意文件上传漏洞，可能我个人觉得也没什么成就感。</p>
+<h2 id="未来"><a href="#未来" class="headerlink" title="未来"></a>未来</h2><p>​    目前JAVA的审计能力也不太行，但其实我也没想要把JAVA审计做到最强，可能JAVA审计我搞到自己认为差不多了，可能会选择扩展知识面，往其他语言的审计上再去扩展，再继续的话可能是再去补一些二进制的功底去分析一些系统层面的漏洞。或者去做了解一些自动化审计的东西，漏洞上的东西搞得差不多了可能再会去了解攻防对抗的一些东西，最后又转回去做渗透。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/随笔/">随笔</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2021/11/11/Thymeleaf-SSTI漏洞分析/"><span>Thymeleaf SSTI漏洞分析</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2021/11/11/Thymeleaf-SSTI漏洞分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2021-11-11T02:25:16.000Z">
+          2021-11-11
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近看到某平台上有一篇关于SSTI的文章，之前也没了解过SSTI的漏洞，因此决定写篇文章记录学习过程。</p>
+<h2 id="模板引擎"><a href="#模板引擎" class="headerlink" title="模板引擎"></a>模板引擎</h2><p>​    要了解SSTI漏洞，首先要对模板引擎有所了解。下面是模板引擎的几个相关概念。</p>
+<blockquote>
+<p>模板引擎（这里特指用于Web开发的模板引擎）是为了使用户界面与业务数据（内容）分离而产生的，它可以生成特定格式的文档，用于网站的模板引擎就会生成一个标准的文档。</p>
+<p>模板引擎的本质是将模板文件和数据通过模板引擎生成最终的HTML代码。</p>
+<p>模板引擎不属于特定技术领域，它是跨领域跨平台的概念。</p>
+</blockquote>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2021/10/28/resin解析漏洞分析/"><span>resin解析漏洞分析</span></a></h3>
     
   
@@ -425,167 +597,6 @@
     <span class="post-categories">
       <i class="icon-categories"></i>
         <a href="/categories/漏洞利用/">漏洞利用</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/10/20/hibernate1利用链分析/"><span>hibernate1利用链分析</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/20/hibernate1利用链分析/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-20T05:40:29.000Z">
-          2021-10-20
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <p>​        最近做项目刚好遇到了反序列化漏洞，在项目中依赖了hibernate组件，借此机会分析下hibernate利用链。</p>
-<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>​        首先看下最终反序列化漏洞的触发点，这个漏洞的触发点在<code>org.hibernate.property.BasicPropertyAccessor.BasicGetter#get</code>中，在这这个方法中使用了method.invoke反射调用。这里的method是从属性中获取的，因此是可控的，所以下来需要找到可以控制target参数的点。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/反序列化/">反序列化</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/10/14/JSP内存马研究/"><span>JSP内存马研究</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/14/JSP内存马研究/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-14T02:03:17.000Z">
-          2021-10-14
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近在研究webshell免杀的问题，到了内存马免杀部分发现传统的Filter或者Servlet查杀手段比较多，不太容易实现免杀，比如有些工具会将所有注册的<code>Servlet</code>和<code>Filter</code>拿出来，排查人员仔细一点还是会被查出来的，所以<strong>我们要找一些其他方式实现的内存马。比如我今天提到的JSP的内存马</strong>。</p>
-<h2 id="JSP加载流程分析"><a href="#JSP加载流程分析" class="headerlink" title="JSP加载流程分析"></a>JSP加载流程分析</h2><p>​    在Tomcat中<code>jsp</code>和<code>jspx</code>都会交给<code>JspServlet</code>处理，所以要想实现<code>JSP</code>驻留内存，首先得分析<code>JspServlet</code>的处理逻辑。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/内存马/">内存马</a>
-    </span>
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2021/10/13/JavaAgent内存马研究/"><span>JavaAgent内存马研究</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2021/10/13/JavaAgent内存马研究/" rel="bookmark">
-        <time class="entry-date published" datetime="2021-10-13T08:59:19.000Z">
-          2021-10-13
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>​    最近在研究<code>webshell</code>免杀，发现针对很多类型的内存马已经有了比较成型的检测方法，当然大多数内存马的查杀方式也是基于<code>javaAgent</code>，但是<code>rebeyond</code>前辈在文章<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/10075">Java内存攻击技术漫谈</a>中给出了绕过检测工具的方法，理论上这种绕过会导致现有的基于<code>Agent</code>检测的工具无法使用，所以值得我们深入学习。</p>
-        
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-      
-
-    <span class="post-categories">
-      <i class="icon-categories"></i>
-        <a href="/categories/内存马/">内存马</a>
     </span>
     
 

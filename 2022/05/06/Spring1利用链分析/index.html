@@ -1,0 +1,161 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Spring1利用链分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="Spring1利用链分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>Spring1利用链分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2022/05/06/Spring1利用链分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2022-05-06T05:47:24.000Z">
+          2022-05-06
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">最近在复习反序列化利用链的知识，尽管之前分析过spring1的利用链，再回头看还是发现其构造过程非常的精彩，再加上分析Spring利用链的文章比较少，因此决定写下Spring1反序列化利用链的分析过程。</span><br></pre></td></tr></table></figure>
+
+<h2 id="分析过程"><a href="#分析过程" class="headerlink" title="分析过程"></a>分析过程</h2><p>​        漏洞的sink在<code>MethodInvokeTypeProvider#readObject</code>中这里通过反射完成方法调用，按照我们之前分析利用链的经验，遇到任意调用的反射肯定是想往<code>Templates#newTransformer</code>上构造，因为只有<code>TemplatesImpl</code>才能触发类加载并执行任意代码而不仅仅是简单的命令执行。</p>
+<span id="more"></span>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">readObject</span><span class="params">(ObjectInputStream inputStream)</span> <span class="keyword">throws</span> IOException, ClassNotFoundException </span>&#123;</span><br><span class="line">    inputStream.defaultReadObject();</span><br><span class="line">    Method method = ReflectionUtils.findMethod(<span class="keyword">this</span>.provider.getType().getClass(), <span class="keyword">this</span>.methodName);</span><br><span class="line">    <span class="keyword">this</span>.result = ReflectionUtils.invokeMethod(method, <span class="keyword">this</span>.provider.getType());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​                要完成这种方式的利用，我们需要让<code>findMethod</code>返回<code>newTransformer</code>方法,并且让<code>this.provider.getType()</code>返回我们构造好的<code>TempletesImpl</code>对象。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Object <span class="title">invokeMethod</span><span class="params">(Method method, Object target)</span> </span>&#123;</span><br><span class="line">     <span class="keyword">return</span> invokeMethod(method, target);</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Object <span class="title">invokeMethod</span><span class="params">(Method method, Object target, Object... args)</span> </span>&#123;</span><br><span class="line">     <span class="keyword">try</span> &#123;</span><br><span class="line">         <span class="keyword">return</span> method.invoke(target, args);</span><br><span class="line">     &#125; <span class="keyword">catch</span> (Exception var4) &#123;</span><br><span class="line">         handleReflectionException(var4);</span><br><span class="line">         <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">&quot;Should never get here&quot;</span>);</span><br><span class="line">     &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​            那么如何让<code>this.provider.getType()</code>返回一个<code>TemplatesImpl</code>对象呢？肯定是需要使用动态代理，当调用到<code>getType</code>时通过<code>InvocationHandler</code>的处理让目标返回<code>TemplatesImpl</code>。在<code>AnnotationInvocationHandler#invoke</code>中可以通过控制<code>memberValues</code>的属性值来控制返回的对象。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">invoke</span><span class="params">(Object var1, Method var2, Object[] var3)</span> </span>&#123;</span><br><span class="line">       String var4 = var2.getName();</span><br><span class="line">       Class[] var5 = var2.getParameterTypes();</span><br><span class="line">       <span class="keyword">if</span> (var4.equals(<span class="string">&quot;equals&quot;</span>) &amp;&amp; var5.length == <span class="number">1</span> &amp;&amp; var5[<span class="number">0</span>] == Object.class) &#123;</span><br><span class="line">           <span class="keyword">return</span> <span class="keyword">this</span>.equalsImpl(var3[<span class="number">0</span>]);</span><br><span class="line">       &#125; <span class="keyword">else</span> <span class="keyword">if</span> (var5.length != <span class="number">0</span>) &#123;</span><br><span class="line">           <span class="keyword">throw</span> <span class="keyword">new</span> AssertionError(<span class="string">&quot;Too many parameters for an annotation method&quot;</span>);</span><br><span class="line">...</span><br><span class="line">           <span class="keyword">default</span>:</span><br><span class="line">           	<span class="comment">//从memberValues属性中获取对象并返回</span></span><br><span class="line">               Object var6 = <span class="keyword">this</span>.memberValues.get(var4);</span><br><span class="line">               <span class="keyword">if</span> (var6 == <span class="keyword">null</span>) &#123;</span><br><span class="line">                   <span class="keyword">throw</span> <span class="keyword">new</span> IncompleteAnnotationException(<span class="keyword">this</span>.type, var4);</span><br><span class="line">               &#125; <span class="keyword">else</span> <span class="keyword">if</span> (var6 <span class="keyword">instanceof</span> ExceptionProxy) &#123;</span><br><span class="line">                   <span class="keyword">throw</span> ((ExceptionProxy)var6).generateException();</span><br><span class="line">               &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                   <span class="keyword">if</span> (var6.getClass().isArray() &amp;&amp; Array.getLength(var6) != <span class="number">0</span>) &#123;</span><br><span class="line">                       var6 = <span class="keyword">this</span>.cloneArray(var6);</span><br><span class="line">                   &#125;</span><br><span class="line"></span><br><span class="line">                   <span class="keyword">return</span> var6;</span><br><span class="line">               &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        但是我们回头去看yso中spring1的利用链却发现并没有我们想象的那么简单，为什么会这么复杂？直接在创建动态代理时将<code>getType</code>的value换为templates不可以吗？</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220521112429951.png" alt="image-20220521112429951"></p>
+<p>​        实际上是不行的，因为getType方法已经明确了返回的对象类型是<code>Type</code>类型而我们直接返回<code>TemplatesImpl</code>类型会导致类型转换错误而失败。所以当调用<code>getType</code>时我们还要返回一个动态代理对象。这个对象要同时实现<code>Type</code>和<code>Templates</code>接口。那么要选哪个<code>InvocationHandler</code>呢？如何才能在反射调用这个代理对象的<code>newTransformer</code>方法时能调用到我们的TemplatesImpl对象的<code>newTransformer</code>方法。也就是说我们需要在这个<code>InvocationHandler#invoke</code>方法中能够获取<code>TemplatesImpl</code>对象并反射调用。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220521112825003.png" alt="image-20220521112825003"></p>
+<p>​        漏洞作者找到了<code>ObjectFactoryDelegatingInvocationHandler</code>，只要我们能控制<code>this.objectFactory.getObject()</code>的返回结果为构造好的<code>TemplateImpl</code>对象即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">invoke</span><span class="params">(Object proxy, Method method, Object[] args)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">          String methodName = method.getName();</span><br><span class="line">          <span class="keyword">if</span> (methodName.equals(<span class="string">&quot;equals&quot;</span>)) &#123;</span><br><span class="line">              <span class="keyword">return</span> proxy == args[<span class="number">0</span>];</span><br><span class="line">          &#125; <span class="keyword">else</span> <span class="keyword">if</span> (methodName.equals(<span class="string">&quot;hashCode&quot;</span>)) &#123;</span><br><span class="line">              <span class="keyword">return</span> System.identityHashCode(proxy);</span><br><span class="line">          &#125; <span class="keyword">else</span> <span class="keyword">if</span> (methodName.equals(<span class="string">&quot;toString&quot;</span>)) &#123;</span><br><span class="line">              <span class="keyword">return</span> <span class="keyword">this</span>.objectFactory.toString();</span><br><span class="line">          &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">              <span class="keyword">try</span> &#123;</span><br><span class="line">                  <span class="keyword">return</span> method.invoke(<span class="keyword">this</span>.objectFactory.getObject(), args);</span><br><span class="line">              &#125; <span class="keyword">catch</span> (InvocationTargetException var6) &#123;</span><br><span class="line">                  <span class="keyword">throw</span> var6.getTargetException();</span><br><span class="line">              &#125;</span><br><span class="line">          &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        所以我们要创建<code>objectFactory</code>的动态代理并且让Handler为<code>AnnocationInvocationHandler</code>并且设置<code>memberValue</code>属性中<code>getObject</code>为key，value为<code>TemplatesImpl</code>对象。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>​        Spring1这条链算是把动态代理玩明白了，通过嵌套了多层代理。通过创建同时实现<code>Type</code>和<code>Templetes</code>接口的代理类来使目标可以获取到<code>newTransformer</code>的Method对象，最后又利用<code>ObjectFactoryDelegatingInvocationHandler</code>动态获取<code>TemplatesImpl</code>对象反射调用<code>newTransformer</code>完成利用。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2022 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Spring Security权限绕过深入分析 | 藏青&#39;s BLOG</title>
+
+  
+  <meta name="author" content="藏青">
+  
+
+  
+  <meta name="description" content="知行合一">
+  
+
+  
+  <meta name="keywords" content="渗透 内网 代码审计">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="Spring Security权限绕过深入分析"/>
+
+  <meta property="og:site_name" content="藏青&#39;s BLOG"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="藏青&#39;s BLOG" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">藏青&#39;s BLOG</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/links">Links</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>Spring Security权限绕过深入分析</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2022/05/06/Spring Security权限绕过漏洞深入分析/" rel="bookmark">
+        <time class="entry-date published" datetime="2022-05-06T05:47:24.000Z">
+          2022-05-06
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">本来是没想把这个洞单独写篇文章的，因为也看到其他师傅已经发表了相应的文章。主要的绕过原理也比较简单。即使用正则表达式匹配路径时.*不会匹配\r或\n，因此当url中包含换行符则springsecurity使用RegexRequestMatcher(&quot;.*&quot;,null)正则表达式去匹配就会匹配不到从而导致了权限绕过。</span><br><span class="line">当我复现这个漏洞时却发现虽然绕过了springsecurity的拦截，但是却访问不到对应的Controller。为了解决这个问题才有了这篇文章。</span><br></pre></td></tr></table></figure>
+
+<span id="more"></span>
+
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>​    借用killer师傅文章中的Demo漏洞环境如下：</p>
+<p>​    <code>SpringSecurity</code>配置</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">configure</span><span class="params">(HttpSecurity http)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    http.csrf().disable();</span><br><span class="line">    http.authorizeRequests()</span><br><span class="line">            .requestMatchers(<span class="keyword">new</span></span><br><span class="line">                    RegexRequestMatcher(<span class="string">&quot;.*&quot;</span>,<span class="keyword">null</span>)).authenticated()<span class="comment">//配置拦截所有请求</span></span><br><span class="line">            .antMatchers(<span class="string">&quot;/login&quot;</span>).permitAll();<span class="comment">//配置/login不拦截</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>​    <code>Controller</code>配置</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ResponseBody</span></span><br><span class="line"><span class="meta">@RequestMapping(&quot;/test/*&quot;)</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> String <span class="title">test</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;test&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>​    正常访问被SpringSecurity规则拦截，如下所示：</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522000105480.png" alt="image-20220522000105480"></p>
+<p>​    通过%0a绕过，这里和其他师傅们的分析有点不同，虽然绕过了springsecurity的限制但是并没有访问到Controller。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522000241788.png" alt="image-20220522000241788"></p>
+<p>​    因为不止一个师傅用上面的demo代码做了复现，所以刚开始我以为是自己哪里配置错了，但是反复的检查发现配置没有问题，我也确实绕过了springsecurity的检测，只是没有访问到Controller而已。后来找killer师傅要了他的环境，在绕过以后确实是可以请求到的。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522000753058.png" alt="image-20220522000753058"></p>
+<h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><p>​    对比了两套环境的差异，发现主要的区别在springmvc的版本上，而且其实根据结果我们也可以猜出来。在第一套环境中springmvc再匹配由<code>/test/11%0a</code>的路由没匹配到而第二套环境匹配到了。所以我们深入的分析下到底是什么原因导致了这种差异。</p>
+<p>​    通过调试对比发现在<code>DispatcherServlet#doDispatch</code>中获取的<code>mappedHandler</code>是不同的，所以问题出现在<code>getHandler</code>的处理过程中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">doDispatch</span><span class="params">(HttpServletRequest request, HttpServletResponse response)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">       ...</span><br><span class="line">                    mappedHandler = <span class="keyword">this</span>.getHandler(processedRequest);</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">                    mv = ha.handle(processedRequest, response, mappedHandler.getHandler());</span><br></pre></td></tr></table></figure>
+
+<p>​    循环调用保存的<code>HandlerMapping#getHandler</code>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> HandlerExecutionChain <span class="title">getHandler</span><span class="params">(HttpServletRequest request)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.handlerMappings != <span class="keyword">null</span>) &#123;</span><br><span class="line">        Iterator var2 = <span class="keyword">this</span>.handlerMappings.iterator();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span>(var2.hasNext()) &#123;</span><br><span class="line">            HandlerMapping mapping = (HandlerMapping)var2.next();</span><br><span class="line">            HandlerExecutionChain handler = mapping.getHandler(request);</span><br><span class="line">            <span class="keyword">if</span> (handler != <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> handler;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    默认保存了下面5个<code>HandlerMapping</code>，通过简单查阅文档可知注解中配置的路由由<code>RequestMappingHandlerMapping</code>处理。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522001555337.png" alt="image-20220522001555337"></p>
+<p>​    <code>getHandler</code>中通过<code>getHandlerInternal</code>获取handler构建<code>HandlerExecutionChain</code>并返回。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">final</span> HandlerExecutionChain <span class="title">getHandler</span><span class="params">(HttpServletRequest request)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">     <span class="comment">//获取handler</span></span><br><span class="line">        Object handler = <span class="keyword">this</span>.getHandlerInternal(request);</span><br><span class="line">。。。</span><br><span class="line">			<span class="comment">//构建HandlerExecutionChain</span></span><br><span class="line">            HandlerExecutionChain executionChain = <span class="keyword">this</span>.getHandlerExecutionChain(handler, request);</span><br><span class="line">。。。</span><br><span class="line">			<span class="comment">//返回</span></span><br><span class="line">            <span class="keyword">return</span> executionChain;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    <code>getHandlerInternal</code>从request对象中获取请求的path并根据path找到<code>handlerMethod</code>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> HandlerMethod <span class="title">getHandlerInternal</span><span class="params">(HttpServletRequest request)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="comment">//从request对象中获取path</span></span><br><span class="line">      String lookupPath = <span class="keyword">this</span>.initLookupPath(request);</span><br><span class="line">      <span class="keyword">this</span>.mappingRegistry.acquireReadLock();</span><br><span class="line"></span><br><span class="line">      HandlerMethod var4;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">          <span class="comment">//根据path找到handlerMethod</span></span><br><span class="line">          HandlerMethod handlerMethod = <span class="keyword">this</span>.lookupHandlerMethod(lookupPath, request);</span><br><span class="line">          var4 = handlerMethod != <span class="keyword">null</span> ? handlerMethod.createWithResolvedBean() : <span class="keyword">null</span>;</span><br><span class="line">      &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">          <span class="keyword">this</span>.mappingRegistry.releaseReadLock();</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">return</span> var4;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​        <code>lookupHandlerMethod</code>首先直接根据路径获取获取不到才使用<code>addMatchingMappings</code>遍历所有的<code>ReuqestMappingInfo</code>对象并进行匹配。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> HandlerMethod <span class="title">lookupHandlerMethod</span><span class="params">(String lookupPath, HttpServletRequest request)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    List&lt;AbstractHandlerMethodMapping&lt;T&gt;.Match&gt; matches = <span class="keyword">new</span> ArrayList();</span><br><span class="line">    <span class="comment">//直接根据路径匹配的，比如配置requestmapping为/test，则/test最为key、ReuqestMappingInfo对象为value保存在map中。然后以lookupPath为key直接从map获取即可。</span></span><br><span class="line">    List&lt;T&gt; directPathMatches = <span class="keyword">this</span>.mappingRegistry.getMappingsByDirectPath(lookupPath);</span><br><span class="line">    <span class="keyword">if</span> (directPathMatches != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">this</span>.addMatchingMappings(directPathMatches, matches, request);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (matches.isEmpty()) &#123;</span><br><span class="line">        <span class="comment">// 获取不到则遍历this.mappingRegistry保存的所有ReuqestMappingInfo对象。</span></span><br><span class="line">        <span class="keyword">this</span>.addMatchingMappings(<span class="keyword">this</span>.mappingRegistry.getRegistrations().keySet(), matches, request);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">addMatchingMappings</span><span class="params">(Collection&lt;T&gt; mappings, List&lt;AbstractHandlerMethodMapping&lt;T&gt;.Match&gt; matches, HttpServletRequest request)</span> </span>&#123;</span><br><span class="line">     Iterator var4 = mappings.iterator();</span><br><span class="line"></span><br><span class="line">     <span class="keyword">while</span>(var4.hasNext()) &#123;</span><br><span class="line">         T mapping = var4.next();</span><br><span class="line">         <span class="comment">//逐个匹配</span></span><br><span class="line">         T match = <span class="keyword">this</span>.getMatchingMapping(mapping, request);</span><br><span class="line">         <span class="keyword">if</span> (match != <span class="keyword">null</span>) &#123;</span><br><span class="line">             matches.add(<span class="keyword">new</span> AbstractHandlerMethodMapping.Match(match, (AbstractHandlerMethodMapping.MappingRegistration)<span class="keyword">this</span>.mappingRegistry.getRegistrations().get(mapping)));</span><br><span class="line">         &#125;</span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    在<code>getMatchingMapping</code>中不同版本的SpringMVC代码不太一样：</p>
+<p>springmvc 5.3.20:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"> <span class="function"><span class="keyword">public</span> RequestMappingInfo <span class="title">getMatchingCondition</span><span class="params">(HttpServletRequest request)</span> </span>&#123;</span><br><span class="line">...</span><br><span class="line">                           PathPatternsRequestCondition pathPatterns = <span class="keyword">null</span>;</span><br><span class="line">                            <span class="keyword">if</span> (<span class="keyword">this</span>.pathPatternsCondition != <span class="keyword">null</span>) &#123;</span><br><span class="line">                                pathPatterns = <span class="keyword">this</span>.pathPatternsCondition.getMatchingCondition(request);</span><br><span class="line">                                <span class="keyword">if</span> (pathPatterns == <span class="keyword">null</span>) &#123;</span><br><span class="line">                                    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">                                &#125;</span><br><span class="line"> ...</span><br><span class="line"></span><br><span class="line">                            &#125;</span><br></pre></td></tr></table></figure>
+
+<p>springmvc 5.1.9:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"> <span class="function"><span class="keyword">public</span> RequestMappingInfo <span class="title">getMatchingCondition</span><span class="params">(HttpServletRequest request)</span> </span>&#123;</span><br><span class="line">...</span><br><span class="line">                            PatternsRequestCondition patterns = <span class="keyword">this</span>.patternsCondition.getMatchingCondition(request);</span><br><span class="line">     ...</span><br><span class="line">                            </span><br></pre></td></tr></table></figure>
+
+<p>​    也就是不同版本的springmvc使用了不同的<code>RequestCondition</code>导致的。经过简单的查阅资料<code>PathPatternsRequestCondition</code>是spring高版本引入的使用<code>PathPattern</code>来进行URL匹配。而在早些版本<code>PatternsRequestCondition</code>使用<code>AntPathMatcher</code>来进行匹配。</p>
+<h3 id="AntPathMatcher"><a href="#AntPathMatcher" class="headerlink" title="AntPathMatcher"></a>AntPathMatcher</h3><p>​    主要是由<code>AntPathMatcher#doMatch</code>完成匹配，首先通过<code>tokenizePattern</code>对路由中的配置的url进行分割，再调用<code>tokenizePath</code>对传入的<code>PathUrl</code>分割,最后将分割后的结果分别通过<code>matchStrings</code>进行匹配。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522101201839.png" alt="image-20220522101201839"></p>
+<p>​    当匹配后面的换行时，由于这里得到的正则也是<code>.*</code>所以也匹配不到换行符，因此找不到对应的Controller进行处理。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522101804434.png" alt="image-20220522101804434"></p>
+<h3 id="PathPattern"><a href="#PathPattern" class="headerlink" title="PathPattern"></a>PathPattern</h3><p>​    <code>PathPatternsRequestCondition#getMatchingCondition</code>将请求的URL转换为<code>PathContainer</code>对象并调用<code>getMatchingPatterns</code>进行匹配，匹配成功则创建<code>PathPatternsRequestCondition</code>并返回。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522102854732.png" alt="image-20220522102854732"></p>
+<p>​    遍历<code>PathPattern</code>并进行匹配</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522103055047.png" alt="image-20220522102519565"></p>
+<p>​    通过<code>SeparatorPathElement#matches</code>匹配，<code>SeparatorPathElement</code>是分离器元素，默认是<code>/</code>。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522103440307.png" alt="image-20220522103440307"></p>
+<p>​    继续往下调用<code>LiteralPathElement#matches</code>逐个字符匹配。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522104335069.png" alt="image-20220522104335069"></p>
+<p>​    由于<code>PathContainer</code>和<code>PathPattern</code>中这里都保存的是<code>test</code>所以可以通过检测。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522104501082.png" alt="image-20220522104501082"></p>
+<p>​    后面还有元素所以继续<code>matches</code></p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522104638277.png" alt="image-20220522104638277"></p>
+<p>​    最后针对<code>*</code>通过<code>WildcardPathElement</code>进行匹配。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522104713945.png" alt="image-20220522104713945"></p>
+<p>​    在<code>WildcardPathElement</code>中只要pathElements的元素个数和<code>PathPattern</code>中的元素个数一致都会返回true。而元素个数的是由<code>/</code>分割的，<code>换行符</code>对元素分割没有影响，因此可以正常匹配。</p>
+<p><img src="https://asdsadasasdffffffffffffffff.oss-cn-beijing.aliyuncs.com/img/image-20220522105317199.png" alt="image-20220522105317199"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>​    SpringSecurity的权限认证绕过只能在高版本的springmvc中使用，由于低版本使用<code>AntPathMatcher</code>也是通过正则<code>.*</code>来匹配的URL路径的，因此在绕过<code>SpringSecurity</code>权限认证的同时也会绕过<code>springmvc</code>路由的匹配，导致匹配失败。</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/漏洞分析/">漏洞分析</a>
+    </span>
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2022 藏青
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>
